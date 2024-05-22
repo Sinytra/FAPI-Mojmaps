@@ -44,4 +44,6 @@ $RECYCLE.BIN/
 .DS_Store
 
 # Generated
-api-meta/fabric-api-mojmap
+fabric-api-yarn
+fabric-api-upstream
+fabric-api-mojmap

@@ -1,3 +1,5 @@
+package org.sinytra.gradle
+
 import com.google.gson.JsonParser
 import net.fabricmc.accesswidener.AccessWidenerReader
 import net.fabricmc.accesswidener.AccessWidenerVisitor
@@ -16,49 +18,36 @@ import org.cadixdev.lorenz.MappingSet
 import org.cadixdev.mercury.Mercury
 import org.cadixdev.mercury.mixin.MixinRemapper
 import org.cadixdev.mercury.remapper.MercuryRemapper
+import org.gradle.api.DefaultTask
+import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
+import org.gradle.api.tasks.*
+import org.gradle.build.event.BuildEventsListenerRegistry
+import org.gradle.kotlin.dsl.provideDelegate
+import org.gradle.kotlin.dsl.submit
+import org.gradle.workers.WorkAction
+import org.gradle.workers.WorkParameters
+import org.gradle.workers.WorkQueue
+import org.gradle.workers.WorkerExecutor
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
+import javax.inject.Inject
 import kotlin.io.path.bufferedReader
 import kotlin.io.path.writeBytes
 
-val sourceSets = extensions.getByType<SourceSetContainer>()
-
-val versionFabricLoader: String by project
-val excludedProjects = listOf("fabric-api-bom", "fabric-api-catalog")
-val projectNames = file("fabric-api-upstream").list()!!.filter { it.startsWith("fabric-") } - excludedProjects
-
-val prepareRemap by tasks.registering(Copy::class) {
-    group = "sinytra"
-
-    projectNames.forEach { from("fabric-api-upstream/$it") { into(it) } }
-
-    destinationDir = file("fabric-api-yarn")
-}
-
-val remapTask = tasks.register("remapUpstreamSources", RemapSourceDirectory::class) {
-    group = "sinytra"
-
-    projectRoots.from(projectNames.map { file("fabric-api-upstream/$it") })
-//    projectRoots.from("fabric-api-upstream/fabric-game-rule-api-v1")
-    classpath.from(configurations[JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME])
-
-    sourceNamespace.set(MappingsNamespace.NAMED.toString())
-    targetNamespace.set(MappingsNamespace.MOJANG.toString())
-    outputDir.set(file("fabric-api-mojmap"))
-}
-
 abstract class RemapSourceDirectory : DefaultTask() {
     @get:SkipWhenEmpty
-    @get:InputFiles
-    val projectRoots: ConfigurableFileCollection = project.objects.fileCollection()
+    @get:InputDirectory
+    val projectRoot: DirectoryProperty = project.objects.directoryProperty()
 
     @get:InputFiles
     val classpath: ConfigurableFileCollection = project.objects.fileCollection()
-
-    @get:InputFiles
-    val sourcepath: ConfigurableFileCollection = project.objects.fileCollection()
 
     @get:Input
     val sourceNamespace: Property<String> = project.objects.property(String::class.java)
@@ -108,9 +97,9 @@ abstract class RemapSourceDirectory : DefaultTask() {
             )
         }
 
-        val sourcePaths = projectRoots.files
-            .map { it.resolve("src") }
-            .flatMap {
+        val rootDir = projectRoot.get().asFile
+        val sourcePaths = rootDir.resolve("src")
+            .let {
                 listOf(
                     it.resolve("main/java"),
                     it.resolve("client/java"),
@@ -123,17 +112,15 @@ abstract class RemapSourceDirectory : DefaultTask() {
         val workQueue: WorkQueue = workerExecutor.noIsolation()
         val javaRelease = SourceRemapper.getJavaCompileRelease(project)
 
-        projectRoots.forEach { projectRoot ->
-            val output = outputDir.dir(projectRoot.name).get()
+        val output = outputDir.dir(rootDir.name).get().dir("src")
 
-            workQueue.submit(MappingWorkAction::class) {
-                inputFile.set(projectRoot)
-                outputDir.set(output)
-                this.mappingServiceUuid.set(UnsafeWorkQueueHelper.create(mappingService))
-                this.sourceMappingServiceUuid.set(UnsafeWorkQueueHelper.create(sourceMappingService))
-                this.sourcePaths.from(sourcePaths)
-                javaCompileRelease.set(javaRelease)
-            }
+        workQueue.submit(MappingWorkAction::class) {
+            inputFile.set(rootDir)
+            outputDir.set(output)
+            this.mappingServiceUuid.set(UnsafeWorkQueueHelper.create(mappingService))
+            this.sourceMappingServiceUuid.set(UnsafeWorkQueueHelper.create(sourceMappingService))
+            this.sourcePaths.from(sourcePaths)
+            javaCompileRelease.set(javaRelease)
         }
     }
 }
@@ -166,7 +153,7 @@ abstract class MappingWorkAction : WorkAction<MappingWorkParameters> {
 
         val mappingSet = mappingSetMethod.invoke(sourceMappingService) as MappingSet
         val mercury = mercurySupplier.invoke(sourceMappingService) as Mercury
-        mercury.isGracefulClasspathChecks = false
+        mercury.isGracefulClasspathChecks = true
         mercury.isGracefulJavadocClasspathChecks = true
         mercury.setSourceCompatibilityFromRelease(parameters.javaCompileRelease.get())
         mercury.isFlexibleAnonymousClassMemberLookups = true
@@ -210,7 +197,8 @@ abstract class MappingWorkAction : WorkAction<MappingWorkParameters> {
                 val accessWidener = json.get("accessWidener")?.asString
                 if (accessWidener != null) {
                     val awPath = resourceRoot.resolve(accessWidener).toPath()
-                    val destDir = parameters.outputDir.get().file("${resourceRoot.parentFile.name}/${resourceRoot.name}").asFile
+                    val destDir =
+                        parameters.outputDir.get().file("${resourceRoot.parentFile.name}/${resourceRoot.name}").asFile
                     destDir.mkdirs()
 
                     val mappedPath = destDir.resolve(accessWidener).toPath()
@@ -242,6 +230,8 @@ abstract class MappingWorkAction : WorkAction<MappingWorkParameters> {
         val mercury = Mercury()
         mercury.setSourceCompatibilityFromRelease(parameters.javaCompileRelease.get())
         mercury.isFlexibleAnonymousClassMemberLookups = true
+        mercury.isGracefulClasspathChecks = true
+        mercury.isGracefulJavadocClasspathChecks = true
         mercury.processors.add(MixinRemapper.create(mappingSet))
         mercury.sourcePath += sourcepath
         mercury.classPath += classpath
@@ -250,6 +240,8 @@ abstract class MappingWorkAction : WorkAction<MappingWorkParameters> {
 
         try {
             mercury.rewrite(inputFile, dstDir)
+        } catch (e: Exception) {
+            LOGGER.info("Error preparing mixin mappings", e)
         } finally {
             Files.walkFileTree(dstDir, DeletingFileVisitor())
         }

@@ -6,8 +6,6 @@ plugins {
 }
 
 repositories {
-    // The org.jetbrains.kotlin.jvm plugin requires a repository
-    // where to download the Kotlin compiler dependencies from.
     mavenCentral()
     maven {
         name = "FabricMC"
@@ -25,20 +23,23 @@ repositories {
         name = "Architectury"
         url = uri("https://maven.architectury.dev/")
     }
-    mavenLocal()
+    maven { 
+        name = "Sinytra"
+        url = uri("https://maven.su5ed.dev/releases")
+    }
+//    mavenLocal()
 }
 
 dependencies {
     implementation("dev.architectury:architectury-loom:1.6-SNAPSHOT")
 
+    implementation("com.google.guava:guava:33.2.0-jre")
     implementation("com.google.code.gson:gson:2.10.1")
-    implementation("dev.architectury:at:1.0.1")
-
-    implementation("commons-codec:commons-codec:1.17.0")
+    implementation("net.fabricmc:mapping-io:0.6.1")
 
     // Remapping
-    implementation("dev.architectury:mercury:0.1.+")
-    implementation("org.cadixdev:mercury-mixin:0.1.1-SNAPSHOT:all") {
+    implementation("org.sinytra:mercury:0.1.+")
+    implementation("org.sinytra:mercury-mixin:0.2.0-SNAPSHOT:all") {
         isTransitive = false
     }
     implementation("net.fabricmc:access-widener:2.1.0")

@@ -20,3 +20,5 @@ pluginManagement {
 }
 
 rootProject.name = "fabric-api-mojmap"
+
+include("intermediary-deobf")

@@ -27,7 +27,6 @@ repositories {
         name = "Sinytra"
         url = uri("https://maven.su5ed.dev/releases")
     }
-//    mavenLocal()
 }
 
 dependencies {
@@ -44,8 +43,4 @@ dependencies {
     }
     implementation("net.fabricmc:access-widener:2.1.0")
     compileOnly("net.fabricmc:tiny-remapper:0.10.+")
-
-    // Update
-    implementation("org.eclipse.jgit:org.eclipse.jgit:6.9.0.202403050737-r")
-    implementation("codechicken:DiffPatch:1.5.0.+")
 }

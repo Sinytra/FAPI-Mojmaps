@@ -15,6 +15,14 @@ import java.lang.ProcessBuilder.Redirect
 import java.util.*
 import java.util.concurrent.TimeUnit
 
+val rootDir = File(".")
+val logger: Logger = LoggerFactory.getLogger("SyncUpstream")
+
+if (!File(rootDir, "build.gradle.kts").exists()) {
+    logger.error("Unexpected root directory {}", rootDir.absolutePath)
+    throw RuntimeException()
+}
+
 val properties = Properties().also { p -> File("gradle.properties").bufferedReader().use(p::load) }
 
 val versionMc: String by properties
@@ -32,10 +40,8 @@ val tempMappedBranch = "temp/$mappedBranch"
 val originRemote = "origin"
 val originMappedBranch = "$originRemote/$mappedBranch"
 
-val rootDir = File(".")
 val submoduleDir = File("fabric-api-upstream")
 val mappedSourcesDir = File("fabric-api-mojmap")
-val logger: Logger = LoggerFactory.getLogger("SyncUpstream")
 
 fun RevCommit.shortName() = "${abbreviate(8).name()} $shortMessage"
 

@@ -49,6 +49,9 @@ abstract class RemapSourceDirectory : DefaultTask() {
     @get:InputFiles
     val classpath: ConfigurableFileCollection = project.objects.fileCollection()
 
+    @get:InputFiles
+    val sourcepath: ConfigurableFileCollection = project.objects.fileCollection()
+
     @get:Input
     val sourceNamespace: Property<String> = project.objects.property(String::class.java)
 
@@ -98,16 +101,18 @@ abstract class RemapSourceDirectory : DefaultTask() {
         }
 
         val rootDir = projectRoot.get().asFile
-        val sourcePaths = rootDir.resolve("src")
-            .let {
-                listOf(
-                    it.resolve("main/java"),
-                    it.resolve("client/java"),
-                    it.resolve("testmod/java"),
-                    it.resolve("testmodClient/java")
-                )
-            }
-            .filter(File::exists)
+        val sourcePaths = sourcepath.files.flatMap {
+            it.resolve("src")
+                .let {
+                    listOf(
+                        it.resolve("main/java"),
+                        it.resolve("client/java"),
+                        it.resolve("testmod/java"),
+                        it.resolve("testmodClient/java")
+                    )
+                }
+                .filter(File::exists)
+        }
 
         val workQueue: WorkQueue = workerExecutor.noIsolation()
         val javaRelease = SourceRemapper.getJavaCompileRelease(project)

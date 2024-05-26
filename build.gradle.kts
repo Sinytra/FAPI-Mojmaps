@@ -2,13 +2,6 @@ import com.google.common.base.CaseFormat
 import net.fabricmc.accesswidener.AccessWidenerReader
 import net.fabricmc.accesswidener.AccessWidenerWriter
 import net.fabricmc.loom.api.mappings.layered.MappingsNamespace
-import org.eclipse.jgit.api.CreateBranchCommand
-import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.lib.ObjectId
-import org.eclipse.jgit.revwalk.RevCommit
-import org.eclipse.jgit.revwalk.RevSort
-import org.eclipse.jgit.revwalk.RevWalk
-import org.eclipse.jgit.transport.URIish
 import org.sinytra.gradle.RemapSourceDirectory
 
 plugins {
@@ -59,6 +52,7 @@ val mappedBranch = "mojmap/$versionMc"
 val ignoredProjects = listOf("fabric-api-bom", "fabric-api-catalog")
 val projectNames = file("fabric-api-upstream").list()?.filter { it.startsWith("fabric-") }?.let { it - ignoredProjects } ?: emptyList()
 
+// TODO Move to setup script
 val generateMergedAccessWidener by tasks.registering(GenerateMergedAccessWidenerTask::class) {
     group = "sinytra"
 
@@ -94,7 +88,6 @@ dependencies {
     })
 
     modImplementation("net.fabricmc:fabric-loader:$versionFabricLoader")
-    modImplementation("net.fabricmc.fabric-api:fabric-api:$versionUpstream")
 
     // Remapping dep
     mercuryClasspath("org.junit.jupiter:junit-jupiter-api:5.8.1")
@@ -106,15 +99,17 @@ val remapUpstreamSources by tasks.registering {
     group = "sinytra"
 }
 
-projectNames.filter { it == "fabric-rendering-v1" }.forEach { projectName ->
+val projectRoots = projectNames.map { file("fabric-api-upstream/$it") }
+
+projectNames.forEach { projectName ->
     val taskName = CaseFormat.LOWER_HYPHEN.to(CaseFormat.UPPER_CAMEL, projectName)
 
     val remapTask = tasks.register("remap${taskName}UpstreamSources", RemapSourceDirectory::class) {
         group = "sinytra"
 
         projectRoot.set(file("fabric-api-upstream/$projectName"))
-        classpath.from(configurations["minecraftNamedCompile"], configurations["mercuryClasspath"])
-        classpath.from(project(":intermediary-deobf").configurations["modCompileClasspathMapped"])
+        classpath.from(configurations["minecraftNamedCompile"], configurations["mercuryClasspath"], configurations["modCompileClasspathMapped"])
+        sourcepath.from(projectRoots)
 
         sourceNamespace.set(MappingsNamespace.NAMED.toString())
         targetNamespace.set(MappingsNamespace.MOJANG.toString())
@@ -124,6 +119,10 @@ projectNames.filter { it == "fabric-rendering-v1" }.forEach { projectName ->
     remapUpstreamSources.configure {
         dependsOn(remapTask)
     }
+}
+
+sourceSets.main {
+    resources.srcDirs("src/generated/resources")
 }
 
 abstract class GenerateMergedAccessWidenerTask : DefaultTask() {

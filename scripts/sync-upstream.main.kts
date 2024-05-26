@@ -1,19 +1,29 @@
 @file:DependsOn("org.eclipse.jgit:org.eclipse.jgit:6.9.0.202403050737-r")
 
+import org.eclipse.jgit.api.CherryPickResult
+import org.eclipse.jgit.api.CherryPickResult.CherryPickStatus
 import org.eclipse.jgit.api.CreateBranchCommand
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api.ResetCommand
+import org.eclipse.jgit.diff.DiffEntry
 import org.eclipse.jgit.lib.ObjectId
+import org.eclipse.jgit.merge.ContentMergeStrategy
+import org.eclipse.jgit.merge.ResolveMerger
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevSort
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.transport.RefSpec
 import org.eclipse.jgit.transport.URIish
+import org.eclipse.jgit.treewalk.CanonicalTreeParser
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.lang.ProcessBuilder.Redirect
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.Path
+import kotlin.io.path.deleteIfExists
+
 
 val rootDir = File(".")
 val logger: Logger = LoggerFactory.getLogger("SyncUpstream")
@@ -42,6 +52,8 @@ val originMappedBranch = "$originRemote/$mappedBranch"
 
 val submoduleDir = File("fabric-api-upstream")
 val mappedSourcesDir = File("fabric-api-mojmap")
+
+val fileChangeFilter = listOf(".java", ".accesswidener")
 
 fun RevCommit.shortName() = "${abbreviate(8).name()} $shortMessage"
 
@@ -76,12 +88,16 @@ Git.open(rootDir).use { git ->
                 setupMappedBranch(sGit)
             }
         }
+        
+        sGit.checkout()
+            .setName(tempLocalBranch)
+            .call()
 
         update(sGit)
     }
 }
 
-fun update(sGit: Git) {
+fun update(sGit: Git): Boolean {
     val currentCommit = sGit.repository.parseCommit(sGit.repository.resolve(tempLocalBranch))
     val latestCommit = sGit.repository.parseCommit(sGit.repository.resolve(upstreamFabricBranch))
     logger.info("CURRENT: ${currentCommit.shortName()}")
@@ -96,11 +112,16 @@ fun update(sGit: Git) {
 
         val nextCommit = findNextCommit(sGit, currentCommit, latestCommit) ?: run {
             logger.info("NO UPDATES FOUND")
-            return
+            return false
         }
-
-        updateToCommit(sGit, nextCommit)
+        if (needsRemap(sGit)) {
+            updateToCommit(sGit, nextCommit)
+        } else {
+            simpleUpdate(sGit, nextCommit)
+        }
+        return true
     }
+    return false
 }
 
 fun setupMappedBranch(sGit: Git) {
@@ -167,16 +188,47 @@ fun updateToCommit(sGit: Git, commit: RevCommit) {
 
     // Load initial changes
     logger.info("Loading original changes from commit")
-    sGit.cherryPick()
+    val result = sGit.cherryPick()
         .setNoCommit(true)
         .include(commit)
+        .setContentMergeStrategy(ContentMergeStrategy.THEIRS)
         .call()
+    if (result.status != CherryPickStatus.OK) {
+        tryResolveIssues(result, sGit)
+    }
 
     // Copy mapped sources
     logger.info("Copying remapped sources")
     mappedSourcesDir.copyRecursively(submoduleDir, true)
 
     // Commit changes
+    finishUpdate(sGit, commit)
+}
+
+fun simpleUpdate(sGit: Git, commit: RevCommit) {
+    logger.info("CHERRY-PICKING COMMIT ${commit.shortName()}")
+
+    // Checkout mojmap branch
+    logger.info("Checking out branch $tempMappedBranch")
+    sGit.checkout()
+        .setName(tempMappedBranch)
+        .call()
+
+    logger.info("Loading original changes from commit")
+    val result = sGit.cherryPick()
+        .setNoCommit(true)
+        .include(commit)
+        .setContentMergeStrategy(ContentMergeStrategy.THEIRS)
+        .call()
+    if (result.status != CherryPickStatus.OK) {
+        tryResolveIssues(result, sGit)
+    }
+
+    // Commit changes
+    finishUpdate(sGit, commit)
+}
+
+fun finishUpdate(sGit: Git, commit: RevCommit) {
     logger.info("Commiting changes")
     sGit.add()
         .addFilepattern(".")
@@ -208,6 +260,30 @@ fun updateToCommit(sGit: Git, commit: RevCommit) {
         .call()
 }
 
+fun tryResolveIssues(result: CherryPickResult, sGit: Git) {
+    if (result.status == CherryPickStatus.CONFLICTING) {
+        if (result.failingPaths != null && result.failingPaths.values.all { it == ResolveMerger.MergeFailureReason.COULD_NOT_DELETE }) {
+            result.failingPaths.forEach { (path) -> Path(path).deleteIfExists() }
+            return
+        }
+        val list = sGit.diff().call()
+            .filter { it.changeType == DiffEntry.ChangeType.DELETE }
+        if (list.isNotEmpty()) {
+            sGit.rm().also { cmd -> list.forEach { cmd.addFilepattern(it.oldPath) } }.call()
+            list.forEach { submoduleDir.resolve(it.oldPath).delete() }
+        }
+        if (sGit.diff().call().isEmpty()) {
+            return
+        }
+    }
+    logger.error("Error cherrypicking changes, aborting update")
+    sGit.reset()
+        .setMode(ResetCommand.ResetType.HARD)
+        .setRef(tempMappedBranch)
+        .call()
+    throw RuntimeException("Error cherrypicking changes")
+}
+
 fun runCommand(vararg args: String) {
     val process = ProcessBuilder(*args)
         .directory(rootDir)
@@ -227,6 +303,24 @@ fun findNextCommit(git: Git, currentCommit: RevCommit, branchHead: ObjectId): Re
         revWalk.sort(RevSort.REVERSE, true)
 
         return revWalk.firstOrNull { currentCommit in it.parents }
+    }
+}
+
+fun needsRemap(git: Git): Boolean {
+    return showChangedFiles(git, git.repository.resolve("HEAD^^{tree}"), git.repository.resolve("HEAD^{tree}"))
+        .any { f -> fileChangeFilter.any(f.newPath::endsWith) }
+}
+
+fun showChangedFiles(git: Git, oldHead: ObjectId, head: ObjectId): List<DiffEntry> {
+    return git.repository.newObjectReader().use { reader ->
+        val oldTreeIter = CanonicalTreeParser()
+        oldTreeIter.reset(reader, oldHead)
+        val newTreeIter = CanonicalTreeParser()
+        newTreeIter.reset(reader, head)
+        git.diff()
+            .setNewTree(newTreeIter)
+            .setOldTree(oldTreeIter)
+            .call()
     }
 }
 

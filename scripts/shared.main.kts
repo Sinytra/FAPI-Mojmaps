@@ -43,6 +43,16 @@ fun RevCommit.shortName() = "${abbreviate(8).name()} $shortMessage"
 fun Git.branchExists(name: String, remote: Boolean = false) =
     repository.exactRef("refs/${if (remote) "remotes" else "heads"}/$name") != null
 
+fun setupOnSubmoduleBranch() {
+    Git.open(rootDir).use { git ->
+        initSubmodule(git).use { sGit ->
+            sGit.checkout()
+                .setName(tempLocalBranch)
+                .call()
+        }
+    }
+}
+
 fun initSubmodule(git: Git): Git {
     if (!submoduleDir.exists()) {
         sharedLogger.info("Initializing submodule")

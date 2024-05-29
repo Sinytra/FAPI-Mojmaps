@@ -1,4 +1,5 @@
 @file:DependsOn("com.google.code.gson:gson:2.10.1")
+@file:Import("shared.main.kts")
 
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.Gson
@@ -14,6 +15,8 @@ val upstreamDir = File("fabric-api-upstream")
 val customProperty = "custom"
 val interfacesProperty = "loom:injected_interfaces"
 val architecturyCommonJson = File("src/generated/resources/architectury.common.json")
+
+setupOnSubmoduleBranch()
 
 val foundInterfaces = mutableMapOf<String, MutableSet<String>>()
 

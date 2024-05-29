@@ -1,4 +1,5 @@
 @file:DependsOn("org.eclipse.jgit:org.eclipse.jgit:6.9.0.202403050737-r")
+@file:Import("shared.main.kts")
 
 import org.eclipse.jgit.api.CherryPickResult
 import org.eclipse.jgit.api.CherryPickResult.CherryPickStatus
@@ -13,52 +14,15 @@ import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevSort
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.transport.RefSpec
-import org.eclipse.jgit.transport.URIish
 import org.eclipse.jgit.treewalk.CanonicalTreeParser
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.File
-import java.lang.ProcessBuilder.Redirect
 import java.util.*
-import java.util.concurrent.TimeUnit
 import kotlin.io.path.Path
 import kotlin.io.path.deleteIfExists
 
-
-val rootDir = File(".")
 val logger: Logger = LoggerFactory.getLogger("SyncUpstream")
-
-if (!File(rootDir, "build.gradle.kts").exists()) {
-    logger.error("Unexpected root directory {}", rootDir.absolutePath)
-    throw RuntimeException()
-}
-
-val properties = Properties().also { p -> File("gradle.properties").bufferedReader().use(p::load) }
-
-val versionMc: String by properties
-
-val upstreamRemote = "upstream"
-val upstreamFabricBranch = "$upstreamRemote/$versionMc"
-
-val localRemote = "root"
-val localBranch = "fabric/$versionMc"
-val mappedBranch = "mojmap/$versionMc"
-val localMappedBranch = "$localRemote/$mappedBranch"
-val tempLocalBranch = "temp/$localBranch"
-val tempMappedBranch = "temp/$mappedBranch"
-
-val originRemote = "origin"
-val originMappedBranch = "$originRemote/$mappedBranch"
-
-val submoduleDir = File("fabric-api-upstream")
-val mappedSourcesDir = File("fabric-api-mojmap")
-
 val fileChangeFilter = listOf(".java", ".accesswidener")
-
-fun RevCommit.shortName() = "${abbreviate(8).name()} $shortMessage"
-
-fun Git.branchExists(name: String, remote: Boolean = false) =
-    repository.exactRef("refs/${if (remote) "remotes" else "heads"}/$name") != null
 
 Git.open(rootDir).use { git ->
     initSubmodule(git).use { sGit ->
@@ -127,7 +91,7 @@ fun update(sGit: Git): Boolean {
 fun setupMappedBranch(sGit: Git) {
     logger.info("=== SETTING UP MAPPED BRANCH FOR THE FIRST TIME ===")
 
-    logger.debug("Checking out branch $tempLocalBranch")
+    logger.debug("Checking out branch {}", tempLocalBranch)
     sGit.checkout()
         .setName(tempLocalBranch)
         .call()
@@ -284,18 +248,6 @@ fun tryResolveIssues(result: CherryPickResult, sGit: Git) {
     throw RuntimeException("Error cherrypicking changes")
 }
 
-fun runCommand(vararg args: String) {
-    val process = ProcessBuilder(*args)
-        .directory(rootDir)
-        .redirectOutput(Redirect.INHERIT)
-        .redirectError(Redirect.INHERIT)
-        .start()
-    process.waitFor(60, TimeUnit.MINUTES)
-    if (process.exitValue() != 0) {
-        throw RuntimeException("Error running command ${listOf(args)}")
-    }
-}
-
 fun findNextCommit(git: Git, currentCommit: RevCommit, branchHead: ObjectId): RevCommit? {
     RevWalk(git.repository).use { revWalk ->
         revWalk.markStart(git.repository.parseCommit(branchHead))
@@ -322,57 +274,4 @@ fun showChangedFiles(git: Git, oldHead: ObjectId, head: ObjectId): List<DiffEntr
             .setOldTree(oldTreeIter)
             .call()
     }
-}
-
-fun initSubmodule(git: Git): Git {
-    if (!submoduleDir.exists()) {
-        logger.info("Initializing submodule")
-        Git.init().setDirectory(submoduleDir).call()
-    }
-    val sGit = Git.open(submoduleDir)
-
-    if (!sGit.branchExists(tempLocalBranch)) {
-        logger.info("Creating submodule remote tracking branch $tempLocalBranch")
-        initSubmoduleBranch(sGit, git)
-    }
-
-    if (!git.branchExists(localBranch)) {
-        logger.info("INITIALIZING ROOT FABRIC REMOTE TRACKING BRANCH")
-        sGit.checkout()
-            .setName(localBranch)
-            .call()
-        sGit.push()
-            .setRemote(localRemote)
-            .call()
-    }
-
-    if (git.remoteList().call().none { it.name == upstreamRemote }) {
-        git.remoteAdd()
-            .setName(upstreamRemote)
-            .setUri(URIish("https://github.com/FabricMC/fabric"))
-            .call()
-    }
-
-    return sGit
-}
-
-fun initSubmoduleBranch(git: Git, rootGit: Git) {
-    // Add upstream remote
-    git.remoteAdd()
-        .setName(upstreamRemote)
-        .setUri(URIish("https://github.com/FabricMC/fabric"))
-        .call()
-    // Add root remote
-    git.remoteAdd()
-        .setName(localRemote)
-        .setUri(URIish(rootDir.toURI().toURL()))
-        .call()
-    listOf(upstreamRemote, localRemote).forEach { git.fetch().setRemote(it).call() }
-    // Set up remote tracking branch
-    git.checkout()
-        .setCreateBranch(true)
-        .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.SET_UPSTREAM)
-        .setName(tempLocalBranch)
-        .setStartPoint(if (rootGit.branchExists(localBranch)) "root/$localBranch" else upstreamFabricBranch)
-        .call()
 }

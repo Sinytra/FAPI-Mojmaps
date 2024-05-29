@@ -57,7 +57,7 @@ public abstract class RuleListWidgetVisitorMixin implements GameRules.GameRuleTy
 	/**
 	 * @reason We need to display an enum rule's default value as translated.
 	 */
-	@Redirect(at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/GameRules$Value;serialize()Ljava/lang/String;"), method = "net/minecraft/client/gui/screen/world/EditGameRulesScreen$RuleListWidget$1.createRuleWidget(Lnet/minecraft/world/level/GameRules$Key;Lnet/minecraft/client/gui/screens/worldselection/EditGameRulesScreen$EntryFactory;)V")
+	@Redirect(at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/GameRules$Value;serialize()Ljava/lang/String;"), method = "addEntry(Lnet/minecraft/world/level/GameRules$Key;Lnet/minecraft/client/gui/screens/worldselection/EditGameRulesScreen$EntryFactory;)V")
 	private <T extends GameRules.Value<T>> String displayProperEnumName(GameRules.Value<T> rule, GameRules.Key<T> key, EditGameRulesScreen.EntryFactory<T> widgetFactory) {
 		if (rule instanceof EnumRule) {
 			String translationKey = key.getDescriptionId() + "." + ((EnumRule<?>) rule).get().name().toLowerCase(Locale.ROOT);

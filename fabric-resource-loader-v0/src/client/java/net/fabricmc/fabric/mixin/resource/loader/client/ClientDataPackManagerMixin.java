@@ -41,7 +41,7 @@ public class ClientDataPackManagerMixin {
 		return ModResourcePackUtil.createClientManager();
 	}
 
-	@ModifyReturnValue(method = "getCommonKnownPacks", at = @At("RETURN"))
+	@ModifyReturnValue(method = "trySelectingPacks", at = @At("RETURN"))
 	List<KnownPack> getCommonKnownPacksReturn(List<KnownPack> original) {
 		if (original.size() > ModResourcePackCreator.MAX_KNOWN_PACKS) {
 			LOGGER.warn("Too many knownPacks: Found {}; max {}", original.size(), ModResourcePackCreator.MAX_KNOWN_PACKS);

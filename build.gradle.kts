@@ -13,7 +13,6 @@ val versionMc: String by project
 val versionForge: String by project
 val versionYarn: String by project
 val versionFabricLoader: String by project
-val versionUpstream: String by project
 
 group = "org.sinytra"
 version = "1.0.0"
@@ -41,7 +40,14 @@ repositories {
         name = "Sinytra"
         url = uri("https://maven.su5ed.dev/releases")
     }
-    mavenLocal()
+    maven {
+        name = "Maven for PR #1076" // https://github.com/neoforged/NeoForge/pull/1076
+        url = uri("https://prmaven.neoforged.net/NeoForge/pr1076")
+        content {
+            includeModule("net.neoforged", "testframework")
+            includeModule("net.neoforged", "neoforge")
+        }
+    }
 }
 
 val submoduleDir = file("fabric-api-upstream")
@@ -84,7 +90,7 @@ dependencies {
     neoForge(group = "net.neoforged", name = "neoforge", version = versionForge)
     mappings(loom.layered {
         mappings("net.fabricmc:yarn:$versionYarn:v2")
-        mappings("dev.architectury:yarn-mappings-patch-neoforge:1.20.5+build.3")
+        officialMojangMappings()
     })
 
     modImplementation("net.fabricmc:fabric-loader:$versionFabricLoader")
@@ -108,7 +114,11 @@ projectNames.forEach { projectName ->
         group = "sinytra"
 
         projectRoot.set(file("fabric-api-upstream/$projectName"))
-        classpath.from(configurations["minecraftNamedCompile"], configurations["mercuryClasspath"], configurations["modCompileClasspathMapped"])
+        classpath.from(
+            configurations["minecraftNamedCompile"],
+            configurations["mercuryClasspath"],
+            configurations["modCompileClasspathMapped"]
+        )
         sourcepath.from(projectRoots)
 
         sourceNamespace.set(MappingsNamespace.NAMED.toString())

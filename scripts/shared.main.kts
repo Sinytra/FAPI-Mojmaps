@@ -23,14 +23,13 @@ if (!File(rootDir, "build.gradle.kts").exists()) {
 
 val properties = Properties().also { p -> File("gradle.properties").bufferedReader().use(p::load) }
 
-val versionMc: String by properties
-
+val upstreamBranch: String by properties
 val upstreamRemote = "upstream"
-val upstreamFabricBranch = "$upstreamRemote/$versionMc"
+val upstreamFabricBranch = "$upstreamRemote/$upstreamBranch"
 
 val localRemote = "root"
-val localBranch = "fabric/$versionMc"
-val mappedBranch = "mojmap/$versionMc"
+val localBranch = "fabric/$upstreamBranch"
+val mappedBranch = "mojmap/$upstreamBranch"
 val localMappedBranch = "$localRemote/$mappedBranch"
 val tempLocalBranch = "temp/$localBranch"
 val tempMappedBranch = "temp/$mappedBranch"

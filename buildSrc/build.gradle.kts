@@ -42,5 +42,6 @@ dependencies {
         isTransitive = false
     }
     implementation("net.fabricmc:access-widener:2.1.0")
+    implementation("net.fabricmc:lorenz-tiny:4.0.2")
     compileOnly("net.fabricmc:tiny-remapper:0.10.+")
 }

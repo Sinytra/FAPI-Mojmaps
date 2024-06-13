@@ -67,6 +67,7 @@ fun initSubmodule(git: Git): Git {
     if (!git.branchExists(localBranch)) {
         sharedLogger.info("INITIALIZING ROOT FABRIC REMOTE TRACKING BRANCH")
         sGit.checkout()
+            .setCreateBranch(true)
             .setName(localBranch)
             .call()
         sGit.push()

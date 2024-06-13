@@ -4,6 +4,7 @@ import com.google.gson.JsonParser
 import net.fabricmc.accesswidener.AccessWidenerReader
 import net.fabricmc.accesswidener.AccessWidenerVisitor
 import net.fabricmc.accesswidener.AccessWidenerWriter
+import net.fabricmc.loom.LoomGradleExtension
 import net.fabricmc.loom.api.mappings.layered.MappingsNamespace
 import net.fabricmc.loom.task.service.MappingsService
 import net.fabricmc.loom.task.service.SourceRemapperService
@@ -13,6 +14,7 @@ import net.fabricmc.loom.util.SourceRemapper
 import net.fabricmc.loom.util.ZipUtils
 import net.fabricmc.loom.util.service.BuildSharedServiceManager
 import net.fabricmc.loom.util.service.UnsafeWorkQueueHelper
+import net.fabricmc.lorenztiny.TinyMappingsReader
 import net.fabricmc.mappingio.tree.MappingTreeView
 import org.cadixdev.lorenz.MappingSet
 import org.cadixdev.mercury.Mercury
@@ -52,6 +54,9 @@ abstract class RemapSourceDirectory : DefaultTask() {
     @get:InputFiles
     val sourcepath: ConfigurableFileCollection = project.objects.fileCollection()
 
+    @get:InputFile
+    val mappingFile: RegularFileProperty = project.objects.fileProperty()
+
     @get:Input
     val sourceNamespace: Property<String> = project.objects.property(String::class.java)
 
@@ -70,36 +75,26 @@ abstract class RemapSourceDirectory : DefaultTask() {
     private val serviceManagerProvider: Provider<BuildSharedServiceManager> =
         BuildSharedServiceManager.createForTask(this, buildEventsListenerRegistry)
 
-    private val sourceMappingService by lazy(::createSourceMapper)
+    private val mappingService: MappingsService by lazy(::createSourceMapper)
 
     @Synchronized
-    fun createSourceMapper(): SourceRemapperService {
-        val serviceManager = serviceManagerProvider.get().get()
+    fun createSourceMapper(): MappingsService {
+        val from = sourceNamespace.get();
         val to = targetNamespace.get()
-        val from = sourceNamespace.get()
-        val javaCompileRelease = SourceRemapper.getJavaCompileRelease(project)
-        return SourceRemapperService::class.java.getDeclaredConstructor(
-            MappingsService::class.java,
-            ConfigurableFileCollection::class.java,
-            Int::class.java
-        ).apply { isAccessible = true }.newInstance(
-            MappingsService.createDefault(project, serviceManager, from, to),
-            classpath,
-            javaCompileRelease
-        ) as SourceRemapperService
+        val mappingConfiguration = LoomGradleExtension.get(project).mappingConfiguration
+        val name = mappingConfiguration.getBuildServiceName("mappingsProvider", from, to)
+        return MappingsService.create(
+            serviceManagerProvider.get().get(),
+            name,
+            mappingFile.get().asFile.toPath(),
+            from,
+            to,
+            false
+        )
     }
 
     @TaskAction
     fun run() {
-        val mappingService by lazy {
-            MappingsService.createDefault(
-                project,
-                serviceManagerProvider.get().get(),
-                sourceNamespace.get(),
-                targetNamespace.get()
-            )
-        }
-
         val rootDir = projectRoot.get().asFile
         val sourcePaths = sourcepath.files.flatMap {
             it.resolve("src")
@@ -123,9 +118,9 @@ abstract class RemapSourceDirectory : DefaultTask() {
             inputFile.set(rootDir)
             outputDir.set(output)
             this.mappingServiceUuid.set(UnsafeWorkQueueHelper.create(mappingService))
-            this.sourceMappingServiceUuid.set(UnsafeWorkQueueHelper.create(sourceMappingService))
             this.sourcePaths.from(sourcePaths)
             javaCompileRelease.set(javaRelease)
+            this.classpath.from(this@RemapSourceDirectory.classpath)
         }
     }
 }
@@ -134,9 +129,9 @@ interface MappingWorkParameters : WorkParameters {
     val inputFile: RegularFileProperty
     val outputDir: DirectoryProperty
     val mappingServiceUuid: Property<String>
-    val sourceMappingServiceUuid: Property<String>
     val sourcePaths: ConfigurableFileCollection
     val javaCompileRelease: Property<Int>
+    val classpath: ConfigurableFileCollection
 }
 
 abstract class MappingWorkAction : WorkAction<MappingWorkParameters> {
@@ -148,25 +143,14 @@ abstract class MappingWorkAction : WorkAction<MappingWorkParameters> {
             SourceRemapperService::class.java.getDeclaredMethod("getMappings").apply { isAccessible = true }
     }
 
-    private val sourceMappingService =
-        UnsafeWorkQueueHelper.get(parameters.sourceMappingServiceUuid, SourceRemapperService::class.java)
     private val mappingService = UnsafeWorkQueueHelper.get(parameters.mappingServiceUuid, MappingsService::class.java)
 
     override fun execute() {
         val inputFile = parameters.inputFile.asFile.get()
         println("Remapping project ${inputFile.name}")
 
-        val mappingSet = mappingSetMethod.invoke(sourceMappingService) as MappingSet
-        val mercury = mercurySupplier.invoke(sourceMappingService) as Mercury
-        mercury.isGracefulClasspathChecks = true
-        mercury.isGracefulJavadocClasspathChecks = true
-        mercury.setSourceCompatibilityFromRelease(parameters.javaCompileRelease.get())
-        mercury.isFlexibleAnonymousClassMemberLookups = true
-        mercury.sourcePath += parameters.sourcePaths.files.map(File::toPath)
-
-        mercury.processors.clear()
-        mercury.processors.add(MixinRemapper.create(mappingSet))
-        mercury.processors.add(MercuryRemapper.create(mappingSet))
+        val mappingSet = getMappings()
+        val mercury = createMercury(mappingSet)
 
         val sourceRoots = mutableListOf<File>()
         val resourceRoots = mutableListOf<File>()
@@ -179,6 +163,35 @@ abstract class MappingWorkAction : WorkAction<MappingWorkParameters> {
         remapProject(sourceRoots, resourceRoots, mappingSet, mercury)
 
         println("Finished remapping ${inputFile.name}")
+    }
+
+    private fun getMappings(): MappingSet {
+        return TinyMappingsReader(
+            mappingService.getMemoryMappingTree(),
+            mappingService.getFromNamespace(),
+            mappingService.getToNamespace()
+        ).read()
+    }
+
+    private fun createMercury(mappingSet: MappingSet): Mercury {
+        val mercury = Mercury()
+        mercury.isGracefulClasspathChecks = true
+        mercury.isGracefulJavadocClasspathChecks = true
+        mercury.isFlexibleAnonymousClassMemberLookups = true
+        mercury.sourcePath += parameters.sourcePaths.files.map(File::toPath)
+
+        mercury.setSourceCompatibilityFromRelease(parameters.javaCompileRelease.get())
+
+        mercury.processors.add(MixinRemapper.create(mappingSet))
+        mercury.processors.add(MercuryRemapper.create(mappingSet))
+
+        for (file in parameters.classpath.files) {
+            if (file.exists()) {
+                mercury.classPath.add(file.toPath())
+            }
+        }
+
+        return mercury
     }
 
     private fun remapProject(

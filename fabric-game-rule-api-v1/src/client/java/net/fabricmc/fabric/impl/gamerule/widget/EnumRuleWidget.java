@@ -18,51 +18,49 @@ package net.fabricmc.fabric.impl.gamerule.widget;
 
 import java.util.List;
 import java.util.Locale;
-
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.world.EditGameRulesScreen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.resource.language.I18n;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Text;
-
 import net.fabricmc.fabric.api.gamerule.v1.rule.EnumRule;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.worldselection.EditGameRulesScreen;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
 
-public final class EnumRuleWidget<E extends Enum<E>> extends EditGameRulesScreen.NamedRuleWidget {
-	private final ButtonWidget buttonWidget;
+public final class EnumRuleWidget<E extends Enum<E>> extends EditGameRulesScreen.GameRuleEntry {
+	private final Button buttonWidget;
 	private final String rootTranslationKey;
 
-	public EnumRuleWidget(EditGameRulesScreen gameRuleScreen, Text name, List<OrderedText> description, final String ruleName, EnumRule<E> rule, String translationKey) {
+	public EnumRuleWidget(EditGameRulesScreen gameRuleScreen, Component name, List<FormattedCharSequence> description, final String ruleName, EnumRule<E> rule, String translationKey) {
 		gameRuleScreen.super(description, name);
 
 		// Overwrite line wrapping to account for button larger than vanilla's by 44 pixels.
-		this.name = MinecraftClient.getInstance().textRenderer.wrapLines(name, 175 - 44);
+		this.label = Minecraft.getInstance().font.split(name, 175 - 44);
 
 		// Base translation key needs to be set before the button widget is created.
 		this.rootTranslationKey = translationKey;
-		this.buttonWidget = ButtonWidget.builder(this.getValueText(rule.get()), (buttonWidget) -> {
+		this.buttonWidget = Button.builder(this.getValueText(rule.get()), (buttonWidget) -> {
 			rule.cycle();
 			buttonWidget.setMessage(this.getValueText(rule.get()));
-		}).position(10, 5).size(88, 20).build();
+		}).pos(10, 5).size(88, 20).build();
 
 		this.children.add(this.buttonWidget);
 	}
 
-	public Text getValueText(E value) {
+	public Component getValueText(E value) {
 		final String key = this.rootTranslationKey + "." + value.name().toLowerCase(Locale.ROOT);
 
-		if (I18n.hasTranslation(key)) {
-			return Text.translatable(key);
+		if (I18n.exists(key)) {
+			return Component.translatable(key);
 		}
 
-		return Text.literal(value.toString());
+		return Component.literal(value.toString());
 	}
 
 	@Override
-	public void render(DrawContext drawContext, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+	public void render(GuiGraphics drawContext, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
 		// FIXME: Param names nightmare
-		this.drawName(drawContext, y, x);
+		this.renderLabel(drawContext, y, x);
 
 		this.buttonWidget.setPosition(x + entryWidth - 89, y);
 		this.buttonWidget.render(drawContext, mouseX, mouseY, tickDelta);

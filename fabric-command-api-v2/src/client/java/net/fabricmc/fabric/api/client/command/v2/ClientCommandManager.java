@@ -38,7 +38,7 @@ import net.fabricmc.fabric.impl.command.client.ClientCommandInternals;
  * For example, you can move heavy code to another thread.
  *
  * <p>This class also has alternatives to the server-side helper methods in
- * {@link net.minecraft.server.command.CommandManager}:
+ * {@link net.minecraft.commands.Commands}:
  * {@link #literal(String)} and {@link #argument(String, ArgumentType)}.
  *
  * <p>The precedence rules of client-sided and server-sided commands with the same name

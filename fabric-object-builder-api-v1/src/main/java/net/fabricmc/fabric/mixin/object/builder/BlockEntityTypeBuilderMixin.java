@@ -19,11 +19,9 @@ package net.fabricmc.fabric.mixin.object.builder;
 import com.mojang.datafixers.types.Type;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityType;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 
 @Mixin(BlockEntityType.Builder.class)
 public abstract class BlockEntityTypeBuilderMixin<T extends BlockEntity> implements FabricBlockEntityType.Builder<T> {

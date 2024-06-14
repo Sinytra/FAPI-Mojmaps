@@ -17,47 +17,45 @@
 package net.fabricmc.fabric.test.item.group;
 
 import com.google.common.base.Supplier;
-
-import net.minecraft.block.Blocks;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemGroups;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
 
 public class ItemGroupTest implements ModInitializer {
 	private static final String MOD_ID = "fabric-item-group-api-v1-testmod";
 	private static Item TEST_ITEM;
 
-	private static final RegistryKey<ItemGroup> ITEM_GROUP = RegistryKey.of(RegistryKeys.ITEM_GROUP, Identifier.of(MOD_ID, "test_group"));
+	private static final ResourceKey<CreativeModeTab> ITEM_GROUP = ResourceKey.create(Registries.CREATIVE_MODE_TAB, ResourceLocation.fromNamespaceAndPath(MOD_ID, "test_group"));
 
 	@Override
 	public void onInitialize() {
-		TEST_ITEM = Registry.register(Registries.ITEM, Identifier.of("fabric-item-groups-v0-testmod", "item_test_group"), new Item(new Item.Settings()));
+		TEST_ITEM = Registry.register(BuiltInRegistries.ITEM, ResourceLocation.fromNamespaceAndPath("fabric-item-groups-v0-testmod", "item_test_group"), new Item(new Item.Properties()));
 
-		Registry.register(Registries.ITEM_GROUP, ITEM_GROUP, FabricItemGroup.builder()
-				.displayName(Text.literal("Test Item Group"))
+		Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, ITEM_GROUP, FabricItemGroup.builder()
+				.title(Component.literal("Test Item Group"))
 				.icon(() -> new ItemStack(Items.DIAMOND))
-				.entries((context, entries) -> {
-					entries.addAll(Registries.ITEM.stream()
+				.displayItems((context, entries) -> {
+					entries.acceptAll(BuiltInRegistries.ITEM.stream()
 							.map(ItemStack::new)
 							.filter(input -> !input.isEmpty())
 							.toList());
 				})
 				.build());
 
-		ItemGroupEvents.modifyEntriesEvent(ItemGroups.BUILDING_BLOCKS).register((content) -> {
-			content.add(TEST_ITEM);
+		ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.BUILDING_BLOCKS).register((content) -> {
+			content.accept(TEST_ITEM);
 
 			content.addBefore(Blocks.OAK_FENCE, Items.DIAMOND, Items.DIAMOND_BLOCK);
 			content.addAfter(Blocks.OAK_DOOR, Items.EMERALD, Items.EMERALD_BLOCK);
@@ -69,26 +67,26 @@ public class ItemGroupTest implements ModInitializer {
 
 		// Add a differently damaged pickaxe to all groups
 		ItemGroupEvents.MODIFY_ENTRIES_ALL.register((group, content) -> {
-			if (group.getIcon() == ItemStack.EMPTY) { // Leave the empty groups empty
+			if (group.getIconItem() == ItemStack.EMPTY) { // Leave the empty groups empty
 				return;
 			}
 
 			ItemStack minDmgPickaxe = new ItemStack(Items.DIAMOND_PICKAXE);
-			minDmgPickaxe.setDamage(1);
+			minDmgPickaxe.setDamageValue(1);
 			content.prepend(minDmgPickaxe);
 
 			ItemStack maxDmgPickaxe = new ItemStack(Items.DIAMOND_PICKAXE);
-			maxDmgPickaxe.setDamage(maxDmgPickaxe.getMaxDamage() - 1);
-			content.add(maxDmgPickaxe);
+			maxDmgPickaxe.setDamageValue(maxDmgPickaxe.getMaxDamage() - 1);
+			content.accept(maxDmgPickaxe);
 		});
 
 		// Regression test for #3566
 		for (int j = 0; j < 20; j++) {
 			Registry.register(
-					Registries.ITEM_GROUP,
-					Identifier.of(MOD_ID, "empty_group_" + j),
+					BuiltInRegistries.CREATIVE_MODE_TAB,
+					ResourceLocation.fromNamespaceAndPath(MOD_ID, "empty_group_" + j),
 					FabricItemGroup.builder()
-							.displayName(Text.literal("Empty Item Group: " + j))
+							.title(Component.literal("Empty Item Group: " + j))
 							.build()
 			);
 		}
@@ -96,14 +94,14 @@ public class ItemGroupTest implements ModInitializer {
 		for (int i = 0; i < 100; i++) {
 			final int index = i;
 
-			Registry.register(Registries.ITEM_GROUP, Identifier.of(MOD_ID, "test_group_" + i), FabricItemGroup.builder()
-					.displayName(Text.literal("Test Item Group: " + i))
-					.icon((Supplier<ItemStack>) () -> new ItemStack(Registries.BLOCK.get(index)))
-					.entries((context, entries) -> {
-						var itemStack = new ItemStack(Registries.ITEM.get(index));
+			Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, ResourceLocation.fromNamespaceAndPath(MOD_ID, "test_group_" + i), FabricItemGroup.builder()
+					.title(Component.literal("Test Item Group: " + i))
+					.icon((Supplier<ItemStack>) () -> new ItemStack(BuiltInRegistries.BLOCK.byId(index)))
+					.displayItems((context, entries) -> {
+						var itemStack = new ItemStack(BuiltInRegistries.ITEM.byId(index));
 
 						if (!itemStack.isEmpty()) {
-							entries.add(itemStack);
+							entries.accept(itemStack);
 						}
 					})
 					.build());

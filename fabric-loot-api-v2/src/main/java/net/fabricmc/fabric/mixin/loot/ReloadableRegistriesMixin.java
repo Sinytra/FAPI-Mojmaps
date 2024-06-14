@@ -22,30 +22,28 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import net.minecraft.loot.LootDataType;
-import net.minecraft.loot.LootTable;
-import net.minecraft.registry.MutableRegistry;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.RegistryOps;
-import net.minecraft.registry.ReloadableRegistries;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.loot.v2.FabricLootTableBuilder;
 import net.fabricmc.fabric.api.loot.v2.LootTableEvents;
 import net.fabricmc.fabric.api.loot.v2.LootTableSource;
 import net.fabricmc.fabric.impl.loot.LootUtil;
+import net.minecraft.core.Registry;
+import net.minecraft.core.WritableRegistry;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.RegistryOps;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.ReloadableServerRegistries;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.world.level.storage.loot.LootDataType;
+import net.minecraft.world.level.storage.loot.LootTable;
 
 /**
  * Implements the events from {@link LootTableEvents}.
  */
-@Mixin(ReloadableRegistries.class)
+@Mixin(ReloadableServerRegistries.class)
 abstract class ReloadableRegistriesMixin {
-	@ModifyArg(method = "method_58286", at = @At(value = "INVOKE", target = "Lnet/minecraft/registry/MutableRegistry;add(Lnet/minecraft/registry/RegistryKey;Ljava/lang/Object;Lnet/minecraft/registry/entry/RegistryEntryInfo;)Lnet/minecraft/registry/entry/RegistryEntry$Reference;"), index = 1)
-	private static Object modifyLootTable(Object value, @Local(argsOnly = true) Identifier id) {
+	@ModifyArg(method = "lambda$scheduleElementParse$2", at = @At(value = "INVOKE", target = "Lnet/minecraft/core/WritableRegistry;register(Lnet/minecraft/resources/ResourceKey;Ljava/lang/Object;Lnet/minecraft/core/RegistrationInfo;)Lnet/minecraft/core/Holder$Reference;"), index = 1)
+	private static Object modifyLootTable(Object value, @Local(argsOnly = true) ResourceLocation id) {
 		if (!(value instanceof LootTable table)) return value;
 
 		if (table == LootTable.EMPTY) {
@@ -53,7 +51,7 @@ abstract class ReloadableRegistriesMixin {
 			return value;
 		}
 
-		RegistryKey<LootTable> key = RegistryKey.of(RegistryKeys.LOOT_TABLE, id);
+		ResourceKey<LootTable> key = ResourceKey.create(Registries.LOOT_TABLE, id);
 		// Populated inside JsonDataLoaderMixin
 		LootTableSource source = LootUtil.SOURCES.get().getOrDefault(id, LootTableSource.DATA_PACK);
 		// Invoke the REPLACE event for the current loot table.
@@ -74,9 +72,9 @@ abstract class ReloadableRegistriesMixin {
 	}
 
 	@SuppressWarnings("unchecked")
-	@Inject(method = "method_58279", at = @At("RETURN"))
-	private static void onLootTablesLoaded(LootDataType lootDataType, ResourceManager resourceManager, RegistryOps registryOps, CallbackInfoReturnable<MutableRegistry> cir) {
-		if (lootDataType != LootDataType.LOOT_TABLES) return;
+	@Inject(method = "lambda$scheduleElementParse$4", at = @At("RETURN"))
+	private static void onLootTablesLoaded(LootDataType lootDataType, ResourceManager resourceManager, RegistryOps registryOps, CallbackInfoReturnable<WritableRegistry> cir) {
+		if (lootDataType != LootDataType.TABLE) return;
 
 		LootTableEvents.ALL_LOADED.invoker().onLootTablesLoaded(resourceManager, (Registry<LootTable>) cir.getReturnValue());
 		LootUtil.SOURCES.remove();

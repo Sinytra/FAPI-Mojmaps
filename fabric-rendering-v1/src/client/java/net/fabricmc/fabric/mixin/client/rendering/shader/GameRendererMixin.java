@@ -27,13 +27,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
-
-import net.minecraft.client.gl.ShaderProgram;
-import net.minecraft.client.render.GameRenderer;
-import net.minecraft.resource.ResourceFactory;
-
 import net.fabricmc.fabric.api.client.rendering.v1.CoreShaderRegistrationCallback;
 import net.fabricmc.fabric.impl.client.rendering.FabricShaderProgram;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.server.packs.resources.ResourceProvider;
 
 /**
  * Implements custom core shader registration (CoreShaderRegistrationCallback).
@@ -41,14 +39,14 @@ import net.fabricmc.fabric.impl.client.rendering.FabricShaderProgram;
 @Mixin(GameRenderer.class)
 abstract class GameRendererMixin {
 	@Inject(
-			method = "loadPrograms",
+			method = "reloadShaders",
 			at = @At(value = "INVOKE", target = "Ljava/util/List;add(Ljava/lang/Object;)Z", remap = false, shift = At.Shift.AFTER),
-			slice = @Slice(from = @At(value = "NEW", target = "net/minecraft/client/gl/ShaderProgram", ordinal = 0)),
+			slice = @Slice(from = @At(value = "NEW", target = "net/minecraft/client/renderer/ShaderInstance", ordinal = 0)),
 			locals = LocalCapture.CAPTURE_FAILHARD
 	)
-	private void registerShaders(ResourceFactory factory, CallbackInfo info, List<?> shaderStages, List<Pair<ShaderProgram, Consumer<ShaderProgram>>> programs) throws IOException {
+	private void registerShaders(ResourceProvider factory, CallbackInfo info, List<?> shaderStages, List<Pair<ShaderInstance, Consumer<ShaderInstance>>> programs) throws IOException {
 		CoreShaderRegistrationCallback.RegistrationContext context = (id, vertexFormat, loadCallback) -> {
-			ShaderProgram program = new FabricShaderProgram(factory, id, vertexFormat);
+			ShaderInstance program = new FabricShaderProgram(factory, id, vertexFormat);
 			programs.add(Pair.of(program, loadCallback));
 		};
 		CoreShaderRegistrationCallback.EVENT.invoker().registerShaders(context);

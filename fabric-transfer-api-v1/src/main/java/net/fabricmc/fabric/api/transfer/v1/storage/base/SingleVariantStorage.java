@@ -22,13 +22,11 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.registry.RegistryOps;
-import net.minecraft.registry.RegistryWrapper;
-
+import net.minecraft.nbt.Tag;
+import net.minecraft.resources.RegistryOps;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
@@ -169,11 +167,11 @@ public abstract class SingleVariantStorage<T extends TransferVariant<?>> extends
 	 * @param codec the item variant codec
 	 * @param fallback the fallback item variant, used when the NBT is invalid
 	 * @param nbt the NBT to read from
-	 * @param wrapperLookup the {@link RegistryWrapper.WrapperLookup} instance
+	 * @param wrapperLookup the {@link HolderLookup.Provider} instance
 	 * @param <T> the type of the item variant
 	 */
-	public static <T extends TransferVariant<?>> void readNbt(SingleVariantStorage<T> storage, Codec<T> codec, Supplier<T> fallback, NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup) {
-		final RegistryOps<NbtElement> ops = wrapperLookup.getOps(NbtOps.INSTANCE);
+	public static <T extends TransferVariant<?>> void readNbt(SingleVariantStorage<T> storage, Codec<T> codec, Supplier<T> fallback, CompoundTag nbt, HolderLookup.Provider wrapperLookup) {
+		final RegistryOps<Tag> ops = wrapperLookup.createSerializationContext(NbtOps.INSTANCE);
 		final DataResult<T> result = codec.parse(ops, nbt.getCompound("variant"));
 
 		if (result.error().isPresent()) {
@@ -192,11 +190,11 @@ public abstract class SingleVariantStorage<T extends TransferVariant<?>> extends
 	 * @param storage the {@link SingleVariantStorage} to write from
 	 * @param codec the item variant codec
 	 * @param nbt the NBT to write to
-	 * @param wrapperLookup the {@link RegistryWrapper.WrapperLookup} instance
+	 * @param wrapperLookup the {@link HolderLookup.Provider} instance
 	 * @param <T> the type of the item variant
 	 */
-	public static <T extends TransferVariant<?>> void writeNbt(SingleVariantStorage<T> storage, Codec<T> codec, NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup) {
-		final RegistryOps<NbtElement> ops = wrapperLookup.getOps(NbtOps.INSTANCE);
+	public static <T extends TransferVariant<?>> void writeNbt(SingleVariantStorage<T> storage, Codec<T> codec, CompoundTag nbt, HolderLookup.Provider wrapperLookup) {
+		final RegistryOps<Tag> ops = wrapperLookup.createSerializationContext(NbtOps.INSTANCE);
 		nbt.put("variant", codec.encode(storage.variant, ops, nbt).getOrThrow(RuntimeException::new));
 		nbt.putLong("amount", storage.amount);
 	}

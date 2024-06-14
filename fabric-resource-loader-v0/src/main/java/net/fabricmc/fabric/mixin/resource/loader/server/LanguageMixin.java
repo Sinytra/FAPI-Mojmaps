@@ -32,10 +32,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
-
-import net.minecraft.util.Language;
-
 import net.fabricmc.fabric.impl.resource.loader.ServerLanguageUtil;
+import net.minecraft.locale.Language;
 
 @Mixin(Language.class)
 class LanguageMixin {
@@ -43,7 +41,7 @@ class LanguageMixin {
 	@Final
 	private static Logger LOGGER;
 
-	@Redirect(method = "create", at = @At(value = "INVOKE", target = "Lcom/google/common/collect/ImmutableMap$Builder;build()Lcom/google/common/collect/ImmutableMap;", remap = false))
+	@Redirect(method = "loadDefault", at = @At(value = "INVOKE", target = "Lcom/google/common/collect/ImmutableMap$Builder;build()Lcom/google/common/collect/ImmutableMap;", remap = false))
 	private static ImmutableMap<String, String> create(ImmutableMap.Builder<String, String> cir) {
 		Map<String, String> map = new HashMap<>(cir.buildOrThrow());
 
@@ -57,13 +55,13 @@ class LanguageMixin {
 	private static void loadFromPath(Path path, BiConsumer<String, String> entryConsumer) {
 		try (InputStream stream = Files.newInputStream(path)) {
 			LOGGER.debug("Loading translations from {}", path);
-			load(stream, entryConsumer);
+			loadFromJson(stream, entryConsumer);
 		} catch (JsonParseException | IOException e) {
 			LOGGER.error("Couldn't read strings from {}", path, e);
 		}
 	}
 
 	@Shadow
-	public static void load(InputStream inputStream, BiConsumer<String, String> entryConsumer) {
+	public static void loadFromJson(InputStream inputStream, BiConsumer<String, String> entryConsumer) {
 	}
 }

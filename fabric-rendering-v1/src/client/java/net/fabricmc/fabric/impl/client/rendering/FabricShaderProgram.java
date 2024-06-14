@@ -16,15 +16,14 @@
 
 package net.fabricmc.fabric.impl.client.rendering;
 
+import com.mojang.blaze3d.vertex.VertexFormat;
 import java.io.IOException;
+import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceProvider;
 
-import net.minecraft.client.gl.ShaderProgram;
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.resource.ResourceFactory;
-import net.minecraft.util.Identifier;
-
-public final class FabricShaderProgram extends ShaderProgram {
-	public FabricShaderProgram(ResourceFactory factory, Identifier name, VertexFormat format) throws IOException {
+public final class FabricShaderProgram extends ShaderInstance {
+	public FabricShaderProgram(ResourceProvider factory, ResourceLocation name, VertexFormat format) throws IOException {
 		super(factory, name.toString(), format);
 	}
 
@@ -38,8 +37,8 @@ public final class FabricShaderProgram extends ShaderProgram {
 	 * @param containedId the ID contained within the input string
 	 * @return the corrected full ID string
 	 */
-	public static Identifier rewriteAsId(String input, String containedId) {
-		Identifier contained = Identifier.of(containedId);
+	public static ResourceLocation rewriteAsId(String input, String containedId) {
+		ResourceLocation contained = ResourceLocation.parse(containedId);
 		return contained.withPath(path -> input.replace(containedId, path));
 	}
 }

@@ -19,28 +19,26 @@ package net.fabricmc.fabric.mixin.entity.event;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
-
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.passive.FishEntity;
-import net.minecraft.entity.passive.TadpoleEntity;
-import net.minecraft.world.World;
-
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.animal.AbstractFish;
+import net.minecraft.world.entity.animal.frog.Tadpole;
+import net.minecraft.world.level.Level;
 
-@Mixin(TadpoleEntity.class)
-abstract class TadpoleEntityMixin extends FishEntity {
-	TadpoleEntityMixin(EntityType<? extends FishEntity> entityType, World world) {
+@Mixin(Tadpole.class)
+abstract class TadpoleEntityMixin extends AbstractFish {
+	TadpoleEntityMixin(EntityType<? extends AbstractFish> entityType, Level world) {
 		super(entityType, world);
 	}
 
 	@ModifyArg(
-			method = "growUp",
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/server/world/ServerWorld;spawnEntityAndPassengers(Lnet/minecraft/entity/Entity;)V")
+			method = "ageUp()V",
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;spawnEntityAndPassengers(Lnet/minecraft/world/entity/Entity;)V")
 	)
 	private Entity afterGrowingUpToFrog(Entity converted) {
-		ServerLivingEntityEvents.MOB_CONVERSION.invoker().onConversion(this, (MobEntity) converted, false);
+		ServerLivingEntityEvents.MOB_CONVERSION.invoker().onConversion(this, (Mob) converted, false);
 		return converted;
 	}
 }

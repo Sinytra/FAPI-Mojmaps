@@ -22,22 +22,20 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.client.color.item.ItemColorProvider;
+import net.minecraft.client.color.item.ItemColor;
 import net.minecraft.client.color.item.ItemColors;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.collection.IdList;
-
+import net.minecraft.core.IdMapper;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.fabricmc.fabric.impl.registry.sync.trackers.IdListTracker;
 
 @Mixin(ItemColors.class)
 public class ItemColorsMixin {
 	@Final
 	@Shadow
-	private IdList<ItemColorProvider> providers;
+	private IdMapper<ItemColor> itemColors;
 
 	@Inject(method = "<init>", at = @At("RETURN"))
 	private void create(CallbackInfo info) {
-		IdListTracker.register(Registries.ITEM, "ItemColors.providers", providers);
+		IdListTracker.register(BuiltInRegistries.ITEM, "ItemColors.providers", itemColors);
 	}
 }

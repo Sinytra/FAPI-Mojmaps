@@ -18,15 +18,13 @@ package net.fabricmc.fabric.test.event.interaction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import net.minecraft.entity.projectile.FireballEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.util.TypedActionResult;
-import net.minecraft.util.math.Vec3d;
-
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.projectile.LargeFireball;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.phys.Vec3;
 
 public class UseItemTests implements ModInitializer {
 	private static final Logger LOGGER = LoggerFactory.getLogger(UseItemTests.class);
@@ -34,28 +32,28 @@ public class UseItemTests implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		UseItemCallback.EVENT.register((player, world, hand) -> {
-			LOGGER.info("UseItemCallback: before hook (client-side = %s)".formatted(world.isClient));
-			return TypedActionResult.pass(ItemStack.EMPTY);
+			LOGGER.info("UseItemCallback: before hook (client-side = %s)".formatted(world.isClientSide));
+			return InteractionResultHolder.pass(ItemStack.EMPTY);
 		});
 
 		// If a player is holding a blaze rod and right-clicks spawn a fireball!
 		UseItemCallback.EVENT.register((player, world, hand) -> {
 			if (!player.isSpectator()) {
-				if (player.getStackInHand(hand).isOf(Items.BLAZE_ROD)) {
-					if (!world.isClient()) {
-						player.getWorld().spawnEntity(new FireballEntity(player.getWorld(), player, new Vec3d(0, 0, 0), 0));
+				if (player.getItemInHand(hand).is(Items.BLAZE_ROD)) {
+					if (!world.isClientSide()) {
+						player.level().addFreshEntity(new LargeFireball(player.level(), player, new Vec3(0, 0, 0), 0));
 					}
 
-					return TypedActionResult.success(player.getStackInHand(hand), world.isClient());
+					return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), world.isClientSide());
 				}
 			}
 
-			return TypedActionResult.pass(ItemStack.EMPTY);
+			return InteractionResultHolder.pass(ItemStack.EMPTY);
 		});
 
 		UseItemCallback.EVENT.register((player, world, hand) -> {
-			LOGGER.info("UseItemCallback: after hook (client-side = %s)".formatted(world.isClient));
-			return TypedActionResult.pass(ItemStack.EMPTY);
+			LOGGER.info("UseItemCallback: after hook (client-side = %s)".formatted(world.isClientSide));
+			return InteractionResultHolder.pass(ItemStack.EMPTY);
 		});
 	}
 }

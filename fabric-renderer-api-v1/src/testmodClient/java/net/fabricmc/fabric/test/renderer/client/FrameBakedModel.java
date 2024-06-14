@@ -21,23 +21,6 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.render.model.json.ModelOverrideList;
-import net.minecraft.client.render.model.json.ModelTransformation;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.BlockRenderView;
-
 import net.fabricmc.fabric.api.blockview.v2.FabricBlockView;
 import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
 import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
@@ -46,14 +29,29 @@ import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.ItemOverrides;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class FrameBakedModel implements BakedModel {
 	private final Mesh frameMesh;
-	private final Sprite frameSprite;
+	private final TextureAtlasSprite frameSprite;
 	private final RenderMaterial translucentMaterial;
 	private final RenderMaterial translucentEmissiveMaterial;
 
-	public FrameBakedModel(Mesh frameMesh, Sprite frameSprite) {
+	public FrameBakedModel(Mesh frameMesh, TextureAtlasSprite frameSprite) {
 		this.frameMesh = frameMesh;
 		this.frameSprite = frameSprite;
 
@@ -69,7 +67,7 @@ public class FrameBakedModel implements BakedModel {
 	}
 
 	@Override
-	public void emitBlockQuads(BlockRenderView blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context) {
+	public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context) {
 		// Emit our frame mesh
 		this.frameMesh.outputTo(context.getEmitter());
 
@@ -78,7 +76,7 @@ public class FrameBakedModel implements BakedModel {
 			return; // No inner block to render, or data of wrong type
 		}
 
-		BlockState innerState = mimickedBlock.getDefaultState();
+		BlockState innerState = mimickedBlock.defaultBlockState();
 
 		// Now, we emit a transparent scaled-down version of the inner model
 		// Try both emissive and non-emissive versions of the translucent material
@@ -86,20 +84,20 @@ public class FrameBakedModel implements BakedModel {
 
 		emitInnerQuads(context, material, () -> {
 			// Use emitBlockQuads to allow for Renderer API features
-			MinecraftClient.getInstance().getBlockRenderManager().getModel(innerState).emitBlockQuads(blockView, innerState, pos, randomSupplier, context);
+			Minecraft.getInstance().getBlockRenderer().getBlockModel(innerState).emitBlockQuads(blockView, innerState, pos, randomSupplier, context);
 		});
 	}
 
 	@Override
-	public void emitItemQuads(ItemStack stack, Supplier<Random> randomSupplier, RenderContext context) {
+	public void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context) {
 		// Emit our frame mesh
 		this.frameMesh.outputTo(context.getEmitter());
 
 		// Emit a scaled-down fence for testing, trying both materials again.
-		RenderMaterial material = stack.contains(DataComponentTypes.CUSTOM_NAME) ? translucentEmissiveMaterial : translucentMaterial;
+		RenderMaterial material = stack.has(DataComponents.CUSTOM_NAME) ? translucentEmissiveMaterial : translucentMaterial;
 
-		ItemStack innerItem = Items.CRAFTING_TABLE.getDefaultStack();
-		BakedModel innerModel = MinecraftClient.getInstance().getItemRenderer().getModel(innerItem, null, null, 0);
+		ItemStack innerItem = Items.CRAFTING_TABLE.getDefaultInstance();
+		BakedModel innerModel = Minecraft.getInstance().getItemRenderer().getModel(innerItem, null, null, 0);
 
 		emitInnerQuads(context, material, () -> {
 			innerModel.emitItemQuads(innerItem, randomSupplier, context);
@@ -145,7 +143,7 @@ public class FrameBakedModel implements BakedModel {
 	}
 
 	@Override
-	public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, Random random) {
+	public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, RandomSource random) {
 		return Collections.emptyList(); // Renderer API makes this obsolete, so return no quads
 	}
 
@@ -155,32 +153,32 @@ public class FrameBakedModel implements BakedModel {
 	}
 
 	@Override
-	public boolean hasDepth() {
+	public boolean isGui3d() {
 		return false;
 	}
 
 	@Override
-	public boolean isSideLit() {
+	public boolean usesBlockLight() {
 		return true; // we want the block to be lit from the side when rendered as an item
 	}
 
 	@Override
-	public boolean isBuiltin() {
+	public boolean isCustomRenderer() {
 		return false;
 	}
 
 	@Override
-	public Sprite getParticleSprite() {
+	public TextureAtlasSprite getParticleIcon() {
 		return this.frameSprite;
 	}
 
 	@Override
-	public ModelTransformation getTransformation() {
+	public ItemTransforms getTransforms() {
 		return ModelHelper.MODEL_TRANSFORM_BLOCK;
 	}
 
 	@Override
-	public ModelOverrideList getOverrides() {
-		return ModelOverrideList.EMPTY;
+	public ItemOverrides getOverrides() {
+		return ItemOverrides.EMPTY;
 	}
 }

@@ -19,24 +19,22 @@ package net.fabricmc.fabric.api.biome.v1;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.function.BiPredicate;
-
+import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.sounds.Music;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.level.biome.AmbientAdditionsSettings;
+import net.minecraft.world.level.biome.AmbientMoodSettings;
+import net.minecraft.world.level.biome.AmbientParticleSettings;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.BiomeSpecialEffects;
+import net.minecraft.world.level.biome.MobSpawnSettings;
+import net.minecraft.world.level.levelgen.GenerationStep;
+import net.minecraft.world.level.levelgen.carver.ConfiguredWorldCarver;
+import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import org.jetbrains.annotations.NotNull;
-
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.sound.BiomeAdditionsSound;
-import net.minecraft.sound.BiomeMoodSound;
-import net.minecraft.sound.MusicSound;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.BiomeEffects;
-import net.minecraft.world.biome.BiomeParticleConfig;
-import net.minecraft.world.biome.SpawnSettings;
-import net.minecraft.world.gen.GenerationStep;
-import net.minecraft.world.gen.carver.ConfiguredCarver;
-import net.minecraft.world.gen.feature.PlacedFeature;
 
 /**
  * Allows {@link Biome} properties to be modified.
@@ -65,224 +63,224 @@ public interface BiomeModificationContext {
 	interface WeatherContext {
 		/**
 		 * @see Biome#hasPrecipitation()
-		 * @see Biome.Builder#precipitation(boolean)
+		 * @see Biome.BiomeBuilder#hasPrecipitation(boolean)
 		 */
 		void setPrecipitation(boolean hasPrecipitation);
 
 		/**
-		 * @see Biome#getTemperature()
-		 * @see Biome.Builder#temperature(float)
+		 * @see Biome#getBaseTemperature()
+		 * @see Biome.BiomeBuilder#temperature(float)
 		 */
 		void setTemperature(float temperature);
 
 		/**
-		 * @see Biome.Builder#temperatureModifier(Biome.TemperatureModifier)
+		 * @see Biome.BiomeBuilder#temperatureAdjustment(Biome.TemperatureModifier)
 		 */
 		void setTemperatureModifier(Biome.TemperatureModifier temperatureModifier);
 
 		/**
-		 * @see Biome.Weather#downfall()
-		 * @see Biome.Builder#downfall(float)
+		 * @see Biome.ClimateSettings#downfall()
+		 * @see Biome.BiomeBuilder#downfall(float)
 		 */
 		void setDownfall(float downfall);
 	}
 
 	interface EffectsContext {
 		/**
-		 * @see BiomeEffects#getFogColor()
-		 * @see BiomeEffects.Builder#fogColor(int)
+		 * @see BiomeSpecialEffects#getFogColor()
+		 * @see BiomeSpecialEffects.Builder#fogColor(int)
 		 */
 		void setFogColor(int color);
 
 		/**
-		 * @see BiomeEffects#getWaterColor()
-		 * @see BiomeEffects.Builder#waterColor(int)
+		 * @see BiomeSpecialEffects#getWaterColor()
+		 * @see BiomeSpecialEffects.Builder#waterColor(int)
 		 */
 		void setWaterColor(int color);
 
 		/**
-		 * @see BiomeEffects#getWaterFogColor()
-		 * @see BiomeEffects.Builder#waterFogColor(int)
+		 * @see BiomeSpecialEffects#getWaterFogColor()
+		 * @see BiomeSpecialEffects.Builder#waterFogColor(int)
 		 */
 		void setWaterFogColor(int color);
 
 		/**
-		 * @see BiomeEffects#getSkyColor()
-		 * @see BiomeEffects.Builder#skyColor(int)
+		 * @see BiomeSpecialEffects#getSkyColor()
+		 * @see BiomeSpecialEffects.Builder#skyColor(int)
 		 */
 		void setSkyColor(int color);
 
 		/**
-		 * @see BiomeEffects#getFoliageColor()
-		 * @see BiomeEffects.Builder#foliageColor(int)
+		 * @see BiomeSpecialEffects#getFoliageColorOverride()
+		 * @see BiomeSpecialEffects.Builder#foliageColorOverride(int)
 		 */
 		void setFoliageColor(Optional<Integer> color);
 
 		/**
-		 * @see BiomeEffects#getFoliageColor()
-		 * @see BiomeEffects.Builder#foliageColor(int)
+		 * @see BiomeSpecialEffects#getFoliageColorOverride()
+		 * @see BiomeSpecialEffects.Builder#foliageColorOverride(int)
 		 */
 		default void setFoliageColor(int color) {
 			setFoliageColor(Optional.of(color));
 		}
 
 		/**
-		 * @see BiomeEffects#getFoliageColor()
-		 * @see BiomeEffects.Builder#foliageColor(int)
+		 * @see BiomeSpecialEffects#getFoliageColorOverride()
+		 * @see BiomeSpecialEffects.Builder#foliageColorOverride(int)
 		 */
 		default void setFoliageColor(OptionalInt color) {
 			color.ifPresentOrElse(this::setFoliageColor, this::clearFoliageColor);
 		}
 
 		/**
-		 * @see BiomeEffects#getFoliageColor()
-		 * @see BiomeEffects.Builder#foliageColor(int)
+		 * @see BiomeSpecialEffects#getFoliageColorOverride()
+		 * @see BiomeSpecialEffects.Builder#foliageColorOverride(int)
 		 */
 		default void clearFoliageColor() {
 			setFoliageColor(Optional.empty());
 		}
 
 		/**
-		 * @see BiomeEffects#getGrassColor()
-		 * @see BiomeEffects.Builder#grassColor(int)
+		 * @see BiomeSpecialEffects#getGrassColorOverride()
+		 * @see BiomeSpecialEffects.Builder#grassColorOverride(int)
 		 */
 		void setGrassColor(Optional<Integer> color);
 
 		/**
-		 * @see BiomeEffects#getGrassColor()
-		 * @see BiomeEffects.Builder#grassColor(int)
+		 * @see BiomeSpecialEffects#getGrassColorOverride()
+		 * @see BiomeSpecialEffects.Builder#grassColorOverride(int)
 		 */
 		default void setGrassColor(int color) {
 			setGrassColor(Optional.of(color));
 		}
 
 		/**
-		 * @see BiomeEffects#getGrassColor()
-		 * @see BiomeEffects.Builder#grassColor(int)
+		 * @see BiomeSpecialEffects#getGrassColorOverride()
+		 * @see BiomeSpecialEffects.Builder#grassColorOverride(int)
 		 */
 		default void setGrassColor(OptionalInt color) {
 			color.ifPresentOrElse(this::setGrassColor, this::clearGrassColor);
 		}
 
 		/**
-		 * @see BiomeEffects#getGrassColor()
-		 * @see BiomeEffects.Builder#grassColor(int)
+		 * @see BiomeSpecialEffects#getGrassColorOverride()
+		 * @see BiomeSpecialEffects.Builder#grassColorOverride(int)
 		 */
 		default void clearGrassColor() {
 			setGrassColor(Optional.empty());
 		}
 
 		/**
-		 * @see BiomeEffects#getGrassColorModifier()
-		 * @see BiomeEffects.Builder#grassColorModifier(BiomeEffects.GrassColorModifier)
+		 * @see BiomeSpecialEffects#getGrassColorModifier()
+		 * @see BiomeSpecialEffects.Builder#grassColorModifier(BiomeSpecialEffects.GrassColorModifier)
 		 */
-		void setGrassColorModifier(@NotNull BiomeEffects.GrassColorModifier colorModifier);
+		void setGrassColorModifier(@NotNull BiomeSpecialEffects.GrassColorModifier colorModifier);
 
 		/**
-		 * @see BiomeEffects#getParticleConfig()
-		 * @see BiomeEffects.Builder#particleConfig(BiomeParticleConfig)
+		 * @see BiomeSpecialEffects#getAmbientParticleSettings()
+		 * @see BiomeSpecialEffects.Builder#ambientParticle(AmbientParticleSettings)
 		 */
-		void setParticleConfig(Optional<BiomeParticleConfig> particleConfig);
+		void setParticleConfig(Optional<AmbientParticleSettings> particleConfig);
 
 		/**
-		 * @see BiomeEffects#getParticleConfig()
-		 * @see BiomeEffects.Builder#particleConfig(BiomeParticleConfig)
+		 * @see BiomeSpecialEffects#getAmbientParticleSettings()
+		 * @see BiomeSpecialEffects.Builder#ambientParticle(AmbientParticleSettings)
 		 */
-		default void setParticleConfig(@NotNull BiomeParticleConfig particleConfig) {
+		default void setParticleConfig(@NotNull AmbientParticleSettings particleConfig) {
 			setParticleConfig(Optional.of(particleConfig));
 		}
 
 		/**
-		 * @see BiomeEffects#getParticleConfig()
-		 * @see BiomeEffects.Builder#particleConfig(BiomeParticleConfig)
+		 * @see BiomeSpecialEffects#getAmbientParticleSettings()
+		 * @see BiomeSpecialEffects.Builder#ambientParticle(AmbientParticleSettings)
 		 */
 		default void clearParticleConfig() {
 			setParticleConfig(Optional.empty());
 		}
 
 		/**
-		 * @see BiomeEffects#getLoopSound()
-		 * @see BiomeEffects.Builder#loopSound(RegistryEntry)
+		 * @see BiomeSpecialEffects#getAmbientLoopSoundEvent()
+		 * @see BiomeSpecialEffects.Builder#ambientLoopSound(Holder)
 		 */
-		void setAmbientSound(Optional<RegistryEntry<SoundEvent>> sound);
+		void setAmbientSound(Optional<Holder<SoundEvent>> sound);
 
 		/**
-		 * @see BiomeEffects#getLoopSound()
-		 * @see BiomeEffects.Builder#loopSound(RegistryEntry)
+		 * @see BiomeSpecialEffects#getAmbientLoopSoundEvent()
+		 * @see BiomeSpecialEffects.Builder#ambientLoopSound(Holder)
 		 */
-		default void setAmbientSound(@NotNull RegistryEntry<SoundEvent> sound) {
+		default void setAmbientSound(@NotNull Holder<SoundEvent> sound) {
 			setAmbientSound(Optional.of(sound));
 		}
 
 		/**
-		 * @see BiomeEffects#getLoopSound()
-		 * @see BiomeEffects.Builder#loopSound(RegistryEntry)
+		 * @see BiomeSpecialEffects#getAmbientLoopSoundEvent()
+		 * @see BiomeSpecialEffects.Builder#ambientLoopSound(Holder)
 		 */
 		default void clearAmbientSound() {
 			setAmbientSound(Optional.empty());
 		}
 
 		/**
-		 * @see BiomeEffects#getMoodSound()
-		 * @see BiomeEffects.Builder#moodSound(BiomeMoodSound)
+		 * @see BiomeSpecialEffects#getAmbientMoodSettings()
+		 * @see BiomeSpecialEffects.Builder#ambientMoodSound(AmbientMoodSettings)
 		 */
-		void setMoodSound(Optional<BiomeMoodSound> sound);
+		void setMoodSound(Optional<AmbientMoodSettings> sound);
 
 		/**
-		 * @see BiomeEffects#getMoodSound()
-		 * @see BiomeEffects.Builder#moodSound(BiomeMoodSound)
+		 * @see BiomeSpecialEffects#getAmbientMoodSettings()
+		 * @see BiomeSpecialEffects.Builder#ambientMoodSound(AmbientMoodSettings)
 		 */
-		default void setMoodSound(@NotNull BiomeMoodSound sound) {
+		default void setMoodSound(@NotNull AmbientMoodSettings sound) {
 			setMoodSound(Optional.of(sound));
 		}
 
 		/**
-		 * @see BiomeEffects#getMoodSound()
-		 * @see BiomeEffects.Builder#moodSound(BiomeMoodSound)
+		 * @see BiomeSpecialEffects#getAmbientMoodSettings()
+		 * @see BiomeSpecialEffects.Builder#ambientMoodSound(AmbientMoodSettings)
 		 */
 		default void clearMoodSound() {
 			setMoodSound(Optional.empty());
 		}
 
 		/**
-		 * @see BiomeEffects#getAdditionsSound()
-		 * @see BiomeEffects.Builder#additionsSound(BiomeAdditionsSound)
+		 * @see BiomeSpecialEffects#getAmbientAdditionsSettings()
+		 * @see BiomeSpecialEffects.Builder#ambientAdditionsSound(AmbientAdditionsSettings)
 		 */
-		void setAdditionsSound(Optional<BiomeAdditionsSound> sound);
+		void setAdditionsSound(Optional<AmbientAdditionsSettings> sound);
 
 		/**
-		 * @see BiomeEffects#getAdditionsSound()
-		 * @see BiomeEffects.Builder#additionsSound(BiomeAdditionsSound)
+		 * @see BiomeSpecialEffects#getAmbientAdditionsSettings()
+		 * @see BiomeSpecialEffects.Builder#ambientAdditionsSound(AmbientAdditionsSettings)
 		 */
-		default void setAdditionsSound(@NotNull BiomeAdditionsSound sound) {
+		default void setAdditionsSound(@NotNull AmbientAdditionsSettings sound) {
 			setAdditionsSound(Optional.of(sound));
 		}
 
 		/**
-		 * @see BiomeEffects#getAdditionsSound()
-		 * @see BiomeEffects.Builder#additionsSound(BiomeAdditionsSound)
+		 * @see BiomeSpecialEffects#getAmbientAdditionsSettings()
+		 * @see BiomeSpecialEffects.Builder#ambientAdditionsSound(AmbientAdditionsSettings)
 		 */
 		default void clearAdditionsSound() {
 			setAdditionsSound(Optional.empty());
 		}
 
 		/**
-		 * @see BiomeEffects#getMusic()
-		 * @see BiomeEffects.Builder#music(MusicSound)
+		 * @see BiomeSpecialEffects#getBackgroundMusic()
+		 * @see BiomeSpecialEffects.Builder#backgroundMusic(Music)
 		 */
-		void setMusic(Optional<MusicSound> sound);
+		void setMusic(Optional<Music> sound);
 
 		/**
-		 * @see BiomeEffects#getMusic()
-		 * @see BiomeEffects.Builder#music(MusicSound)
+		 * @see BiomeSpecialEffects#getBackgroundMusic()
+		 * @see BiomeSpecialEffects.Builder#backgroundMusic(Music)
 		 */
-		default void setMusic(@NotNull MusicSound sound) {
+		default void setMusic(@NotNull Music sound) {
 			setMusic(Optional.of(sound));
 		}
 
 		/**
-		 * @see BiomeEffects#getMusic()
-		 * @see BiomeEffects.Builder#music(MusicSound)
+		 * @see BiomeSpecialEffects#getBackgroundMusic()
+		 * @see BiomeSpecialEffects.Builder#backgroundMusic(Music)
 		 */
 		default void clearMusic() {
 			setMusic(Optional.empty());
@@ -293,15 +291,15 @@ public interface BiomeModificationContext {
 		/**
 		 * Removes a feature from one of this biomes generation steps, and returns if any features were removed.
 		 */
-		boolean removeFeature(GenerationStep.Feature step, RegistryKey<PlacedFeature> placedFeatureKey);
+		boolean removeFeature(GenerationStep.Decoration step, ResourceKey<PlacedFeature> placedFeatureKey);
 
 		/**
 		 * Removes a feature from all of this biomes generation steps, and returns if any features were removed.
 		 */
-		default boolean removeFeature(RegistryKey<PlacedFeature> placedFeatureKey) {
+		default boolean removeFeature(ResourceKey<PlacedFeature> placedFeatureKey) {
 			boolean anyFound = false;
 
-			for (GenerationStep.Feature step : GenerationStep.Feature.values()) {
+			for (GenerationStep.Decoration step : GenerationStep.Decoration.values()) {
 				if (removeFeature(step, placedFeatureKey)) {
 					anyFound = true;
 				}
@@ -313,29 +311,29 @@ public interface BiomeModificationContext {
 		/**
 		 * Adds a feature to one of this biomes generation steps, identified by the placed feature's registry key.
 		 */
-		void addFeature(GenerationStep.Feature step, RegistryKey<PlacedFeature> placedFeatureKey);
+		void addFeature(GenerationStep.Decoration step, ResourceKey<PlacedFeature> placedFeatureKey);
 
 		/**
 		 * Adds a configured carver to one of this biomes generation steps.
 		 */
-		void addCarver(GenerationStep.Carver step, RegistryKey<ConfiguredCarver<?>> carverKey);
+		void addCarver(GenerationStep.Carving step, ResourceKey<ConfiguredWorldCarver<?>> carverKey);
 
 		/**
 		 * Removes all carvers with the given key from one of this biomes generation steps.
 		 *
 		 * @return True if any carvers were removed.
 		 */
-		boolean removeCarver(GenerationStep.Carver step, RegistryKey<ConfiguredCarver<?>> configuredCarverKey);
+		boolean removeCarver(GenerationStep.Carving step, ResourceKey<ConfiguredWorldCarver<?>> configuredCarverKey);
 
 		/**
 		 * Removes all carvers with the given key from all of this biomes generation steps.
 		 *
 		 * @return True if any carvers were removed.
 		 */
-		default boolean removeCarver(RegistryKey<ConfiguredCarver<?>> configuredCarverKey) {
+		default boolean removeCarver(ResourceKey<ConfiguredWorldCarver<?>> configuredCarverKey) {
 			boolean anyFound = false;
 
-			for (GenerationStep.Carver step : GenerationStep.Carver.values()) {
+			for (GenerationStep.Carving step : GenerationStep.Carving.values()) {
 				if (removeCarver(step, configuredCarverKey)) {
 					anyFound = true;
 				}
@@ -349,25 +347,25 @@ public interface BiomeModificationContext {
 		/**
 		 * Associated JSON property: <code>creature_spawn_probability</code>.
 		 *
-		 * @see SpawnSettings#getCreatureSpawnProbability()
-		 * @see SpawnSettings.Builder#creatureSpawnProbability(float)
+		 * @see MobSpawnSettings#getCreatureProbability()
+		 * @see MobSpawnSettings.Builder#creatureGenerationProbability(float)
 		 */
 		void setCreatureSpawnProbability(float probability);
 
 		/**
 		 * Associated JSON property: <code>spawners</code>.
 		 *
-		 * @see SpawnSettings#getSpawnEntries(SpawnGroup)
-		 * @see SpawnSettings.Builder#spawn(SpawnGroup, SpawnSettings.SpawnEntry)
+		 * @see MobSpawnSettings#getMobs(MobCategory)
+		 * @see MobSpawnSettings.Builder#addSpawn(MobCategory, MobSpawnSettings.SpawnerData)
 		 */
-		void addSpawn(SpawnGroup spawnGroup, SpawnSettings.SpawnEntry spawnEntry);
+		void addSpawn(MobCategory spawnGroup, MobSpawnSettings.SpawnerData spawnEntry);
 
 		/**
 		 * Removes any spawns matching the given predicate from this biome, and returns true if any matched.
 		 *
 		 * <p>Associated JSON property: <code>spawners</code>.
 		 */
-		boolean removeSpawns(BiPredicate<SpawnGroup, SpawnSettings.SpawnEntry> predicate);
+		boolean removeSpawns(BiPredicate<MobCategory, MobSpawnSettings.SpawnerData> predicate);
 
 		/**
 		 * Removes all spawns of the given entity type.
@@ -385,7 +383,7 @@ public interface BiomeModificationContext {
 		 *
 		 * <p>Associated JSON property: <code>spawners</code>.
 		 */
-		default void clearSpawns(SpawnGroup group) {
+		default void clearSpawns(MobCategory group) {
 			removeSpawns((spawnGroup, spawnEntry) -> spawnGroup == group);
 		}
 
@@ -401,8 +399,8 @@ public interface BiomeModificationContext {
 		/**
 		 * Associated JSON property: <code>spawn_costs</code>.
 		 *
-		 * @see SpawnSettings#getSpawnDensity(EntityType)
-		 * @see SpawnSettings.Builder#spawnCost(EntityType, double, double)
+		 * @see MobSpawnSettings#getMobSpawnCost(EntityType)
+		 * @see MobSpawnSettings.Builder#addMobCharge(EntityType, double, double)
 		 */
 		void setSpawnCost(EntityType<?> entityType, double mass, double gravityLimit);
 

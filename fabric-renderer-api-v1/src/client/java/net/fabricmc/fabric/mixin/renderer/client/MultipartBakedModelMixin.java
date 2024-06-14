@@ -30,27 +30,25 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.MultipartBakedModel;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.BlockRenderView;
-
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.MultiPartBakedModel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 
-@Mixin(MultipartBakedModel.class)
+@Mixin(MultiPartBakedModel.class)
 public class MultipartBakedModelMixin implements FabricBakedModel {
 	@Shadow
 	@Final
-	private List<Pair<Predicate<BlockState>, BakedModel>> components;
+	private List<Pair<Predicate<BlockState>, BakedModel>> selectors;
 
 	@Shadow
 	@Final
-	private Map<BlockState, BitSet> stateCache;
+	private Map<BlockState, BitSet> selectorCache;
 
 	@Unique
 	boolean isVanilla = true;
@@ -71,40 +69,40 @@ public class MultipartBakedModelMixin implements FabricBakedModel {
 	}
 
 	@Override
-	public void emitBlockQuads(BlockRenderView blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context) {
-		BitSet bitSet = this.stateCache.get(state);
+	public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context) {
+		BitSet bitSet = this.selectorCache.get(state);
 
 		if (bitSet == null) {
 			bitSet = new BitSet();
 
-			for (int i = 0; i < this.components.size(); i++) {
-				Pair<Predicate<BlockState>, BakedModel> pair = components.get(i);
+			for (int i = 0; i < this.selectors.size(); i++) {
+				Pair<Predicate<BlockState>, BakedModel> pair = selectors.get(i);
 
 				if (pair.getLeft().test(state)) {
 					bitSet.set(i);
 				}
 			}
 
-			stateCache.put(state, bitSet);
+			selectorCache.put(state, bitSet);
 		}
 
-		Random random = randomSupplier.get();
+		RandomSource random = randomSupplier.get();
 		// Imitate vanilla passing a new random to the submodels
 		long randomSeed = random.nextLong();
-		Supplier<Random> subModelRandomSupplier = () -> {
+		Supplier<RandomSource> subModelRandomSupplier = () -> {
 			random.setSeed(randomSeed);
 			return random;
 		};
 
-		for (int i = 0; i < this.components.size(); i++) {
+		for (int i = 0; i < this.selectors.size(); i++) {
 			if (bitSet.get(i)) {
-				components.get(i).getRight().emitBlockQuads(blockView, state, pos, subModelRandomSupplier, context);
+				selectors.get(i).getRight().emitBlockQuads(blockView, state, pos, subModelRandomSupplier, context);
 			}
 		}
 	}
 
 	@Override
-	public void emitItemQuads(ItemStack stack, Supplier<Random> randomSupplier, RenderContext context) {
+	public void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context) {
 		// Vanilla doesn't use MultipartBakedModel for items.
 	}
 }

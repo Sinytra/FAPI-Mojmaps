@@ -16,11 +16,10 @@
 
 package net.fabricmc.fabric.impl.client.indigo.renderer.material;
 
-import net.minecraft.util.math.MathHelper;
-
 import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
 import net.fabricmc.fabric.api.renderer.v1.material.MaterialView;
 import net.fabricmc.fabric.api.util.TriState;
+import net.minecraft.util.Mth;
 
 /**
  * Default implementation of the standard render materials.
@@ -34,12 +33,12 @@ public class MaterialViewImpl implements MaterialView {
 	private static final TriState[] TRI_STATES = TriState.values();
 	private static final int TRI_STATE_COUNT = TRI_STATES.length;
 
-	protected static final int BLEND_MODE_BIT_LENGTH = MathHelper.ceilLog2(BLEND_MODE_COUNT);
+	protected static final int BLEND_MODE_BIT_LENGTH = Mth.ceillog2(BLEND_MODE_COUNT);
 	protected static final int COLOR_DISABLE_BIT_LENGTH = 1;
 	protected static final int EMISSIVE_BIT_LENGTH = 1;
 	protected static final int DIFFUSE_BIT_LENGTH = 1;
-	protected static final int AO_BIT_LENGTH = MathHelper.ceilLog2(TRI_STATE_COUNT);
-	protected static final int GLINT_BIT_LENGTH = MathHelper.ceilLog2(TRI_STATE_COUNT);
+	protected static final int AO_BIT_LENGTH = Mth.ceillog2(TRI_STATE_COUNT);
+	protected static final int GLINT_BIT_LENGTH = Mth.ceillog2(TRI_STATE_COUNT);
 
 	protected static final int BLEND_MODE_BIT_OFFSET = 0;
 	protected static final int COLOR_DISABLE_BIT_OFFSET = BLEND_MODE_BIT_OFFSET + BLEND_MODE_BIT_LENGTH;

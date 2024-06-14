@@ -18,6 +18,13 @@ package net.fabricmc.fabric.mixin.item;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BrewingStandBlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -26,34 +33,26 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import net.minecraft.block.entity.BrewingStandBlockEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemConvertible;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-
 @Mixin(BrewingStandBlockEntity.class)
 public class BrewingStandBlockEntityMixin {
 	@Unique
 	private static final ThreadLocal<ItemStack> REMAINDER_STACK = new ThreadLocal<>();
 
-	@Inject(method = "craft", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/ItemStack;decrement(I)V", shift = At.Shift.AFTER), locals = LocalCapture.CAPTURE_FAILHARD)
-	private static void captureItemStack(World world, BlockPos pos, DefaultedList<ItemStack> slots, CallbackInfo ci, ItemStack itemStack) {
+	@Inject(method = "doBrew", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;shrink(I)V", shift = At.Shift.AFTER), locals = LocalCapture.CAPTURE_FAILHARD)
+	private static void captureItemStack(Level world, BlockPos pos, NonNullList<ItemStack> slots, CallbackInfo ci, ItemStack itemStack) {
 		REMAINDER_STACK.set(itemStack.getRecipeRemainder());
 	}
 
-	@Redirect(method = "craft", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/Item;hasRecipeRemainder()Z"))
+	@Redirect(method = "doBrew", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/Item;hasCraftingRemainingItem()Z"))
 	private static boolean hasStackRecipeRemainder(Item instance) {
 		return !REMAINDER_STACK.get().isEmpty();
 	}
 
 	/**
-	 * Injected after the {@link Item#getRecipeRemainder} to replace the old remainder with are new one.
+	 * Injected after the {@link Item#getCraftingRemainingItem} to replace the old remainder with are new one.
 	 */
-	@WrapOperation(method = "craft", at = @At(value = "NEW", target = "(Lnet/minecraft/item/ItemConvertible;)Lnet/minecraft/item/ItemStack;"))
-	private static ItemStack createStackRecipeRemainder(ItemConvertible item, Operation<ItemStack> original) {
+	@WrapOperation(method = "doBrew", at = @At(value = "NEW", target = "(Lnet/minecraft/world/level/ItemLike;)Lnet/minecraft/world/item/ItemStack;"))
+	private static ItemStack createStackRecipeRemainder(ItemLike item, Operation<ItemStack> original) {
 		ItemStack remainder = REMAINDER_STACK.get();
 		REMAINDER_STACK.remove();
 		return remainder;

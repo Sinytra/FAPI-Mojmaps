@@ -25,17 +25,15 @@ import com.mojang.serialization.Codec;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
+import net.minecraft.resources.ResourceLocation;
 
 public final class AttachmentRegistryImpl {
 	private static final Logger LOGGER = LoggerFactory.getLogger("fabric-data-attachment-api-v1");
-	private static final Map<Identifier, AttachmentType<?>> attachmentRegistry = new HashMap<>();
+	private static final Map<ResourceLocation, AttachmentType<?>> attachmentRegistry = new HashMap<>();
 
-	public static <A> void register(Identifier id, AttachmentType<A> attachmentType) {
+	public static <A> void register(ResourceLocation id, AttachmentType<A> attachmentType) {
 		AttachmentType<?> existing = attachmentRegistry.put(id, attachmentType);
 
 		if (existing != null) {
@@ -44,7 +42,7 @@ public final class AttachmentRegistryImpl {
 	}
 
 	@Nullable
-	public static AttachmentType<?> get(Identifier id) {
+	public static AttachmentType<?> get(ResourceLocation id) {
 		return attachmentRegistry.get(id);
 	}
 
@@ -82,7 +80,7 @@ public final class AttachmentRegistryImpl {
 		}
 
 		@Override
-		public AttachmentType<A> buildAndRegister(Identifier id) {
+		public AttachmentType<A> buildAndRegister(ResourceLocation id) {
 			var attachment = new AttachmentTypeImpl<>(id, defaultInitializer, persistenceCodec, copyOnDeath);
 			register(id, attachment);
 			return attachment;

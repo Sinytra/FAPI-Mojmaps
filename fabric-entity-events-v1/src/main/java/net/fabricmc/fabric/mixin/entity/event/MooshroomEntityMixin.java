@@ -19,21 +19,19 @@ package net.fabricmc.fabric.mixin.entity.event;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
-
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.passive.MooshroomEntity;
-
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.animal.MushroomCow;
 
-@Mixin(MooshroomEntity.class)
+@Mixin(MushroomCow.class)
 class MooshroomEntityMixin {
 	@ModifyArg(
-			method = "sheared",
-			at = @At(ordinal = 0, value = "INVOKE", target = "Lnet/minecraft/world/World;spawnEntity(Lnet/minecraft/entity/Entity;)Z")
+			method = "shear",
+			at = @At(ordinal = 0, value = "INVOKE", target = "Lnet/minecraft/world/level/Level;addFreshEntity(Lnet/minecraft/world/entity/Entity;)Z")
 	)
 	private Entity afterMooshroomConversion(Entity converted) {
-		ServerLivingEntityEvents.MOB_CONVERSION.invoker().onConversion((MooshroomEntity) (Object) this, (MobEntity) converted, false);
+		ServerLivingEntityEvents.MOB_CONVERSION.invoker().onConversion((MushroomCow) (Object) this, (Mob) converted, false);
 		return converted;
 	}
 }

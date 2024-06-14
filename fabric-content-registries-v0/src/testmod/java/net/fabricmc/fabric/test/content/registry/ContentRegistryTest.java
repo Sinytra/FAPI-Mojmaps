@@ -18,37 +18,6 @@ package net.fabricmc.fabric.test.content.registry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.ai.pathing.PathNodeType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.HoeItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.item.PotionItem;
-import net.minecraft.potion.Potions;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.registry.tag.ItemTags;
-import net.minecraft.resource.featuretoggle.FeatureFlags;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.village.VillagerProfession;
-import net.minecraft.world.World;
-import net.minecraft.world.event.GameEvent;
-
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.registry.CompostingChanceRegistry;
 import net.fabricmc.fabric.api.registry.FabricBrewingRecipeRegistryBuilder;
@@ -61,12 +30,41 @@ import net.fabricmc.fabric.api.registry.SculkSensorFrequencyRegistry;
 import net.fabricmc.fabric.api.registry.StrippableBlockRegistry;
 import net.fabricmc.fabric.api.registry.TillableBlockRegistry;
 import net.fabricmc.fabric.api.registry.VillagerInteractionRegistries;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.npc.VillagerProfession;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.flag.FeatureFlags;
+import net.minecraft.world.item.HoeItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.PotionItem;
+import net.minecraft.world.item.alchemy.Potions;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.level.pathfinder.PathType;
+import net.minecraft.world.phys.BlockHitResult;
 
 public final class ContentRegistryTest implements ModInitializer {
 	public static final Logger LOGGER = LoggerFactory.getLogger(ContentRegistryTest.class);
 
-	public static final Identifier TEST_EVENT_ID = Identifier.of("fabric-content-registries-v0-testmod", "test_event");
-	public static final RegistryEntry.Reference<GameEvent> TEST_EVENT = Registry.registerReference(Registries.GAME_EVENT, TEST_EVENT_ID, new GameEvent(GameEvent.DEFAULT_RANGE));
+	public static final ResourceLocation TEST_EVENT_ID = ResourceLocation.fromNamespaceAndPath("fabric-content-registries-v0-testmod", "test_event");
+	public static final Holder.Reference<GameEvent> TEST_EVENT = Registry.registerForHolder(BuiltInRegistries.GAME_EVENT, TEST_EVENT_ID, new GameEvent(GameEvent.DEFAULT_NOTIFICATION_RADIUS));
 
 	@Override
 	public void onInitialize() {
@@ -93,10 +91,10 @@ public final class ContentRegistryTest implements ModInitializer {
 		CompostingChanceRegistry.INSTANCE.add(Items.OBSIDIAN, 0.5F);
 		FlammableBlockRegistry.getDefaultInstance().add(Blocks.DIAMOND_BLOCK, 4, 4);
 		FlammableBlockRegistry.getDefaultInstance().add(BlockTags.SAND, 4, 4);
-		FlattenableBlockRegistry.register(Blocks.RED_WOOL, Blocks.YELLOW_WOOL.getDefaultState());
+		FlattenableBlockRegistry.register(Blocks.RED_WOOL, Blocks.YELLOW_WOOL.defaultBlockState());
 		FuelRegistry.INSTANCE.add(Items.OBSIDIAN, 50);
 		FuelRegistry.INSTANCE.add(ItemTags.DIRT, 100);
-		LandPathNodeTypesRegistry.register(Blocks.DEAD_BUSH, PathNodeType.DAMAGE_OTHER, PathNodeType.DANGER_OTHER);
+		LandPathNodeTypesRegistry.register(Blocks.DEAD_BUSH, PathType.DAMAGE_OTHER, PathType.DANGER_OTHER);
 		StrippableBlockRegistry.register(Blocks.QUARTZ_PILLAR, Blocks.HAY_BLOCK);
 
 		// assert that StrippableBlockRegistry throws when the blocks don't have 'axis'
@@ -109,7 +107,7 @@ public final class ContentRegistryTest implements ModInitializer {
 			LOGGER.info("StrippableBlockRegistry test passed!");
 		}
 
-		TillableBlockRegistry.register(Blocks.GREEN_WOOL, context -> true, HoeItem.createTillAction(Blocks.LIME_WOOL.getDefaultState()));
+		TillableBlockRegistry.register(Blocks.GREEN_WOOL, context -> true, HoeItem.changeIntoState(Blocks.LIME_WOOL.defaultBlockState()));
 
 		OxidizableBlocksRegistry.registerOxidizableBlockPair(Blocks.COPPER_ORE, Blocks.IRON_ORE);
 		OxidizableBlocksRegistry.registerOxidizableBlockPair(Blocks.IRON_ORE, Blocks.GOLD_ORE);
@@ -140,14 +138,14 @@ public final class ContentRegistryTest implements ModInitializer {
 
 		VillagerInteractionRegistries.registerCollectable(Items.OAK_SAPLING);
 
-		VillagerInteractionRegistries.registerGiftLootTable(VillagerProfession.NITWIT, RegistryKey.of(RegistryKeys.LOOT_TABLE, Identifier.ofVanilla("fake_loot_table")));
+		VillagerInteractionRegistries.registerGiftLootTable(VillagerProfession.NITWIT, ResourceKey.create(Registries.LOOT_TABLE, ResourceLocation.withDefaultNamespace("fake_loot_table")));
 
-		Registry.register(Registries.BLOCK, TEST_EVENT_ID, new TestEventBlock(AbstractBlock.Settings.copy(Blocks.STONE)));
-		SculkSensorFrequencyRegistry.register(TEST_EVENT.registryKey(), 2);
+		Registry.register(BuiltInRegistries.BLOCK, TEST_EVENT_ID, new TestEventBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.STONE)));
+		SculkSensorFrequencyRegistry.register(TEST_EVENT.key(), 2);
 
 		// assert that SculkSensorFrequencyRegistry throws when registering a frequency outside the allowed range
 		try {
-			SculkSensorFrequencyRegistry.register(GameEvent.SHRIEK.registryKey(), 18);
+			SculkSensorFrequencyRegistry.register(GameEvent.SHRIEK.key(), 18);
 
 			throw new AssertionError("SculkSensorFrequencyRegistry didn't throw when frequency was outside allowed range!");
 		} catch (IllegalArgumentException e) {
@@ -155,43 +153,43 @@ public final class ContentRegistryTest implements ModInitializer {
 			LOGGER.info("SculkSensorFrequencyRegistry test passed!");
 		}
 
-		var dirtyPotion = new DirtyPotionItem(new Item.Settings().maxCount(1));
-		Registry.register(Registries.ITEM, Identifier.of("fabric-content-registries-v0-testmod", "dirty_potion"),
+		var dirtyPotion = new DirtyPotionItem(new Item.Properties().stacksTo(1));
+		Registry.register(BuiltInRegistries.ITEM, ResourceLocation.fromNamespaceAndPath("fabric-content-registries-v0-testmod", "dirty_potion"),
 				dirtyPotion);
 		/* Mods should use BrewingRecipeRegistry.registerPotionType(Item), which is access widened by fabric-transitive-access-wideners-v1
 		 * This testmod uses an accessor due to Loom limitations that prevent TAWs from applying across Gradle subproject boundaries */
 		FabricBrewingRecipeRegistryBuilder.BUILD.register(builder -> {
-			builder.registerPotionType(dirtyPotion);
-			builder.registerItemRecipe(Items.POTION, Ingredient.fromTag(ItemTags.DIRT), dirtyPotion);
-			builder.registerPotionRecipe(Potions.AWKWARD, Ingredient.fromTag(ItemTags.SMALL_FLOWERS), Potions.HEALING);
+			builder.addContainer(dirtyPotion);
+			builder.registerItemRecipe(Items.POTION, Ingredient.of(ItemTags.DIRT), dirtyPotion);
+			builder.registerPotionRecipe(Potions.AWKWARD, Ingredient.of(ItemTags.SMALL_FLOWERS), Potions.HEALING);
 
 			if (builder.getEnabledFeatures().contains(FeatureFlags.BUNDLE)) {
-				builder.registerPotionRecipe(Potions.AWKWARD, Ingredient.ofItems(Items.BUNDLE), Potions.LUCK);
+				builder.registerPotionRecipe(Potions.AWKWARD, Ingredient.of(Items.BUNDLE), Potions.LUCK);
 			}
 		});
 	}
 
 	public static class TestEventBlock extends Block {
-		public TestEventBlock(Settings settings) {
+		public TestEventBlock(Properties settings) {
 			super(settings);
 		}
 
 		@Override
-		public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
+		public InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
 			// Emit the test event
-			world.emitGameEvent(player, TEST_EVENT, pos);
-			return ActionResult.SUCCESS;
+			world.gameEvent(player, TEST_EVENT, pos);
+			return InteractionResult.SUCCESS;
 		}
 	}
 
 	public static class DirtyPotionItem extends PotionItem {
-		public DirtyPotionItem(Settings settings) {
+		public DirtyPotionItem(Properties settings) {
 			super(settings);
 		}
 
 		@Override
-		public Text getName(ItemStack stack) {
-			return Text.literal("Dirty ").append(Items.POTION.getName(stack));
+		public Component getName(ItemStack stack) {
+			return Component.literal("Dirty ").append(Items.POTION.getName(stack));
 		}
 	}
 }

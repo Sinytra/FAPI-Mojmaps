@@ -16,18 +16,17 @@
 
 package net.fabricmc.fabric.test.item.client;
 
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 
 public class TooltipTests implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		// Adds a tooltip to all items so testing can be verified easily.
 		ItemTooltipCallback.EVENT.register((stack, context, type, lines) -> {
-			lines.add(Text.literal("Fancy Tooltips").formatted(Formatting.LIGHT_PURPLE));
+			lines.add(Component.literal("Fancy Tooltips").withStyle(ChatFormatting.LIGHT_PURPLE));
 		});
 	}
 }

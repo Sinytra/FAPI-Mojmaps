@@ -20,15 +20,13 @@ import java.util.List;
 import java.util.function.Function;
 
 import com.mojang.serialization.MapCodec;
-
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredient;
 import net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredientSerializer;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.crafting.Ingredient;
 
 /**
  * Base class for ALL and ANY ingredients.
@@ -60,21 +58,21 @@ abstract class CombinedIngredient implements CustomIngredient {
 	}
 
 	static class Serializer<I extends CombinedIngredient> implements CustomIngredientSerializer<I> {
-		private final Identifier identifier;
+		private final ResourceLocation identifier;
 		private final MapCodec<I> allowEmptyCodec;
 		private final MapCodec<I> disallowEmptyCodec;
-		private final PacketCodec<RegistryByteBuf, I> packetCodec;
+		private final StreamCodec<RegistryFriendlyByteBuf, I> packetCodec;
 
-		Serializer(Identifier identifier, Function<List<Ingredient>, I> factory, MapCodec<I> allowEmptyCodec, MapCodec<I> disallowEmptyCodec) {
+		Serializer(ResourceLocation identifier, Function<List<Ingredient>, I> factory, MapCodec<I> allowEmptyCodec, MapCodec<I> disallowEmptyCodec) {
 			this.identifier = identifier;
 			this.allowEmptyCodec = allowEmptyCodec;
 			this.disallowEmptyCodec = disallowEmptyCodec;
-			this.packetCodec = Ingredient.PACKET_CODEC.collect(PacketCodecs.toList())
-					.xmap(factory, I::getIngredients);
+			this.packetCodec = Ingredient.CONTENTS_STREAM_CODEC.apply(ByteBufCodecs.list())
+					.map(factory, I::getIngredients);
 		}
 
 		@Override
-		public Identifier getIdentifier() {
+		public ResourceLocation getIdentifier() {
 			return identifier;
 		}
 
@@ -84,7 +82,7 @@ abstract class CombinedIngredient implements CustomIngredient {
 		}
 
 		@Override
-		public PacketCodec<RegistryByteBuf, I> getPacketCodec() {
+		public StreamCodec<RegistryFriendlyByteBuf, I> getPacketCodec() {
 			return this.packetCodec;
 		}
 	}

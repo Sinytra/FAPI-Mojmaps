@@ -27,32 +27,30 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
-
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.BakedModelManager;
-import net.minecraft.client.render.model.BlockStatesLoader;
-import net.minecraft.client.render.model.ModelLoader;
-import net.minecraft.client.render.model.json.JsonUnbakedModel;
-import net.minecraft.client.util.ModelIdentifier;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.resource.ResourceReloader;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Pair;
-import net.minecraft.util.profiler.Profiler;
-
 import net.fabricmc.fabric.api.client.model.loading.v1.FabricBakedModelManager;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.impl.client.model.loading.ModelLoadingConstants;
 import net.fabricmc.fabric.impl.client.model.loading.ModelLoadingPluginManager;
+import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.BlockStateModelLoader;
+import net.minecraft.client.resources.model.ModelBakery;
+import net.minecraft.client.resources.model.ModelManager;
+import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.PreparableReloadListener;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.util.Tuple;
+import net.minecraft.util.profiling.ProfilerFiller;
 
-@Mixin(BakedModelManager.class)
+@Mixin(ModelManager.class)
 abstract class BakedModelManagerMixin implements FabricBakedModelManager {
 	@Shadow
-	private Map<ModelIdentifier, BakedModel> models;
+	private Map<ModelResourceLocation, BakedModel> bakedRegistry;
 
 	@Override
-	public BakedModel getModel(Identifier id) {
-		return models.get(ModelLoadingConstants.toResourceModelId(id));
+	public BakedModel getModel(ResourceLocation id) {
+		return bakedRegistry.get(ModelLoadingConstants.toResourceModelId(id));
 	}
 
 	@Redirect(
@@ -63,23 +61,23 @@ abstract class BakedModelManagerMixin implements FabricBakedModelManager {
 					remap = false
 			),
 			allow = 1)
-	private CompletableFuture<ModelLoader> loadModelPluginData(
-			CompletableFuture<Map<Identifier, JsonUnbakedModel>> self,
-			CompletionStage<Map<Identifier, List<BlockStatesLoader.SourceTrackedData>>> otherFuture,
-			BiFunction<Map<Identifier, JsonUnbakedModel>, Map<Identifier, List<BlockStatesLoader.SourceTrackedData>>, ModelLoader> modelLoaderConstructor,
+	private CompletableFuture<ModelBakery> loadModelPluginData(
+			CompletableFuture<Map<ResourceLocation, BlockModel>> self,
+			CompletionStage<Map<ResourceLocation, List<BlockStateModelLoader.LoadedJson>>> otherFuture,
+			BiFunction<Map<ResourceLocation, BlockModel>, Map<ResourceLocation, List<BlockStateModelLoader.LoadedJson>>, ModelBakery> modelLoaderConstructor,
 			Executor executor,
 			// reload args
-			ResourceReloader.Synchronizer synchronizer,
+			PreparableReloadListener.PreparationBarrier synchronizer,
 			ResourceManager manager,
-			Profiler prepareProfiler,
-			Profiler applyProfiler,
+			ProfilerFiller prepareProfiler,
+			ProfilerFiller applyProfiler,
 			Executor prepareExecutor,
 			Executor applyExecutor) {
 		CompletableFuture<List<ModelLoadingPlugin>> pluginsFuture = ModelLoadingPluginManager.preparePlugins(manager, prepareExecutor);
-		CompletableFuture<Pair<Map<Identifier, JsonUnbakedModel>, Map<Identifier, List<BlockStatesLoader.SourceTrackedData>>>> pairFuture = self.thenCombine(otherFuture, Pair::new);
+		CompletableFuture<Tuple<Map<ResourceLocation, BlockModel>, Map<ResourceLocation, List<BlockStateModelLoader.LoadedJson>>>> pairFuture = self.thenCombine(otherFuture, Tuple::new);
 		return pairFuture.thenCombineAsync(pluginsFuture, (pair, plugins) -> {
 			ModelLoadingPluginManager.CURRENT_PLUGINS.set(plugins);
-			ModelLoader modelLoader = modelLoaderConstructor.apply(pair.getLeft(), pair.getRight());
+			ModelBakery modelLoader = modelLoaderConstructor.apply(pair.getA(), pair.getB());
 			ModelLoadingPluginManager.CURRENT_PLUGINS.remove();
 			return modelLoader;
 		}, executor);

@@ -45,15 +45,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import net.minecraft.registry.MutableRegistry;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.SimpleRegistry;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.registry.entry.RegistryEntryInfo;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
 import net.fabricmc.fabric.api.event.registry.RegistryAttribute;
@@ -65,9 +56,16 @@ import net.fabricmc.fabric.impl.registry.sync.RegistrySyncManager;
 import net.fabricmc.fabric.impl.registry.sync.RemapException;
 import net.fabricmc.fabric.impl.registry.sync.RemapStateImpl;
 import net.fabricmc.fabric.impl.registry.sync.RemappableRegistry;
+import net.minecraft.core.Holder;
+import net.minecraft.core.MappedRegistry;
+import net.minecraft.core.RegistrationInfo;
+import net.minecraft.core.Registry;
+import net.minecraft.core.WritableRegistry;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 
-@Mixin(SimpleRegistry.class)
-public abstract class SimpleRegistryMixin<T> implements MutableRegistry<T>, RemappableRegistry, ListenableRegistry<T> {
+@Mixin(MappedRegistry.class)
+public abstract class SimpleRegistryMixin<T> implements WritableRegistry<T>, RemappableRegistry, ListenableRegistry<T> {
 	// Namespaces used by the vanilla game. "brigadier" is used by command argument type registry.
 	// While Realms use "realms" namespace, it is irrelevant for Registry Sync.
 	@Unique
@@ -75,25 +73,25 @@ public abstract class SimpleRegistryMixin<T> implements MutableRegistry<T>, Rema
 
 	@Shadow
 	@Final
-	private ObjectList<RegistryEntry.Reference<T>> rawIdToEntry;
+	private ObjectList<Holder.Reference<T>> byId;
 	@Shadow
 	@Final
-	private Reference2IntMap<T> entryToRawId;
+	private Reference2IntMap<T> toId;
 	@Shadow
 	@Final
-	private Map<Identifier, RegistryEntry.Reference<T>> idToEntry;
+	private Map<ResourceLocation, Holder.Reference<T>> byLocation;
 	@Shadow
 	@Final
-	private Map<RegistryKey<T>, RegistryEntry.Reference<T>> keyToEntry;
+	private Map<ResourceKey<T>, Holder.Reference<T>> byKey;
 
 	@Shadow
-	public abstract Optional<RegistryKey<T>> getKey(T entry);
+	public abstract Optional<ResourceKey<T>> getResourceKey(T entry);
 
 	@Shadow
-	public abstract @Nullable T get(@Nullable Identifier id);
+	public abstract @Nullable T get(@Nullable ResourceLocation id);
 
 	@Shadow
-	public abstract RegistryKey<? extends Registry<T>> getKey();
+	public abstract ResourceKey<? extends Registry<T>> key();
 
 	@Unique
 	private static final Logger FABRIC_LOGGER = LoggerFactory.getLogger(SimpleRegistryMixin.class);
@@ -105,9 +103,9 @@ public abstract class SimpleRegistryMixin<T> implements MutableRegistry<T>, Rema
 	private Event<RegistryIdRemapCallback<T>> fabric_postRemapEvent;
 
 	@Unique
-	private Object2IntMap<Identifier> fabric_prevIndexedEntries;
+	private Object2IntMap<ResourceLocation> fabric_prevIndexedEntries;
 	@Unique
-	private BiMap<Identifier, RegistryEntry.Reference<T>> fabric_prevEntries;
+	private BiMap<ResourceLocation, Holder.Reference<T>> fabric_prevEntries;
 
 	@Override
 	public Event<RegistryEntryAddedCallback<T>> fabric_getAddObjectEvent() {
@@ -119,8 +117,8 @@ public abstract class SimpleRegistryMixin<T> implements MutableRegistry<T>, Rema
 		return fabric_postRemapEvent;
 	}
 
-	@Inject(method = "<init>(Lnet/minecraft/registry/RegistryKey;Lcom/mojang/serialization/Lifecycle;Z)V", at = @At("RETURN"))
-	private void init(RegistryKey key, Lifecycle lifecycle, boolean intrusive, CallbackInfo ci) {
+	@Inject(method = "<init>(Lnet/minecraft/resources/ResourceKey;Lcom/mojang/serialization/Lifecycle;Z)V", at = @At("RETURN"))
+	private void init(ResourceKey key, Lifecycle lifecycle, boolean intrusive, CallbackInfo ci) {
 		fabric_addObjectEvent = EventFactory.createArrayBacked(RegistryEntryAddedCallback.class,
 			(callbacks) -> (rawId, id, object) -> {
 				for (RegistryEntryAddedCallback<T> callback : callbacks) {
@@ -138,31 +136,31 @@ public abstract class SimpleRegistryMixin<T> implements MutableRegistry<T>, Rema
 	}
 
 	@Unique
-	private void onChange(RegistryKey<T> registryKey) {
-		if (RegistrySyncManager.postBootstrap || !VANILLA_NAMESPACES.contains(registryKey.getValue().getNamespace())) {
-			RegistryAttributeHolder holder = RegistryAttributeHolder.get(getKey());
+	private void onChange(ResourceKey<T> registryKey) {
+		if (RegistrySyncManager.postBootstrap || !VANILLA_NAMESPACES.contains(registryKey.location().getNamespace())) {
+			RegistryAttributeHolder holder = RegistryAttributeHolder.get(key());
 
 			if (!holder.hasAttribute(RegistryAttribute.MODDED)) {
-				Identifier id = getKey().getValue();
-				FABRIC_LOGGER.debug("Registry {} has been marked as modded, registry entry {} was changed", id, registryKey.getValue());
-				RegistryAttributeHolder.get(getKey()).addAttribute(RegistryAttribute.MODDED);
+				ResourceLocation id = key().location();
+				FABRIC_LOGGER.debug("Registry {} has been marked as modded, registry entry {} was changed", id, registryKey.location());
+				RegistryAttributeHolder.get(key()).addAttribute(RegistryAttribute.MODDED);
 			}
 		}
 	}
 
-	@Inject(method = "add", at = @At("RETURN"))
-	private void set(RegistryKey<T> key, T entry, RegistryEntryInfo arg, CallbackInfoReturnable<RegistryEntry.Reference<T>> info) {
+	@Inject(method = "register(Lnet/minecraft/resources/ResourceKey;Ljava/lang/Object;Lnet/minecraft/core/RegistrationInfo;)Lnet/minecraft/core/Holder$Reference;", at = @At("RETURN"))
+	private void set(ResourceKey<T> key, T entry, RegistrationInfo arg, CallbackInfoReturnable<Holder.Reference<T>> info) {
 		// We need to restore the 1.19 behavior of binding the value to references immediately.
 		// Unfrozen registries cannot be interacted with otherwise, because the references would throw when
 		// trying to access their values.
-		info.getReturnValue().setValue(entry);
+		info.getReturnValue().bindValue(entry);
 
-		fabric_addObjectEvent.invoker().onEntryAdded(entryToRawId.getInt(entry), key.getValue(), entry);
+		fabric_addObjectEvent.invoker().onEntryAdded(toId.getInt(entry), key.location(), entry);
 		onChange(key);
 	}
 
 	@Override
-	public void remap(String name, Object2IntMap<Identifier> remoteIndexedEntries, RemapMode mode) throws RemapException {
+	public void remap(String name, Object2IntMap<ResourceLocation> remoteIndexedEntries, RemapMode mode) throws RemapException {
 		// Throw on invalid conditions.
 		switch (mode) {
 		case AUTHORITATIVE:
@@ -170,8 +168,8 @@ public abstract class SimpleRegistryMixin<T> implements MutableRegistry<T>, Rema
 		case REMOTE: {
 			List<String> strings = null;
 
-			for (Identifier remoteId : remoteIndexedEntries.keySet()) {
-				if (!idToEntry.containsKey(remoteId)) {
+			for (ResourceLocation remoteId : remoteIndexedEntries.keySet()) {
+				if (!byLocation.containsKey(remoteId)) {
 					if (strings == null) {
 						strings = new ArrayList<>();
 					}
@@ -193,16 +191,16 @@ public abstract class SimpleRegistryMixin<T> implements MutableRegistry<T>, Rema
 			break;
 		}
 		case EXACT: {
-			if (!idToEntry.keySet().equals(remoteIndexedEntries.keySet())) {
+			if (!byLocation.keySet().equals(remoteIndexedEntries.keySet())) {
 				List<String> strings = new ArrayList<>();
 
-				for (Identifier remoteId : remoteIndexedEntries.keySet()) {
-					if (!idToEntry.containsKey(remoteId)) {
+				for (ResourceLocation remoteId : remoteIndexedEntries.keySet()) {
+					if (!byLocation.containsKey(remoteId)) {
 						strings.add(" - " + remoteId + " (missing on local)");
 					}
 				}
 
-				for (Identifier localId : getIds()) {
+				for (ResourceLocation localId : keySet()) {
 					if (!remoteIndexedEntries.containsKey(localId)) {
 						strings.add(" - " + localId + " (missing on remote)");
 					}
@@ -229,17 +227,17 @@ public abstract class SimpleRegistryMixin<T> implements MutableRegistry<T>, Rema
 		// compatibility.
 		if (fabric_prevIndexedEntries == null) {
 			fabric_prevIndexedEntries = new Object2IntOpenHashMap<>();
-			fabric_prevEntries = HashBiMap.create(idToEntry);
+			fabric_prevEntries = HashBiMap.create(byLocation);
 
 			for (T o : this) {
-				fabric_prevIndexedEntries.put(getId(o), getRawId(o));
+				fabric_prevIndexedEntries.put(getKey(o), getId(o));
 			}
 		}
 
-		Int2ObjectMap<Identifier> oldIdMap = new Int2ObjectOpenHashMap<>();
+		Int2ObjectMap<ResourceLocation> oldIdMap = new Int2ObjectOpenHashMap<>();
 
 		for (T o : this) {
-			oldIdMap.put(getRawId(o), getId(o));
+			oldIdMap.put(getId(o), getKey(o));
 		}
 
 		// If we're AUTHORITATIVE, we append entries which only exist on the
@@ -248,16 +246,16 @@ public abstract class SimpleRegistryMixin<T> implements MutableRegistry<T>, Rema
 		case AUTHORITATIVE: {
 			int maxValue = 0;
 
-			Object2IntMap<Identifier> oldRemoteIndexedEntries = remoteIndexedEntries;
+			Object2IntMap<ResourceLocation> oldRemoteIndexedEntries = remoteIndexedEntries;
 			remoteIndexedEntries = new Object2IntOpenHashMap<>();
 
-			for (Identifier id : oldRemoteIndexedEntries.keySet()) {
+			for (ResourceLocation id : oldRemoteIndexedEntries.keySet()) {
 				int v = oldRemoteIndexedEntries.getInt(id);
 				remoteIndexedEntries.put(id, v);
 				if (v > maxValue) maxValue = v;
 			}
 
-			for (Identifier id : getIds()) {
+			for (ResourceLocation id : keySet()) {
 				if (!remoteIndexedEntries.containsKey(id)) {
 					FABRIC_LOGGER.warn("Adding " + id + " to saved/remote registry.");
 					remoteIndexedEntries.put(id, ++maxValue);
@@ -269,7 +267,7 @@ public abstract class SimpleRegistryMixin<T> implements MutableRegistry<T>, Rema
 		case REMOTE: {
 			int maxId = -1;
 
-			for (Identifier id : getIds()) {
+			for (ResourceLocation id : keySet()) {
 				if (!remoteIndexedEntries.containsKey(id)) {
 					if (maxId < 0) {
 						for (int value : remoteIndexedEntries.values()) {
@@ -285,7 +283,7 @@ public abstract class SimpleRegistryMixin<T> implements MutableRegistry<T>, Rema
 
 					maxId++;
 
-					FABRIC_LOGGER.debug("An ID for {} was not sent by the server, assuming client only registry entry and assigning a new id ({}) in {}", id.toString(), maxId, getKey().getValue().toString());
+					FABRIC_LOGGER.debug("An ID for {} was not sent by the server, assuming client only registry entry and assigning a new id ({}) in {}", id.toString(), maxId, key().location().toString());
 					remoteIndexedEntries.put(id, maxId);
 				}
 			}
@@ -296,15 +294,15 @@ public abstract class SimpleRegistryMixin<T> implements MutableRegistry<T>, Rema
 
 		Int2IntMap idMap = new Int2IntOpenHashMap();
 
-		for (int i = 0; i < rawIdToEntry.size(); i++) {
-			RegistryEntry.Reference<T> reference = rawIdToEntry.get(i);
+		for (int i = 0; i < byId.size(); i++) {
+			Holder.Reference<T> reference = byId.get(i);
 
 			// Unused id, can happen if there are holes in the registry.
 			if (reference == null) {
-				throw new RemapException("Unused id " + i + " in registry " + getKey().getValue());
+				throw new RemapException("Unused id " + i + " in registry " + key().location());
 			}
 
-			Identifier id = reference.registryKey().getValue();
+			ResourceLocation id = reference.key().location();
 
 			// see above note
 			if (remoteIndexedEntries.containsKey(id)) {
@@ -313,15 +311,15 @@ public abstract class SimpleRegistryMixin<T> implements MutableRegistry<T>, Rema
 		}
 
 		// entries was handled above, if it was necessary.
-		rawIdToEntry.clear();
-		entryToRawId.clear();
+		byId.clear();
+		toId.clear();
 
-		List<Identifier> orderedRemoteEntries = new ArrayList<>(remoteIndexedEntries.keySet());
+		List<ResourceLocation> orderedRemoteEntries = new ArrayList<>(remoteIndexedEntries.keySet());
 		orderedRemoteEntries.sort(Comparator.comparingInt(remoteIndexedEntries::getInt));
 
-		for (Identifier identifier : orderedRemoteEntries) {
+		for (ResourceLocation identifier : orderedRemoteEntries) {
 			int id = remoteIndexedEntries.getInt(identifier);
-			RegistryEntry.Reference<T> object = idToEntry.get(identifier);
+			Holder.Reference<T> object = byLocation.get(identifier);
 
 			// Warn if an object is missing from the local registry.
 			// This should only happen in AUTHORITATIVE mode, and as such we
@@ -337,10 +335,10 @@ public abstract class SimpleRegistryMixin<T> implements MutableRegistry<T>, Rema
 			}
 
 			// Add the new object
-			rawIdToEntry.size(Math.max(this.rawIdToEntry.size(), id + 1));
-			assert rawIdToEntry.get(id) == null;
-			rawIdToEntry.set(id, object);
-			entryToRawId.put(object.value(), id);
+			byId.size(Math.max(this.byId.size(), id + 1));
+			assert byId.get(id) == null;
+			byId.set(id, object);
+			toId.put(object.value(), id);
 		}
 
 		fabric_getRemapEvent().invoker().onRemap(new RemapStateImpl<>(this, oldIdMap, idMap));
@@ -349,30 +347,30 @@ public abstract class SimpleRegistryMixin<T> implements MutableRegistry<T>, Rema
 	@Override
 	public void unmap(String name) throws RemapException {
 		if (fabric_prevIndexedEntries != null) {
-			List<Identifier> addedIds = new ArrayList<>();
+			List<ResourceLocation> addedIds = new ArrayList<>();
 
 			// Emit AddObject events for previously culled objects.
-			for (Identifier id : fabric_prevEntries.keySet()) {
-				if (!idToEntry.containsKey(id)) {
+			for (ResourceLocation id : fabric_prevEntries.keySet()) {
+				if (!byLocation.containsKey(id)) {
 					assert fabric_prevIndexedEntries.containsKey(id);
 					addedIds.add(id);
 				}
 			}
 
-			idToEntry.clear();
-			keyToEntry.clear();
+			byLocation.clear();
+			byKey.clear();
 
-			idToEntry.putAll(fabric_prevEntries);
+			byLocation.putAll(fabric_prevEntries);
 
-			for (Map.Entry<Identifier, RegistryEntry.Reference<T>> entry : fabric_prevEntries.entrySet()) {
-				RegistryKey<T> entryKey = RegistryKey.of(getKey(), entry.getKey());
-				keyToEntry.put(entryKey, entry.getValue());
+			for (Map.Entry<ResourceLocation, Holder.Reference<T>> entry : fabric_prevEntries.entrySet()) {
+				ResourceKey<T> entryKey = ResourceKey.create(key(), entry.getKey());
+				byKey.put(entryKey, entry.getValue());
 			}
 
 			remap(name, fabric_prevIndexedEntries, RemapMode.AUTHORITATIVE);
 
-			for (Identifier id : addedIds) {
-				fabric_getAddObjectEvent().invoker().onEntryAdded(entryToRawId.getInt(idToEntry.get(id)), id, get(id));
+			for (ResourceLocation id : addedIds) {
+				fabric_getAddObjectEvent().invoker().onEntryAdded(toId.getInt(byLocation.get(id)), id, get(id));
 			}
 
 			fabric_prevIndexedEntries = null;

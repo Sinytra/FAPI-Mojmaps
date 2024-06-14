@@ -19,18 +19,16 @@ package net.fabricmc.fabric.impl.client.indigo.renderer.render;
 import java.util.function.Supplier;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockColors;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.RenderLayers;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.BlockRenderView;
-
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
 
 /**
@@ -41,30 +39,30 @@ import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
  * so they can be applied together with chunk offsets.
  */
 public class BlockRenderInfo {
-	private final BlockColors blockColorMap = MinecraftClient.getInstance().getBlockColors();
-	private final BlockPos.Mutable searchPos = new BlockPos.Mutable();
+	private final BlockColors blockColorMap = Minecraft.getInstance().getBlockColors();
+	private final BlockPos.MutableBlockPos searchPos = new BlockPos.MutableBlockPos();
 
-	public BlockRenderView blockView;
+	public BlockAndTintGetter blockView;
 	public BlockPos blockPos;
 	public BlockState blockState;
 
 	boolean useAo;
 	boolean defaultAo;
-	RenderLayer defaultLayer;
+	RenderType defaultLayer;
 
-	Random random;
+	RandomSource random;
 	long seed;
 	boolean recomputeSeed;
-	public final Supplier<Random> randomSupplier = () -> {
+	public final Supplier<RandomSource> randomSupplier = () -> {
 		long seed = this.seed;
 
 		if (recomputeSeed) {
-			seed = blockState.getRenderingSeed(blockPos);
+			seed = blockState.getSeed(blockPos);
 			this.seed = seed;
 			recomputeSeed = false;
 		}
 
-		final Random random = this.random;
+		final RandomSource random = this.random;
 		random.setSeed(seed);
 		return random;
 	};
@@ -73,7 +71,7 @@ public class BlockRenderInfo {
 	private int cullCompletionFlags;
 	private int cullResultFlags;
 
-	public void prepareForWorld(BlockRenderView blockView, boolean enableCulling) {
+	public void prepareForWorld(BlockAndTintGetter blockView, boolean enableCulling) {
 		this.blockView = blockView;
 		this.enableCulling = enableCulling;
 	}
@@ -82,10 +80,10 @@ public class BlockRenderInfo {
 		this.blockPos = blockPos;
 		this.blockState = blockState;
 
-		useAo = MinecraftClient.isAmbientOcclusionEnabled();
-		defaultAo = useAo && modelAo && blockState.getLuminance() == 0;
+		useAo = Minecraft.useAmbientOcclusion();
+		defaultAo = useAo && modelAo && blockState.getLightEmission() == 0;
 
-		defaultLayer = RenderLayers.getBlockLayer(blockState);
+		defaultLayer = ItemBlockRenderTypes.getChunkRenderType(blockState);
 
 		cullCompletionFlags = 0;
 		cullResultFlags = 0;
@@ -106,12 +104,12 @@ public class BlockRenderInfo {
 			return true;
 		}
 
-		final int mask = 1 << face.getId();
+		final int mask = 1 << face.get3DDataValue();
 
 		if ((cullCompletionFlags & mask) == 0) {
 			cullCompletionFlags |= mask;
 
-			if (Block.shouldDrawSide(blockState, blockView, blockPos, face, searchPos.set(blockPos, face))) {
+			if (Block.shouldRenderFace(blockState, blockView, blockPos, face, searchPos.setWithOffset(blockPos, face))) {
 				cullResultFlags |= mask;
 				return true;
 			} else {
@@ -122,7 +120,7 @@ public class BlockRenderInfo {
 		}
 	}
 
-	RenderLayer effectiveRenderLayer(BlendMode blendMode) {
+	RenderType effectiveRenderLayer(BlendMode blendMode) {
 		return blendMode == BlendMode.DEFAULT ? this.defaultLayer : blendMode.blockRenderLayer;
 	}
 }

@@ -16,18 +16,17 @@
 
 package net.fabricmc.fabric.test.object.builder.client.mixin;
 
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.client.render.block.entity.BlockEntityRendererFactories;
-import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
-
-@Mixin(BlockEntityRendererFactories.class)
+@Mixin(BlockEntityRenderers.class)
 public interface BlockEntityRendererFactoriesAccessor {
 	@Invoker
-	static <T extends BlockEntity> void callRegister(BlockEntityType<? extends T> type, BlockEntityRendererFactory<T> factory) {
+	static <T extends BlockEntity> void callRegister(BlockEntityType<? extends T> type, BlockEntityRendererProvider<T> factory) {
 		throw new UnsupportedOperationException();
 	}
 }

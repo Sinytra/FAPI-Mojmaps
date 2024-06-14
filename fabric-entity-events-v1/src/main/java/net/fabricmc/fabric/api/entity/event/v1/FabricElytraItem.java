@@ -16,11 +16,11 @@
 
 package net.fabricmc.fabric.api.entity.event.v1;
 
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.ElytraItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.event.GameEvent;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ElytraItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.gameevent.GameEvent;
 
 /**
  * An interface that can be implemented on an item to provide custom elytra flight when it is worn in the {@link EquipmentSlot#CHEST} slot.
@@ -37,7 +37,7 @@ public interface FabricElytraItem {
 	 * @return true to enable elytra flight for the entity
 	 */
 	default boolean useCustomElytra(LivingEntity entity, ItemStack chestStack, boolean tickElytra) {
-		if (ElytraItem.isUsable(chestStack)) {
+		if (ElytraItem.isFlyEnabled(chestStack)) {
 			if (tickElytra) {
 				doVanillaElytraTick(entity, chestStack);
 			}
@@ -54,12 +54,12 @@ public interface FabricElytraItem {
 	default void doVanillaElytraTick(LivingEntity entity, ItemStack chestStack) {
 		int nextRoll = entity.getFallFlyingTicks() + 1;
 
-		if (!entity.getWorld().isClient && nextRoll % 10 == 0) {
+		if (!entity.level().isClientSide && nextRoll % 10 == 0) {
 			if ((nextRoll / 10) % 2 == 0) {
-				chestStack.damage(1, entity, EquipmentSlot.CHEST);
+				chestStack.hurtAndBreak(1, entity, EquipmentSlot.CHEST);
 			}
 
-			entity.emitGameEvent(GameEvent.ELYTRA_GLIDE);
+			entity.gameEvent(GameEvent.ELYTRA_GLIDE);
 		}
 	}
 }

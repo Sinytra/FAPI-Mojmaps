@@ -20,16 +20,14 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.client.network.ClientTagLoader;
-import net.minecraft.registry.DynamicRegistryManager;
-
 import net.fabricmc.fabric.api.event.lifecycle.v1.CommonLifecycleEvents;
+import net.minecraft.client.multiplayer.TagCollector;
+import net.minecraft.core.RegistryAccess;
 
-@Mixin(ClientTagLoader.class)
+@Mixin(TagCollector.class)
 public class ClientTagLoaderMixin {
-	@Inject(method = "load(Lnet/minecraft/registry/DynamicRegistryManager;Z)V", at = @At("TAIL"))
-	private void invokeTagsLoaded(DynamicRegistryManager registryManager, boolean local, CallbackInfo ci) {
+	@Inject(method = "updateTags(Lnet/minecraft/core/RegistryAccess;Z)V", at = @At("TAIL"))
+	private void invokeTagsLoaded(RegistryAccess registryManager, boolean local, CallbackInfo ci) {
 		CommonLifecycleEvents.TAGS_LOADED.invoker().onTagsLoaded(registryManager, true);
 	}
 }

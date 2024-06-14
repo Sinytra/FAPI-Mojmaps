@@ -16,21 +16,20 @@
 
 package net.fabricmc.fabric.api.object.builder.v1.client.model;
 
-import net.minecraft.client.item.ClampedModelPredicateProvider;
-import net.minecraft.item.Item;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.mixin.object.builder.client.ModelPredicateProviderRegistryAccessor;
 import net.fabricmc.fabric.mixin.object.builder.client.ModelPredicateProviderRegistrySpecificAccessor;
+import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 
 /**
  * Allows registering model predicate providers for item models.
  *
  * <p>A registered model predicate providers for an item can be retrieved through
- * {@link net.minecraft.client.item.ModelPredicateProviderRegistry#get(net.minecraft.item.ItemStack, Identifier)}.</p>
+ * {@link net.minecraft.client.renderer.item.ItemProperties#getProperty(net.minecraft.world.item.ItemStack, ResourceLocation)}.</p>
  *
- * @see net.minecraft.client.item.ModelPredicateProviderRegistry
- * @deprecated Replaced by access wideners for {@link net.minecraft.client.item.ModelPredicateProviderRegistry}
+ * @see net.minecraft.client.renderer.item.ItemProperties
+ * @deprecated Replaced by access wideners for {@link net.minecraft.client.renderer.item.ItemProperties}
  * registration methods in Fabric Transitive Access Wideners (v1).
  */
 @Deprecated
@@ -41,7 +40,7 @@ public final class FabricModelPredicateProviderRegistry {
 	 * @param id       the identifier of the provider
 	 * @param provider the provider
 	 */
-	public static void register(Identifier id, ClampedModelPredicateProvider provider) {
+	public static void register(ResourceLocation id, ClampedItemPropertyFunction provider) {
 		ModelPredicateProviderRegistryAccessor.callRegister(id, provider);
 	}
 
@@ -52,7 +51,7 @@ public final class FabricModelPredicateProviderRegistry {
 	 * @param id       the identifier of the provider
 	 * @param provider the provider
 	 */
-	public static void register(Item item, Identifier id, ClampedModelPredicateProvider provider) {
+	public static void register(Item item, ResourceLocation id, ClampedItemPropertyFunction provider) {
 		ModelPredicateProviderRegistrySpecificAccessor.callRegister(item, id, provider);
 	}
 }

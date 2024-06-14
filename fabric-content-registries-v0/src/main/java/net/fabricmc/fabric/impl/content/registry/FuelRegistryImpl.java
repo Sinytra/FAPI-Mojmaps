@@ -22,20 +22,18 @@ import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import net.minecraft.block.entity.AbstractFurnaceBlockEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemConvertible;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.registry.tag.TagKey;
-
 import net.fabricmc.fabric.api.registry.FuelRegistry;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 
 // TODO: Clamp values to 32767 (+ add hook for mods which extend the limit to disable the check?)
 public final class FuelRegistryImpl implements FuelRegistry {
 	private static final Logger LOGGER = LoggerFactory.getLogger(FuelRegistryImpl.class);
-	private final Object2IntMap<ItemConvertible> itemCookTimes = new Object2IntLinkedOpenHashMap<>();
+	private final Object2IntMap<ItemLike> itemCookTimes = new Object2IntLinkedOpenHashMap<>();
 	private final Object2IntMap<TagKey<Item>> tagCookTimes = new Object2IntLinkedOpenHashMap<>();
 
 	public FuelRegistryImpl() {
@@ -43,16 +41,16 @@ public final class FuelRegistryImpl implements FuelRegistry {
 
 	public Map<Item, Integer> getFuelTimes() {
 		// Cached by vanilla now
-		return AbstractFurnaceBlockEntity.createFuelTimeMap();
+		return AbstractFurnaceBlockEntity.getFuel();
 	}
 
 	@Override
-	public Integer get(ItemConvertible item) {
+	public Integer get(ItemLike item) {
 		return getFuelTimes().get(item.asItem());
 	}
 
 	@Override
-	public void add(ItemConvertible item, Integer cookTime) {
+	public void add(ItemLike item, Integer cookTime) {
 		if (cookTime > 32767) {
 			LOGGER.warn("Tried to register an overly high cookTime: " + cookTime + " > 32767! (" + item + ")");
 		}
@@ -72,7 +70,7 @@ public final class FuelRegistryImpl implements FuelRegistry {
 	}
 
 	@Override
-	public void remove(ItemConvertible item) {
+	public void remove(ItemLike item) {
 		add(item, 0);
 		resetCache();
 	}
@@ -84,7 +82,7 @@ public final class FuelRegistryImpl implements FuelRegistry {
 	}
 
 	@Override
-	public void clear(ItemConvertible item) {
+	public void clear(ItemLike item) {
 		itemCookTimes.removeInt(item);
 		resetCache();
 	}
@@ -101,32 +99,32 @@ public final class FuelRegistryImpl implements FuelRegistry {
 			int time = tagCookTimes.getInt(tag);
 
 			if (time <= 0) {
-				for (RegistryEntry<Item> key : Registries.ITEM.iterateEntries(tag)) {
+				for (Holder<Item> key : BuiltInRegistries.ITEM.getTagOrEmpty(tag)) {
 					final Item item = key.value();
 					map.remove(item);
 				}
 			} else {
-				AbstractFurnaceBlockEntity.addFuel(map, tag, time);
+				AbstractFurnaceBlockEntity.add(map, tag, time);
 			}
 		}
 
-		for (ItemConvertible item : itemCookTimes.keySet()) {
+		for (ItemLike item : itemCookTimes.keySet()) {
 			int time = itemCookTimes.getInt(item);
 
 			if (time <= 0) {
 				map.remove(item.asItem());
 			} else {
-				AbstractFurnaceBlockEntity.addFuel(map, item, time);
+				AbstractFurnaceBlockEntity.add(map, item, time);
 			}
 		}
 	}
 
 	private static String getTagName(TagKey<?> tag) {
-		return tag.id().toString();
+		return tag.location().toString();
 	}
 
 	public void resetCache() {
 		// Note: tag reload is already handled by vanilla, see DataPackContents#refresh
-		AbstractFurnaceBlockEntity.clearFuelTimes();
+		AbstractFurnaceBlockEntity.invalidateCache();
 	}
 }

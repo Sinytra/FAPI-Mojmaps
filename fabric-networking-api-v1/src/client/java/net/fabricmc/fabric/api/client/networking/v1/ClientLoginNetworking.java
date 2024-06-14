@@ -21,17 +21,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientLoginNetworkHandler;
-import net.minecraft.network.ClientConnection;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.PacketCallbacks;
-import net.minecraft.network.listener.PacketListener;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.networking.v1.ServerLoginNetworking;
 import net.fabricmc.fabric.impl.networking.client.ClientNetworkingImpl;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientHandshakePacketListenerImpl;
+import net.minecraft.network.Connection;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.PacketListener;
+import net.minecraft.network.PacketSendListener;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Offers access to login stage client-side networking functionalities.
@@ -47,15 +45,15 @@ public final class ClientLoginNetworking {
 	 * A global receiver is registered to all connections, in the present and future.
 	 *
 	 * <p>If a handler is already registered to the {@code channel}, this method will return {@code false}, and no change will be made.
-	 * Use {@link #unregisterGlobalReceiver(Identifier)} to unregister the existing handler.
+	 * Use {@link #unregisterGlobalReceiver(ResourceLocation)} to unregister the existing handler.
 	 *
 	 * @param channelName the id of the channel
 	 * @param queryHandler the handler
 	 * @return false if a handler is already registered to the channel
-	 * @see ClientLoginNetworking#unregisterGlobalReceiver(Identifier)
-	 * @see ClientLoginNetworking#registerReceiver(Identifier, LoginQueryRequestHandler)
+	 * @see ClientLoginNetworking#unregisterGlobalReceiver(ResourceLocation)
+	 * @see ClientLoginNetworking#registerReceiver(ResourceLocation, LoginQueryRequestHandler)
 	 */
-	public static boolean registerGlobalReceiver(Identifier channelName, LoginQueryRequestHandler queryHandler) {
+	public static boolean registerGlobalReceiver(ResourceLocation channelName, LoginQueryRequestHandler queryHandler) {
 		return ClientNetworkingImpl.LOGIN.registerGlobalReceiver(channelName, queryHandler);
 	}
 
@@ -67,11 +65,11 @@ public final class ClientLoginNetworking {
 	 *
 	 * @param channelName the id of the channel
 	 * @return the previous handler, or {@code null} if no handler was bound to the channel
-	 * @see ClientLoginNetworking#registerGlobalReceiver(Identifier, LoginQueryRequestHandler)
-	 * @see ClientLoginNetworking#unregisterReceiver(Identifier)
+	 * @see ClientLoginNetworking#registerGlobalReceiver(ResourceLocation, LoginQueryRequestHandler)
+	 * @see ClientLoginNetworking#unregisterReceiver(ResourceLocation)
 	 */
 	@Nullable
-	public static ClientLoginNetworking.LoginQueryRequestHandler unregisterGlobalReceiver(Identifier channelName) {
+	public static ClientLoginNetworking.LoginQueryRequestHandler unregisterGlobalReceiver(ResourceLocation channelName) {
 		return ClientNetworkingImpl.LOGIN.unregisterGlobalReceiver(channelName);
 	}
 
@@ -81,7 +79,7 @@ public final class ClientLoginNetworking {
 	 *
 	 * @return all channel names which global receivers are registered for.
 	 */
-	public static Set<Identifier> getGlobalReceivers() {
+	public static Set<ResourceLocation> getGlobalReceivers() {
 		return ClientNetworkingImpl.LOGIN.getChannels();
 	}
 
@@ -89,21 +87,21 @@ public final class ClientLoginNetworking {
 	 * Registers a handler to a query request channel.
 	 *
 	 * <p>If a handler is already registered to the {@code channelName}, this method will return {@code false}, and no change will be made.
-	 * Use {@link #unregisterReceiver(Identifier)} to unregister the existing handler.
+	 * Use {@link #unregisterReceiver(ResourceLocation)} to unregister the existing handler.
 	 *
 	 * @param channelName the id of the channel
 	 * @param queryHandler the handler
 	 * @return false if a handler is already registered to the channel name
 	 * @throws IllegalStateException if the client is not logging in
 	 */
-	public static boolean registerReceiver(Identifier channelName, LoginQueryRequestHandler queryHandler) throws IllegalStateException {
-		final ClientConnection connection = ClientNetworkingImpl.getLoginConnection();
+	public static boolean registerReceiver(ResourceLocation channelName, LoginQueryRequestHandler queryHandler) throws IllegalStateException {
+		final Connection connection = ClientNetworkingImpl.getLoginConnection();
 
 		if (connection != null) {
 			final PacketListener packetListener = connection.getPacketListener();
 
-			if (packetListener instanceof ClientLoginNetworkHandler) {
-				return ClientNetworkingImpl.getAddon(((ClientLoginNetworkHandler) packetListener)).registerChannel(channelName, queryHandler);
+			if (packetListener instanceof ClientHandshakePacketListenerImpl) {
+				return ClientNetworkingImpl.getAddon(((ClientHandshakePacketListenerImpl) packetListener)).registerChannel(channelName, queryHandler);
 			}
 		}
 
@@ -120,14 +118,14 @@ public final class ClientLoginNetworking {
 	 * @throws IllegalStateException if the client is not logging in
 	 */
 	@Nullable
-	public static LoginQueryRequestHandler unregisterReceiver(Identifier channelName) throws IllegalStateException {
-		final ClientConnection connection = ClientNetworkingImpl.getLoginConnection();
+	public static LoginQueryRequestHandler unregisterReceiver(ResourceLocation channelName) throws IllegalStateException {
+		final Connection connection = ClientNetworkingImpl.getLoginConnection();
 
 		if (connection != null) {
 			final PacketListener packetListener = connection.getPacketListener();
 
-			if (packetListener instanceof ClientLoginNetworkHandler) {
-				return ClientNetworkingImpl.getAddon(((ClientLoginNetworkHandler) packetListener)).unregisterChannel(channelName);
+			if (packetListener instanceof ClientHandshakePacketListenerImpl) {
+				return ClientNetworkingImpl.getAddon(((ClientHandshakePacketListenerImpl) packetListener)).unregisterChannel(channelName);
 			}
 		}
 
@@ -143,7 +141,7 @@ public final class ClientLoginNetworking {
 		 * Handles an incoming query request from a server.
 		 *
 		 * <p>This method is executed on {@linkplain io.netty.channel.EventLoop netty's event loops}.
-		 * Modification to the game should be {@linkplain net.minecraft.util.thread.ThreadExecutor#submit(Runnable) scheduled} using the provided Minecraft client instance.
+		 * Modification to the game should be {@linkplain net.minecraft.util.thread.BlockableEventLoop#submit(Runnable) scheduled} using the provided Minecraft client instance.
 		 *
 		 * <p>The return value of this method is a completable future that may be used to delay the login process to the server until a task {@link CompletableFuture#isDone() is done}.
 		 * The future should complete in reasonably time to prevent disconnection by the server.
@@ -156,6 +154,6 @@ public final class ClientLoginNetworking {
 		 * @return a completable future which contains the payload to respond to the server with.
 		 * If the future contains {@code null}, then the server will be notified that the client did not understand the query.
 		 */
-		CompletableFuture<@Nullable PacketByteBuf> receive(MinecraftClient client, ClientLoginNetworkHandler handler, PacketByteBuf buf, Consumer<PacketCallbacks> callbacksConsumer);
+		CompletableFuture<@Nullable FriendlyByteBuf> receive(Minecraft client, ClientHandshakePacketListenerImpl handler, FriendlyByteBuf buf, Consumer<PacketSendListener> callbacksConsumer);
 	}
 }

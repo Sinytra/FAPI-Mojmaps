@@ -16,20 +16,20 @@
 
 package net.fabricmc.fabric.test.lookup.client.entity;
 
-import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.render.entity.PigEntityRenderer;
-import net.minecraft.entity.passive.PigEntity;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.PigRenderer;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.animal.Pig;
 
-public class InspectablePigEntityRenderer extends PigEntityRenderer {
-	private static final Identifier TEXTURE = Identifier.ofVanilla("missingno");
+public class InspectablePigEntityRenderer extends PigRenderer {
+	private static final ResourceLocation TEXTURE = ResourceLocation.withDefaultNamespace("missingno");
 
-	public InspectablePigEntityRenderer(EntityRendererFactory.Context context) {
+	public InspectablePigEntityRenderer(EntityRendererProvider.Context context) {
 		super(context);
 	}
 
 	@Override
-	public Identifier getTexture(PigEntity pigEntity) {
+	public ResourceLocation getTextureLocation(Pig pigEntity) {
 		return TEXTURE;
 	}
 }

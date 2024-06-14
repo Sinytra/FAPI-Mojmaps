@@ -16,18 +16,17 @@
 
 package net.fabricmc.fabric.test.client.event.interaction;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.util.Hand;
-
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.event.client.player.ClientPickBlockApplyCallback;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 public class PlayerPickBlockTests implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		ClientPickBlockApplyCallback.EVENT.register((player, result, stack) -> {
-			if (player.getStackInHand(Hand.MAIN_HAND).getItem() == Items.DIAMOND) {
+			if (player.getItemInHand(InteractionHand.MAIN_HAND).getItem() == Items.DIAMOND) {
 				return new ItemStack(Items.OBSIDIAN);
 			}
 

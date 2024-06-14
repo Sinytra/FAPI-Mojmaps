@@ -29,18 +29,16 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryLoader;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.event.registry.DynamicRegistrySetupCallback;
 import net.fabricmc.fabric.impl.registry.sync.DynamicRegistriesImpl;
 import net.fabricmc.fabric.impl.registry.sync.DynamicRegistryViewImpl;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.resources.RegistryDataLoader;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 
-@Mixin(RegistryLoader.class)
+@Mixin(RegistryDataLoader.class)
 public class RegistryLoaderMixin {
 	@Unique
 	private static final ThreadLocal<Boolean> IS_SERVER = ThreadLocal.withInitial(() -> false);
@@ -49,8 +47,8 @@ public class RegistryLoaderMixin {
 	 * Sets IS_SERVER flag. Note that this must be reset after call, as the render thread
 	 * invokes this method as well.
 	 */
-	@WrapOperation(method = "loadFromResource(Lnet/minecraft/resource/ResourceManager;Lnet/minecraft/registry/DynamicRegistryManager;Ljava/util/List;)Lnet/minecraft/registry/DynamicRegistryManager$Immutable;", at = @At(value = "INVOKE", target = "Lnet/minecraft/registry/RegistryLoader;load(Lnet/minecraft/registry/RegistryLoader$RegistryLoadable;Lnet/minecraft/registry/DynamicRegistryManager;Ljava/util/List;)Lnet/minecraft/registry/DynamicRegistryManager$Immutable;"))
-	private static DynamicRegistryManager.Immutable wrapIsServerCall(@Coerce Object registryLoadable, DynamicRegistryManager baseRegistryManager, List<RegistryLoader.Entry<?>> entries, Operation<DynamicRegistryManager.Immutable> original) {
+	@WrapOperation(method = "load(Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/core/RegistryAccess;Ljava/util/List;)Lnet/minecraft/core/RegistryAccess$Frozen;", at = @At(value = "INVOKE", target = "Lnet/minecraft/resources/RegistryDataLoader;load(Lnet/minecraft/resources/RegistryDataLoader$LoadingFunction;Lnet/minecraft/core/RegistryAccess;Ljava/util/List;)Lnet/minecraft/core/RegistryAccess$Frozen;"))
+	private static RegistryAccess.Frozen wrapIsServerCall(@Coerce Object registryLoadable, RegistryAccess baseRegistryManager, List<RegistryDataLoader.RegistryData<?>> entries, Operation<RegistryAccess.Frozen> original) {
 		try {
 			IS_SERVER.set(true);
 			return original.call(registryLoadable, baseRegistryManager, entries);
@@ -60,20 +58,20 @@ public class RegistryLoaderMixin {
 	}
 
 	@Inject(
-			method = "load(Lnet/minecraft/registry/RegistryLoader$RegistryLoadable;Lnet/minecraft/registry/DynamicRegistryManager;Ljava/util/List;)Lnet/minecraft/registry/DynamicRegistryManager$Immutable;",
+			method = "load(Lnet/minecraft/resources/RegistryDataLoader$LoadingFunction;Lnet/minecraft/core/RegistryAccess;Ljava/util/List;)Lnet/minecraft/core/RegistryAccess$Frozen;",
 			at = @At(
 					value = "INVOKE",
 					target = "Ljava/util/List;forEach(Ljava/util/function/Consumer;)V",
 					ordinal = 0
 			)
 	)
-	private static void beforeLoad(@Coerce Object registryLoadable, DynamicRegistryManager baseRegistryManager, List<RegistryLoader.Entry<?>> entries, CallbackInfoReturnable<DynamicRegistryManager.Immutable> cir, @Local(ordinal = 1) List<RegistryLoader.Loader<?>> registriesList) {
+	private static void beforeLoad(@Coerce Object registryLoadable, RegistryAccess baseRegistryManager, List<RegistryDataLoader.RegistryData<?>> entries, CallbackInfoReturnable<RegistryAccess.Frozen> cir, @Local(ordinal = 1) List<RegistryDataLoader.Loader<?>> registriesList) {
 		if (!IS_SERVER.get()) return;
 
-		Map<RegistryKey<? extends Registry<?>>, Registry<?>> registries = new IdentityHashMap<>(registriesList.size());
+		Map<ResourceKey<? extends Registry<?>>, Registry<?>> registries = new IdentityHashMap<>(registriesList.size());
 
-		for (RegistryLoader.Loader<?> entry : registriesList) {
-			registries.put(entry.registry().getKey(), entry.registry());
+		for (RegistryDataLoader.Loader<?> entry : registriesList) {
+			registries.put(entry.registry().key(), entry.registry());
 		}
 
 		DynamicRegistrySetupCallback.EVENT.invoker().onRegistrySetup(new DynamicRegistryViewImpl(registries));
@@ -83,18 +81,18 @@ public class RegistryLoaderMixin {
 	// so we prepend the directories with the namespace if it's a modded registry registered using the Fabric API.
 	@WrapOperation(
 			method = {
-					"loadFromNetwork(Ljava/util/Map;Lnet/minecraft/resource/ResourceFactory;Lnet/minecraft/registry/RegistryOps$RegistryInfoGetter;Lnet/minecraft/registry/MutableRegistry;Lcom/mojang/serialization/Decoder;Ljava/util/Map;)V",
-					"loadFromResource(Lnet/minecraft/resource/ResourceManager;Lnet/minecraft/registry/RegistryOps$RegistryInfoGetter;Lnet/minecraft/registry/MutableRegistry;Lcom/mojang/serialization/Decoder;Ljava/util/Map;)V"
+					"loadContentsFromNetwork(Ljava/util/Map;Lnet/minecraft/server/packs/resources/ResourceProvider;Lnet/minecraft/resources/RegistryOps$RegistryInfoLookup;Lnet/minecraft/core/WritableRegistry;Lcom/mojang/serialization/Decoder;Ljava/util/Map;)V",
+					"loadContentsFromManager(Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/resources/RegistryOps$RegistryInfoLookup;Lnet/minecraft/core/WritableRegistry;Lcom/mojang/serialization/Decoder;Ljava/util/Map;)V"
 			},
 			at = @At(
 					value = "INVOKE",
-					target = "Lnet/minecraft/registry/RegistryKeys;getPath(Lnet/minecraft/registry/RegistryKey;)Ljava/lang/String;"
+					target = "Lnet/minecraft/core/registries/Registries;elementsDirPath(Lnet/minecraft/resources/ResourceKey;)Ljava/lang/String;"
 			)
 	)
-	private static String prependDirectoryWithNamespace(RegistryKey<? extends Registry<?>> registryKey, Operation<String> original) {
+	private static String prependDirectoryWithNamespace(ResourceKey<? extends Registry<?>> registryKey, Operation<String> original) {
 		String originalDirectory = original.call(registryKey);
-		Identifier id = registryKey.getValue();
-		if (!id.getNamespace().equals(Identifier.DEFAULT_NAMESPACE)
+		ResourceLocation id = registryKey.location();
+		if (!id.getNamespace().equals(ResourceLocation.DEFAULT_NAMESPACE)
 				&& DynamicRegistriesImpl.FABRIC_DYNAMIC_REGISTRY_KEYS.contains(registryKey)) {
 			return id.getNamespace() + "/" + originalDirectory;
 		}

@@ -19,19 +19,17 @@ package net.fabricmc.fabric.api.object.builder.v1.block.entity;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
 import com.mojang.datafixers.types.Type;
-
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.util.math.BlockPos;
 
 /**
  * Fabric's version of BlockEntityType.Builder with additional convenience methods.
  *
- * <p>Alternatively, use the access widener for {@link BlockEntityType.BlockEntityFactory}
+ * <p>Alternatively, use the access widener for {@link BlockEntityType.BlockEntitySupplier}
  * in Fabric Transitive Access Wideners (v1).
  *
  * @deprecated Use {@link BlockEntityType.Builder} directly.
@@ -47,7 +45,7 @@ public final class FabricBlockEntityTypeBuilder<T extends BlockEntity> {
 	}
 
 	/**
-	 * @deprecated Use {@link BlockEntityType.Builder#create(BlockEntityType.BlockEntityFactory, Block...)}.
+	 * @deprecated Use {@link BlockEntityType.Builder#of(BlockEntityType.BlockEntitySupplier, Block...)}.
 	 */
 	@Deprecated
 	public static <T extends BlockEntity> FabricBlockEntityTypeBuilder<T> create(Factory<? extends T> factory, Block... blocks) {
@@ -62,7 +60,7 @@ public final class FabricBlockEntityTypeBuilder<T extends BlockEntity> {
 	 *
 	 * @param block the supported block
 	 * @return this builder
-	 * @deprecated Use {@link BlockEntityType.Builder#create(BlockEntityType.BlockEntityFactory, Block...)}.
+	 * @deprecated Use {@link BlockEntityType.Builder#of(BlockEntityType.BlockEntitySupplier, Block...)}.
 	 */
 	@Deprecated
 	public FabricBlockEntityTypeBuilder<T> addBlock(Block block) {
@@ -75,7 +73,7 @@ public final class FabricBlockEntityTypeBuilder<T extends BlockEntity> {
 	 *
 	 * @param blocks the supported blocks
 	 * @return this builder
-	 * @deprecated Use {@link BlockEntityType.Builder#create(BlockEntityType.BlockEntityFactory, Block...)}.
+	 * @deprecated Use {@link BlockEntityType.Builder#of(BlockEntityType.BlockEntitySupplier, Block...)}.
 	 */
 	@Deprecated
 	public FabricBlockEntityTypeBuilder<T> addBlocks(Block... blocks) {
@@ -96,12 +94,12 @@ public final class FabricBlockEntityTypeBuilder<T extends BlockEntity> {
 	 */
 	@Deprecated
 	public BlockEntityType<T> build(Type<?> type) {
-		return BlockEntityType.Builder.<T>create(factory::create, blocks.toArray(new Block[0]))
+		return BlockEntityType.Builder.<T>of(factory::create, blocks.toArray(new Block[0]))
 				.build(type);
 	}
 
 	/**
-	 * @deprecated Use {@link BlockEntityType.BlockEntityFactory}.
+	 * @deprecated Use {@link BlockEntityType.BlockEntitySupplier}.
 	 */
 	@FunctionalInterface
 	@Deprecated

@@ -16,17 +16,16 @@
 
 package net.fabricmc.fabric.mixin.object.builder.client;
 
+import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
+import net.minecraft.client.renderer.item.ItemProperties;
+import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
-import net.minecraft.client.item.ClampedModelPredicateProvider;
-import net.minecraft.client.item.ModelPredicateProviderRegistry;
-import net.minecraft.util.Identifier;
-
-@Mixin(ModelPredicateProviderRegistry.class)
+@Mixin(ItemProperties.class)
 public interface ModelPredicateProviderRegistryAccessor {
 	@Invoker
-	static ClampedModelPredicateProvider callRegister(Identifier id, ClampedModelPredicateProvider provider) {
+	static ClampedItemPropertyFunction callRegister(ResourceLocation id, ClampedItemPropertyFunction provider) {
 		throw new AssertionError("mixin dummy");
 	}
 }

@@ -20,17 +20,15 @@ import com.llamalad7.mixinextras.sugar.Local;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
-
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.mob.MobEntity;
-
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
 
-@Mixin(MobEntity.class)
+@Mixin(Mob.class)
 public class MobEntityMixin {
-	@ModifyArg(method = "convertTo", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;spawnEntity(Lnet/minecraft/entity/Entity;)Z"))
+	@ModifyArg(method = "convertTo", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;addFreshEntity(Lnet/minecraft/world/entity/Entity;)Z"))
 	private Entity afterEntityConverted(Entity converted, @Local(argsOnly = true) boolean keepEquipment) {
-		ServerLivingEntityEvents.MOB_CONVERSION.invoker().onConversion((MobEntity) (Object) this, (MobEntity) converted, keepEquipment);
+		ServerLivingEntityEvents.MOB_CONVERSION.invoker().onConversion((Mob) (Object) this, (Mob) converted, keepEquipment);
 		return converted;
 	}
 }

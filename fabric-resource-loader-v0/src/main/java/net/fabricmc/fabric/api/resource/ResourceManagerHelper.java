@@ -17,14 +17,12 @@
 package net.fabricmc.fabric.api.resource;
 
 import org.jetbrains.annotations.ApiStatus;
-
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.resource.ResourceType;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.impl.resource.loader.ResourceManagerHelperImpl;
 import net.fabricmc.loader.api.ModContainer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.resources.ResourceManager;
 
 /**
  * Helper for working with {@link ResourceManager} instances, and other resource loader generalities.
@@ -55,7 +53,7 @@ public interface ResourceManagerHelper {
 	 * @param type The given resource type.
 	 * @return The ResourceManagerHelper instance.
 	 */
-	static ResourceManagerHelper get(ResourceType type) {
+	static ResourceManagerHelper get(PackType type) {
 		return ResourceManagerHelperImpl.get(type);
 	}
 
@@ -75,7 +73,7 @@ public interface ResourceManagerHelper {
 	 * @param activationType the activation type of the resource pack
 	 * @return {@code true} if successfully registered the resource pack, else {@code false}
 	 */
-	static boolean registerBuiltinResourcePack(Identifier id, ModContainer container, ResourcePackActivationType activationType) {
+	static boolean registerBuiltinResourcePack(ResourceLocation id, ModContainer container, ResourcePackActivationType activationType) {
 		return ResourceManagerHelperImpl.registerBuiltinResourcePack(id, "resourcepacks/" + id.getPath(), container, activationType);
 	}
 
@@ -96,7 +94,7 @@ public interface ResourceManagerHelper {
 	 * @param activationType the activation type of the resource pack
 	 * @return {@code true} if successfully registered the resource pack, else {@code false}
 	 */
-	static boolean registerBuiltinResourcePack(Identifier id, ModContainer container, Text displayName, ResourcePackActivationType activationType) {
+	static boolean registerBuiltinResourcePack(ResourceLocation id, ModContainer container, Component displayName, ResourcePackActivationType activationType) {
 		return ResourceManagerHelperImpl.registerBuiltinResourcePack(id, "resourcepacks/" + id.getPath(), container, displayName, activationType);
 	}
 
@@ -116,11 +114,11 @@ public interface ResourceManagerHelper {
 	 * @param displayName    the display name of the resource pack, should include mod name for clarity
 	 * @param activationType the activation type of the resource pack
 	 * @return {@code true} if successfully registered the resource pack, else {@code false}
-	 * @deprecated Use {@link #registerBuiltinResourcePack(Identifier, ModContainer, Text, ResourcePackActivationType)} instead.
+	 * @deprecated Use {@link #registerBuiltinResourcePack(ResourceLocation, ModContainer, Component, ResourcePackActivationType)} instead.
 	 */
 	@Deprecated
-	static boolean registerBuiltinResourcePack(Identifier id, ModContainer container, String displayName, ResourcePackActivationType activationType) {
-		return ResourceManagerHelperImpl.registerBuiltinResourcePack(id, "resourcepacks/" + id.getPath(), container, Text.literal(displayName), activationType);
+	static boolean registerBuiltinResourcePack(ResourceLocation id, ModContainer container, String displayName, ResourcePackActivationType activationType) {
+		return ResourceManagerHelperImpl.registerBuiltinResourcePack(id, "resourcepacks/" + id.getPath(), container, Component.literal(displayName), activationType);
 	}
 
 	/**
@@ -141,11 +139,11 @@ public interface ResourceManagerHelper {
 	 * @param container        the mod container
 	 * @param enabledByDefault {@code true} if enabled by default, else {@code false}
 	 * @return {@code true} if successfully registered the resource pack, else {@code false}
-	 * @deprecated Please use {@link #registerBuiltinResourcePack(Identifier, ModContainer, ResourcePackActivationType)} instead, the {@code sub path} should be removed in a future
+	 * @deprecated Please use {@link #registerBuiltinResourcePack(ResourceLocation, ModContainer, ResourcePackActivationType)} instead, the {@code sub path} should be removed in a future
 	 * release in favor of the identifier path.
 	 */
 	@Deprecated
-	static boolean registerBuiltinResourcePack(Identifier id, String subPath, ModContainer container, boolean enabledByDefault) {
+	static boolean registerBuiltinResourcePack(ResourceLocation id, String subPath, ModContainer container, boolean enabledByDefault) {
 		return ResourceManagerHelperImpl.registerBuiltinResourcePack(id, subPath, container,
 				enabledByDefault ? ResourcePackActivationType.DEFAULT_ENABLED : ResourcePackActivationType.NORMAL);
 	}

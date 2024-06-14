@@ -24,12 +24,12 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.world.PersistentState;
-
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedData.Factory;
 import net.fabricmc.fabric.impl.attachment.AttachmentPersistentState;
 
-@Mixin(ServerWorld.class)
+@Mixin(ServerLevel.class)
 abstract class ServerWorldMixin {
 	@Shadow
 	@Final
@@ -38,12 +38,12 @@ abstract class ServerWorldMixin {
 	@Inject(at = @At("TAIL"), method = "<init>")
 	private void createAttachmentsPersistentState(CallbackInfo ci) {
 		// Force persistent state creation
-		ServerWorld world = (ServerWorld) (Object) this;
-		var type = new PersistentState.Type<>(
+		ServerLevel world = (ServerLevel) (Object) this;
+		var type = new SavedData.Factory<>(
 				() -> new AttachmentPersistentState(world),
-				(nbt, wrapperLookup) -> AttachmentPersistentState.read(world, nbt, server.getRegistryManager()),
+				(nbt, wrapperLookup) -> AttachmentPersistentState.read(world, nbt, server.registryAccess()),
 				null // Object builder API 12.1.0 and later makes this a no-op
 		);
-		world.getPersistentStateManager().getOrCreate(type, AttachmentPersistentState.ID);
+		world.getDataStorage().computeIfAbsent(type, AttachmentPersistentState.ID);
 	}
 }

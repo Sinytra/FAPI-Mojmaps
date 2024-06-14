@@ -22,40 +22,38 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Slice;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.client.particle.BlockDustParticle;
-import net.minecraft.client.particle.SpriteBillboardParticle;
-import net.minecraft.util.math.BlockPos;
-
 import net.fabricmc.fabric.api.client.particle.v1.ParticleRenderEvents;
+import net.minecraft.client.particle.TerrainParticle;
+import net.minecraft.client.particle.TextureSheetParticle;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 
 // Implements ParticleRenderEvents.ALLOW_BLOCK_DUST_TINT
-@Mixin(BlockDustParticle.class)
-abstract class BlockDustParticleMixin extends SpriteBillboardParticle {
+@Mixin(TerrainParticle.class)
+abstract class BlockDustParticleMixin extends TextureSheetParticle {
 	@Shadow
 	@Final
-	private BlockPos blockPos;
+	private BlockPos pos;
 
 	private BlockDustParticleMixin() {
 		super(null, 0, 0, 0);
 	}
 
 	@ModifyVariable(
-			method = "<init>(Lnet/minecraft/client/world/ClientWorld;DDDDDDLnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;)V",
+			method = "<init>(Lnet/minecraft/client/multiplayer/ClientLevel;DDDDDDLnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)V",
 			at = @At("LOAD"),
 			argsOnly = true,
 			slice = @Slice(
-					from = @At(value = "FIELD", target = "Lnet/minecraft/client/particle/BlockDustParticle;blue:F", ordinal = 0),
-					to = @At(value = "INVOKE", target = "Lnet/minecraft/block/BlockState;isOf(Lnet/minecraft/block/Block;)Z")
+					from = @At(value = "FIELD", target = "Lnet/minecraft/client/particle/TerrainParticle;bCol:F", ordinal = 0),
+					to = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;isOf(Lnet/minecraft/world/level/block/Block;)Z")
 			),
 			allow = 1
 	)
 	private BlockState removeUntintableParticles(BlockState state) {
-		if (!ParticleRenderEvents.ALLOW_BLOCK_DUST_TINT.invoker().allowBlockDustTint(state, world, blockPos)) {
+		if (!ParticleRenderEvents.ALLOW_BLOCK_DUST_TINT.invoker().allowBlockDustTint(state, level, pos)) {
 			// As of 1.20.1, vanilla hardcodes grass block particles to not get tinted.
-			return Blocks.GRASS_BLOCK.getDefaultState();
+			return Blocks.GRASS_BLOCK.defaultBlockState();
 		}
 
 		return state;

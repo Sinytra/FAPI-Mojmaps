@@ -16,100 +16,99 @@
 
 package net.fabricmc.fabric.test.resource.conditions;
 
-import net.minecraft.block.entity.BannerPattern;
-import net.minecraft.loot.LootTable;
-import net.minecraft.recipe.RecipeManager;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.ReloadableRegistries;
-import net.minecraft.test.GameTest;
-import net.minecraft.test.TestContext;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.ReloadableServerRegistries;
+import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.world.level.block.entity.BannerPattern;
+import net.minecraft.world.level.storage.loot.LootTable;
 
 public class ConditionalResourcesTest {
 	private static final String MOD_ID = "fabric-resource-conditions-api-v1-testmod";
 
-	private static Identifier id(String path) {
-		return Identifier.of(MOD_ID, path);
+	private static ResourceLocation id(String path) {
+		return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
 	}
 
-	@GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE)
-	public void conditionalRecipes(TestContext context) {
-		RecipeManager manager = context.getWorld().getRecipeManager();
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void conditionalRecipes(GameTestHelper context) {
+		RecipeManager manager = context.getLevel().getRecipeManager();
 
-		if (manager.get(id("not_loaded")).isPresent()) {
+		if (manager.byKey(id("not_loaded")).isPresent()) {
 			throw new AssertionError("not_loaded recipe should not have been loaded.");
 		}
 
-		if (manager.get(id("loaded")).isEmpty()) {
+		if (manager.byKey(id("loaded")).isEmpty()) {
 			throw new AssertionError("loaded recipe should have been loaded.");
 		}
 
-		if (manager.get(id("item_tags_populated")).isEmpty()) {
+		if (manager.byKey(id("item_tags_populated")).isEmpty()) {
 			throw new AssertionError("item_tags_populated recipe should have been loaded.");
 		}
 
-		if (manager.get(id("tags_populated")).isEmpty()) {
+		if (manager.byKey(id("tags_populated")).isEmpty()) {
 			throw new AssertionError("tags_populated recipe should have been loaded.");
 		}
 
-		if (manager.get(id("tags_populated_default")).isEmpty()) {
+		if (manager.byKey(id("tags_populated_default")).isEmpty()) {
 			throw new AssertionError("tags_populated_default recipe should have been loaded.");
 		}
 
-		if (manager.get(id("tags_not_populated")).isPresent()) {
+		if (manager.byKey(id("tags_not_populated")).isPresent()) {
 			throw new AssertionError("tags_not_populated recipe should not have been loaded.");
 		}
 
-		if (manager.get(id("features_enabled")).isEmpty()) {
+		if (manager.byKey(id("features_enabled")).isEmpty()) {
 			throw new AssertionError("features_enabled recipe should have been loaded.");
 		}
 
-		long loadedRecipes = manager.values().stream().filter(r -> r.id().getNamespace().equals(MOD_ID)).count();
+		long loadedRecipes = manager.getRecipes().stream().filter(r -> r.id().getNamespace().equals(MOD_ID)).count();
 		if (loadedRecipes != 5) throw new AssertionError("Unexpected loaded recipe count: " + loadedRecipes);
 
-		context.complete();
+		context.succeed();
 	}
 
-	@GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE)
-	public void conditionalPredicates(TestContext context) {
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void conditionalPredicates(GameTestHelper context) {
 		// Predicates are internally handled as a kind of loot data,
 		// hence the yarn name "loot condition".
 
-		ReloadableRegistries.Lookup registries = context.getWorld().getServer().getReloadableRegistries();
+		ReloadableServerRegistries.Holder registries = context.getLevel().getServer().reloadableRegistries();
 
-		if (!registries.getRegistryManager().get(RegistryKeys.PREDICATE).containsId(id("loaded"))) {
+		if (!registries.get().registryOrThrow(Registries.PREDICATE).containsKey(id("loaded"))) {
 			throw new AssertionError("loaded predicate should have been loaded.");
 		}
 
-		if (registries.getRegistryManager().get(RegistryKeys.PREDICATE).containsId(id("not_loaded"))) {
+		if (registries.get().registryOrThrow(Registries.PREDICATE).containsKey(id("not_loaded"))) {
 			throw new AssertionError("not_loaded predicate should not have been loaded.");
 		}
 
-		context.complete();
+		context.succeed();
 	}
 
-	@GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE)
-	public void conditionalLootTables(TestContext context) {
-		ReloadableRegistries.Lookup registries = context.getWorld().getServer().getReloadableRegistries();
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void conditionalLootTables(GameTestHelper context) {
+		ReloadableServerRegistries.Holder registries = context.getLevel().getServer().reloadableRegistries();
 
-		if (registries.getLootTable(RegistryKey.of(RegistryKeys.LOOT_TABLE, id("blocks/loaded"))) == LootTable.EMPTY) {
+		if (registries.getLootTable(ResourceKey.create(Registries.LOOT_TABLE, id("blocks/loaded"))) == LootTable.EMPTY) {
 			throw new AssertionError("loaded loot table should have been loaded.");
 		}
 
-		if (registries.getLootTable(RegistryKey.of(RegistryKeys.LOOT_TABLE, id("blocks/not_loaded"))) != LootTable.EMPTY) {
+		if (registries.getLootTable(ResourceKey.create(Registries.LOOT_TABLE, id("blocks/not_loaded"))) != LootTable.EMPTY) {
 			throw new AssertionError("not_loaded loot table should not have been loaded.");
 		}
 
-		context.complete();
+		context.succeed();
 	}
 
-	@GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE)
-	public void conditionalDynamicRegistry(TestContext context) {
-		Registry<BannerPattern> registry = context.getWorld().getRegistryManager().get(RegistryKeys.BANNER_PATTERN);
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void conditionalDynamicRegistry(GameTestHelper context) {
+		Registry<BannerPattern> registry = context.getLevel().registryAccess().registryOrThrow(Registries.BANNER_PATTERN);
 
 		if (registry.get(id("loaded")) == null) {
 			throw new AssertionError("loaded banner pattern should have been loaded.");
@@ -119,6 +118,6 @@ public class ConditionalResourcesTest {
 			throw new AssertionError("not_loaded banner pattern should not have been loaded.");
 		}
 
-		context.complete();
+		context.succeed();
 	}
 }

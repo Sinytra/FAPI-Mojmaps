@@ -22,35 +22,33 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
-
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.recipe.Recipe;
-import net.minecraft.recipe.input.RecipeInput;
-import net.minecraft.util.collection.DefaultedList;
-
 import net.fabricmc.fabric.impl.item.RecipeRemainderHandler;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeInput;
 
 @Mixin(Recipe.class)
 public interface RecipeMixin<T extends RecipeInput> {
-	@Inject(method = "getRemainder", at = @At(value = "INVOKE", target = "Lnet/minecraft/recipe/input/RecipeInput;getStackInSlot(I)Lnet/minecraft/item/ItemStack;"), locals = LocalCapture.CAPTURE_FAILHARD)
-	default void captureStack(T inventory, CallbackInfoReturnable<DefaultedList<ItemStack>> cir, DefaultedList<ItemStack> defaultedList, int i) {
-		RecipeRemainderHandler.REMAINDER_STACK.set(inventory.getStackInSlot(i).getRecipeRemainder());
+	@Inject(method = "getRemainingItems", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/crafting/RecipeInput;getItem(I)Lnet/minecraft/world/item/ItemStack;"), locals = LocalCapture.CAPTURE_FAILHARD)
+	default void captureStack(T inventory, CallbackInfoReturnable<NonNullList<ItemStack>> cir, NonNullList<ItemStack> defaultedList, int i) {
+		RecipeRemainderHandler.REMAINDER_STACK.set(inventory.getItem(i).getRecipeRemainder());
 	}
 
-	@Redirect(method = "getRemainder", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/Item;hasRecipeRemainder()Z"))
+	@Redirect(method = "getRemainingItems", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/Item;hasCraftingRemainingItem()Z"))
 	private boolean hasStackRemainder(Item instance) {
 		return !RecipeRemainderHandler.REMAINDER_STACK.get().isEmpty();
 	}
 
-	@Redirect(method = "getRemainder", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/Item;getRecipeRemainder()Lnet/minecraft/item/Item;"))
+	@Redirect(method = "getRemainingItems", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/Item;getCraftingRemainingItem()Lnet/minecraft/world/item/Item;"))
 	private Item replaceGetRecipeRemainder(Item instance) {
 		return Items.AIR;
 	}
 
-	@Redirect(method = "getRemainder", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/collection/DefaultedList;set(ILjava/lang/Object;)Ljava/lang/Object;"))
-	private Object getStackRemainder(DefaultedList<ItemStack> inventory, int index, Object element) {
+	@Redirect(method = "getRemainingItems", at = @At(value = "INVOKE", target = "Lnet/minecraft/core/NonNullList;set(ILjava/lang/Object;)Ljava/lang/Object;"))
+	private Object getStackRemainder(NonNullList<ItemStack> inventory, int index, Object element) {
 		Object remainder = inventory.set(index, RecipeRemainderHandler.REMAINDER_STACK.get());
 		RecipeRemainderHandler.REMAINDER_STACK.remove();
 		return remainder;

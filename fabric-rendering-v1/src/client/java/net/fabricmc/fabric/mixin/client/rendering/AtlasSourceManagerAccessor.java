@@ -17,17 +17,16 @@
 package net.fabricmc.fabric.mixin.client.rendering;
 
 import com.google.common.collect.BiMap;
+import net.minecraft.client.renderer.texture.atlas.SpriteSourceType;
+import net.minecraft.client.renderer.texture.atlas.SpriteSources;
+import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-import net.minecraft.client.texture.atlas.AtlasSourceManager;
-import net.minecraft.client.texture.atlas.AtlasSourceType;
-import net.minecraft.util.Identifier;
-
-@Mixin(AtlasSourceManager.class)
+@Mixin(SpriteSources.class)
 public interface AtlasSourceManagerAccessor {
-	@Accessor("SOURCE_TYPE_BY_ID")
-	static BiMap<Identifier, AtlasSourceType> getSourceTypeById() {
+	@Accessor("TYPES")
+	static BiMap<ResourceLocation, SpriteSourceType> getSourceTypeById() {
 		throw new AssertionError();
 	}
 }

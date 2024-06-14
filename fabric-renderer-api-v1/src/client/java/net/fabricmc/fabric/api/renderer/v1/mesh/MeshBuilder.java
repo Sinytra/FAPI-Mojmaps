@@ -16,7 +16,7 @@
 
 package net.fabricmc.fabric.api.renderer.v1.mesh;
 
-import net.minecraft.client.render.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferBuilder;
 
 /**
  * Similar in purpose to {@link BufferBuilder} but simpler

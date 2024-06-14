@@ -16,13 +16,12 @@
 
 package net.fabricmc.fabric.test.entity.event;
 
-import net.minecraft.item.ArmorItem;
-import net.minecraft.item.ArmorMaterials;
-
 import net.fabricmc.fabric.api.entity.event.v1.FabricElytraItem;
+import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.ArmorMaterials;
 
 public class DiamondElytraItem extends ArmorItem implements FabricElytraItem {
 	public DiamondElytraItem() {
-		super(ArmorMaterials.DIAMOND, Type.CHESTPLATE, new Settings().maxCount(1));
+		super(ArmorMaterials.DIAMOND, Type.CHESTPLATE, new Properties().stacksTo(1));
 	}
 }

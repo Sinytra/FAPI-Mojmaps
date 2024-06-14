@@ -18,33 +18,31 @@ package net.fabricmc.fabric.api.object.builder.v1.block;
 
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
-
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.MapColor;
-import net.minecraft.block.enums.NoteBlockInstrument;
-import net.minecraft.block.piston.PistonBehavior;
-import net.minecraft.entity.EntityType;
-import net.minecraft.loot.LootTable;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.resource.featuretoggle.FeatureFlag;
-import net.minecraft.sound.BlockSoundGroup;
-import net.minecraft.util.DyeColor;
-
 import net.fabricmc.fabric.mixin.object.builder.AbstractBlockAccessor;
 import net.fabricmc.fabric.mixin.object.builder.AbstractBlockSettingsAccessor;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.flag.FeatureFlag;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
+import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.PushReaction;
+import net.minecraft.world.level.storage.loot.LootTable;
 
 /**
- * @deprecated replace with {@link AbstractBlock.Settings}
+ * @deprecated replace with {@link BlockBehaviour.Properties}
  */
 @Deprecated
-public class FabricBlockSettings extends AbstractBlock.Settings {
+public class FabricBlockSettings extends BlockBehaviour.Properties {
 	protected FabricBlockSettings() {
 		super();
 	}
 
-	protected FabricBlockSettings(AbstractBlock.Settings settings) {
+	protected FabricBlockSettings(BlockBehaviour.Properties settings) {
 		this();
 		// Mostly Copied from vanilla's copy method
 		// Note: If new methods are added to Block settings, an accessor must be added here
@@ -52,28 +50,28 @@ public class FabricBlockSettings extends AbstractBlock.Settings {
 		AbstractBlockSettingsAccessor otherAccessor = (AbstractBlockSettingsAccessor) settings;
 
 		// Copied in vanilla: sorted by vanilla copy order
-		this.hardness(otherAccessor.getHardness());
-		this.resistance(otherAccessor.getResistance());
-		this.collidable(otherAccessor.getCollidable());
-		thisAccessor.setRandomTicks(otherAccessor.getRandomTicks());
-		this.luminance(otherAccessor.getLuminance());
-		thisAccessor.setMapColorProvider(otherAccessor.getMapColorProvider());
-		this.sounds(otherAccessor.getSoundGroup());
-		this.slipperiness(otherAccessor.getSlipperiness());
-		this.velocityMultiplier(otherAccessor.getVelocityMultiplier());
-		thisAccessor.setDynamicBounds(otherAccessor.getDynamicBounds());
-		thisAccessor.setOpaque(otherAccessor.getOpaque());
+		this.destroyTime(otherAccessor.getDestroyTime());
+		this.explosionResistance(otherAccessor.getExplosionResistance());
+		this.collidable(otherAccessor.getHasCollision());
+		thisAccessor.setIsRandomlyTicking(otherAccessor.getIsRandomlyTicking());
+		this.lightLevel(otherAccessor.getLuminance());
+		thisAccessor.setMapColor(otherAccessor.getMapColor());
+		this.sound(otherAccessor.getSoundType());
+		this.friction(otherAccessor.getFriction());
+		this.speedFactor(otherAccessor.getSpeedFactor());
+		thisAccessor.setDynamicShape(otherAccessor.getDynamicShape());
+		thisAccessor.setCanOcclude(otherAccessor.getCanOcclude());
 		thisAccessor.setIsAir(otherAccessor.getIsAir());
-		thisAccessor.setBurnable(otherAccessor.getBurnable());
+		thisAccessor.setIgnitedByLava(otherAccessor.getIgnitedByLava());
 		thisAccessor.setLiquid(otherAccessor.getLiquid());
-		thisAccessor.setForceNotSolid(otherAccessor.getForceNotSolid());
-		thisAccessor.setForceSolid(otherAccessor.getForceSolid());
-		this.pistonBehavior(otherAccessor.getPistonBehavior());
-		thisAccessor.setToolRequired(otherAccessor.isToolRequired());
-		thisAccessor.setOffsetter(otherAccessor.getOffsetter());
-		thisAccessor.setBlockBreakParticles(otherAccessor.getBlockBreakParticles());
+		thisAccessor.setForceSolidOff(otherAccessor.getForceSolidOff());
+		thisAccessor.setForceSolidOn(otherAccessor.getForceSolidOn());
+		this.pushReaction(otherAccessor.getPushReaction());
+		thisAccessor.setRequiresCorrectToolForDrops(otherAccessor.isRequiresCorrectToolForDrops());
+		thisAccessor.setOffsetFunction(otherAccessor.getOffsetFunction());
+		thisAccessor.setSpawnTerrainParticles(otherAccessor.getSpawnTerrainParticles());
 		thisAccessor.setRequiredFeatures(otherAccessor.getRequiredFeatures());
-		this.emissiveLighting(otherAccessor.getEmissiveLightingPredicate());
+		this.emissiveRendering(otherAccessor.getEmissiveRendering());
 		this.instrument(otherAccessor.getInstrument());
 		thisAccessor.setReplaceable(otherAccessor.getReplaceable());
 
@@ -83,101 +81,101 @@ public class FabricBlockSettings extends AbstractBlock.Settings {
 		// deprecated. To maintain compatibility and since this behavior seems to be the
 		// more proper way, this copies all the fields, not just the shallow ones.
 		// Fields are added by field definition order.
-		this.jumpVelocityMultiplier(otherAccessor.getJumpVelocityMultiplier());
-		this.drops(otherAccessor.getLootTableKey());
-		this.allowsSpawning(otherAccessor.getAllowsSpawningPredicate());
-		this.solidBlock(otherAccessor.getSolidBlockPredicate());
-		this.suffocates(otherAccessor.getSuffocationPredicate());
-		this.blockVision(otherAccessor.getBlockVisionPredicate());
-		this.postProcess(otherAccessor.getPostProcessPredicate());
+		this.jumpFactor(otherAccessor.getJumpFactor());
+		this.drops(otherAccessor.getDrops());
+		this.isValidSpawn(otherAccessor.getIsValidSpawn());
+		this.isRedstoneConductor(otherAccessor.getIsRedstoneConductor());
+		this.isSuffocating(otherAccessor.getIsSuffocating());
+		this.isViewBlocking(otherAccessor.getIsViewBlocking());
+		this.hasPostProcess(otherAccessor.getHasPostProcess());
 	}
 
 	/**
-	 * @deprecated replace with {@link AbstractBlock.Settings#create()}
+	 * @deprecated replace with {@link BlockBehaviour.Properties#of()}
 	 */
 	@Deprecated
-	public static FabricBlockSettings create() {
+	public static FabricBlockSettings of() {
 		return new FabricBlockSettings();
 	}
 
 	/**
-	 * @deprecated replace with {@link AbstractBlock.Settings#create()}
+	 * @deprecated replace with {@link BlockBehaviour.Properties#of()}
 	 */
 	@Deprecated
 	public static FabricBlockSettings of() {
-		return create();
+		return of();
 	}
 
 	/**
-	 * @deprecated replace with {@link AbstractBlock.Settings#copy(AbstractBlock)}
+	 * @deprecated replace with {@link BlockBehaviour.Properties#ofFullCopy(BlockBehaviour)}
 	 */
 	@Deprecated
-	public static FabricBlockSettings copyOf(AbstractBlock block) {
-		return new FabricBlockSettings(((AbstractBlockAccessor) block).getSettings());
+	public static FabricBlockSettings copyOf(BlockBehaviour block) {
+		return new FabricBlockSettings(((AbstractBlockAccessor) block).getProperties());
 	}
 
 	/**
-	 * @deprecated replace with {@link AbstractBlock.Settings#copy(AbstractBlock)}
+	 * @deprecated replace with {@link BlockBehaviour.Properties#ofFullCopy(BlockBehaviour)}
 	 */
 	@Deprecated
-	public static FabricBlockSettings copyOf(AbstractBlock.Settings settings) {
+	public static FabricBlockSettings copyOf(BlockBehaviour.Properties settings) {
 		return new FabricBlockSettings(settings);
 	}
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings noCollision() {
-		super.noCollision();
+	public FabricBlockSettings noCollission() {
+		super.noCollission();
 		return this;
 	}
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings nonOpaque() {
-		super.nonOpaque();
+	public FabricBlockSettings noOcclusion() {
+		super.noOcclusion();
 		return this;
 	}
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings slipperiness(float value) {
-		super.slipperiness(value);
+	public FabricBlockSettings friction(float value) {
+		super.friction(value);
 		return this;
 	}
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings velocityMultiplier(float velocityMultiplier) {
-		super.velocityMultiplier(velocityMultiplier);
+	public FabricBlockSettings speedFactor(float velocityMultiplier) {
+		super.speedFactor(velocityMultiplier);
 		return this;
 	}
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings jumpVelocityMultiplier(float jumpVelocityMultiplier) {
-		super.jumpVelocityMultiplier(jumpVelocityMultiplier);
+	public FabricBlockSettings jumpFactor(float jumpVelocityMultiplier) {
+		super.jumpFactor(jumpVelocityMultiplier);
 		return this;
 	}
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings sounds(BlockSoundGroup group) {
-		super.sounds(group);
+	public FabricBlockSettings sound(SoundType group) {
+		super.sound(group);
 		return this;
 	}
 
 	/**
-	 * @deprecated Please use {@link FabricBlockSettings#luminance(ToIntFunction)}.
+	 * @deprecated Please use {@link FabricBlockSettings#lightLevel(ToIntFunction)}.
 	 */
 	@Deprecated
 	public FabricBlockSettings lightLevel(ToIntFunction<BlockState> levelFunction) {
-		return this.luminance(levelFunction);
+		return this.lightLevel(levelFunction);
 	}
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings luminance(ToIntFunction<BlockState> luminanceFunction) {
-		super.luminance(luminanceFunction);
+	public FabricBlockSettings lightLevel(ToIntFunction<BlockState> luminanceFunction) {
+		super.lightLevel(luminanceFunction);
 		return this;
 	}
 
@@ -190,8 +188,8 @@ public class FabricBlockSettings extends AbstractBlock.Settings {
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings breakInstantly() {
-		super.breakInstantly();
+	public FabricBlockSettings instabreak() {
+		super.instabreak();
 		return this;
 	}
 
@@ -204,22 +202,22 @@ public class FabricBlockSettings extends AbstractBlock.Settings {
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings ticksRandomly() {
-		super.ticksRandomly();
+	public FabricBlockSettings randomTicks() {
+		super.randomTicks();
 		return this;
 	}
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings dynamicBounds() {
-		super.dynamicBounds();
+	public FabricBlockSettings dynamicShape() {
+		super.dynamicShape();
 		return this;
 	}
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings dropsNothing() {
-		super.dropsNothing();
+	public FabricBlockSettings noLootTable() {
+		super.noLootTable();
 		return this;
 	}
 
@@ -239,43 +237,43 @@ public class FabricBlockSettings extends AbstractBlock.Settings {
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings allowsSpawning(AbstractBlock.TypedContextPredicate<EntityType<?>> predicate) {
-		super.allowsSpawning(predicate);
+	public FabricBlockSettings isValidSpawn(BlockBehaviour.StateArgumentPredicate<EntityType<?>> predicate) {
+		super.isValidSpawn(predicate);
 		return this;
 	}
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings solidBlock(AbstractBlock.ContextPredicate predicate) {
-		super.solidBlock(predicate);
+	public FabricBlockSettings isRedstoneConductor(BlockBehaviour.StatePredicate predicate) {
+		super.isRedstoneConductor(predicate);
 		return this;
 	}
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings suffocates(AbstractBlock.ContextPredicate predicate) {
-		super.suffocates(predicate);
+	public FabricBlockSettings isSuffocating(BlockBehaviour.StatePredicate predicate) {
+		super.isSuffocating(predicate);
 		return this;
 	}
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings blockVision(AbstractBlock.ContextPredicate predicate) {
-		super.blockVision(predicate);
+	public FabricBlockSettings isViewBlocking(BlockBehaviour.StatePredicate predicate) {
+		super.isViewBlocking(predicate);
 		return this;
 	}
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings postProcess(AbstractBlock.ContextPredicate predicate) {
-		super.postProcess(predicate);
+	public FabricBlockSettings hasPostProcess(BlockBehaviour.StatePredicate predicate) {
+		super.hasPostProcess(predicate);
 		return this;
 	}
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings emissiveLighting(AbstractBlock.ContextPredicate predicate) {
-		super.emissiveLighting(predicate);
+	public FabricBlockSettings emissiveRendering(BlockBehaviour.StatePredicate predicate) {
+		super.emissiveRendering(predicate);
 		return this;
 	}
 
@@ -284,8 +282,8 @@ public class FabricBlockSettings extends AbstractBlock.Settings {
 	 */
 	@Deprecated
 	@Override
-	public FabricBlockSettings requiresTool() {
-		super.requiresTool();
+	public FabricBlockSettings requiresCorrectToolForDrops() {
+		super.requiresCorrectToolForDrops();
 		return this;
 	}
 
@@ -298,36 +296,36 @@ public class FabricBlockSettings extends AbstractBlock.Settings {
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings hardness(float hardness) {
-		super.hardness(hardness);
+	public FabricBlockSettings destroyTime(float hardness) {
+		super.destroyTime(hardness);
 		return this;
 	}
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings resistance(float resistance) {
-		super.resistance(resistance);
+	public FabricBlockSettings explosionResistance(float resistance) {
+		super.explosionResistance(resistance);
 		return this;
 	}
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings offset(AbstractBlock.OffsetType offsetType) {
-		super.offset(offsetType);
+	public FabricBlockSettings offsetType(BlockBehaviour.OffsetType offsetType) {
+		super.offsetType(offsetType);
 		return this;
 	}
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings noBlockBreakParticles() {
-		super.noBlockBreakParticles();
+	public FabricBlockSettings noTerrainParticles() {
+		super.noTerrainParticles();
 		return this;
 	}
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings requires(FeatureFlag... features) {
-		super.requires(features);
+	public FabricBlockSettings requiredFeatures(FeatureFlag... features) {
+		super.requiredFeatures(features);
 		return this;
 	}
 
@@ -340,8 +338,8 @@ public class FabricBlockSettings extends AbstractBlock.Settings {
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings burnable() {
-		super.burnable();
+	public FabricBlockSettings ignitedByLava() {
+		super.ignitedByLava();
 		return this;
 	}
 
@@ -354,22 +352,22 @@ public class FabricBlockSettings extends AbstractBlock.Settings {
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings solid() {
-		super.solid();
+	public FabricBlockSettings forceSolidOn() {
+		super.forceSolidOn();
 		return this;
 	}
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings notSolid() {
-		super.notSolid();
+	public FabricBlockSettings forceSolidOff() {
+		super.forceSolidOff();
 		return this;
 	}
 
 	@Deprecated
 	@Override
-	public FabricBlockSettings pistonBehavior(PistonBehavior pistonBehavior) {
-		super.pistonBehavior(pistonBehavior);
+	public FabricBlockSettings pushReaction(PushReaction pistonBehavior) {
+		super.pushReaction(pistonBehavior);
 		return this;
 	}
 
@@ -399,24 +397,24 @@ public class FabricBlockSettings extends AbstractBlock.Settings {
 	}
 
 	/**
-	 * @deprecated replace with {@link AbstractBlock.Settings#luminance(ToIntFunction)}
+	 * @deprecated replace with {@link BlockBehaviour.Properties#lightLevel(ToIntFunction)}
 	 */
 	@Deprecated
 	public FabricBlockSettings luminance(int luminance) {
-		this.luminance(ignored -> luminance);
+		this.lightLevel(ignored -> luminance);
 		return this;
 	}
 
 	@Deprecated
-	public FabricBlockSettings drops(RegistryKey<LootTable> dropTableId) {
-		((AbstractBlockSettingsAccessor) this).setLootTableKey(dropTableId);
+	public FabricBlockSettings drops(ResourceKey<LootTable> dropTableId) {
+		((AbstractBlockSettingsAccessor) this).setDrops(dropTableId);
 		return this;
 	}
 
 	/* FABRIC DELEGATE WRAPPERS */
 
 	/**
-	 * @deprecated Please migrate to {@link AbstractBlock.Settings#mapColor(MapColor)}
+	 * @deprecated Please migrate to {@link BlockBehaviour.Properties#mapColor(MapColor)}
 	 */
 	@Deprecated
 	public FabricBlockSettings materialColor(MapColor color) {
@@ -424,7 +422,7 @@ public class FabricBlockSettings extends AbstractBlock.Settings {
 	}
 
 	/**
-	 * @deprecated Please migrate to {@link AbstractBlock.Settings#mapColor(DyeColor)}
+	 * @deprecated Please migrate to {@link BlockBehaviour.Properties#mapColor(DyeColor)}
 	 */
 	@Deprecated
 	public FabricBlockSettings materialColor(DyeColor color) {
@@ -432,7 +430,7 @@ public class FabricBlockSettings extends AbstractBlock.Settings {
 	}
 
 	/**
-	 * @deprecated Please migrate to {@link AbstractBlock.Settings#mapColor(DyeColor)}
+	 * @deprecated Please migrate to {@link BlockBehaviour.Properties#mapColor(DyeColor)}
 	 */
 	@Deprecated
 	public FabricBlockSettings mapColor(DyeColor color) {
@@ -441,7 +439,7 @@ public class FabricBlockSettings extends AbstractBlock.Settings {
 
 	@Deprecated
 	public FabricBlockSettings collidable(boolean collidable) {
-		((AbstractBlockSettingsAccessor) this).setCollidable(collidable);
+		((AbstractBlockSettingsAccessor) this).setHasCollision(collidable);
 		return this;
 	}
 }

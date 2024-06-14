@@ -18,18 +18,16 @@ package net.fabricmc.fabric.test.tag.convention.v2;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import net.minecraft.block.Blocks;
-import net.minecraft.enchantment.Enchantments;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.world.biome.BiomeKeys;
-
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalBiomeTags;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalBlockTags;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalEnchantmentTags;
 import net.fabricmc.fabric.api.tag.convention.v2.TagUtil;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.biome.Biomes;
+import net.minecraft.world.level.block.Blocks;
 
 public class TagUtilTest implements ModInitializer {
 	private static final Logger LOGGER = LoggerFactory.getLogger(TagUtilTest.class);
@@ -37,20 +35,20 @@ public class TagUtilTest implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
-			if (!TagUtil.isIn(server.getRegistryManager(), ConventionalEnchantmentTags.INCREASE_BLOCK_DROPS, server.getRegistryManager().get(RegistryKeys.ENCHANTMENT).get(Enchantments.FORTUNE))) {
+			if (!TagUtil.isIn(server.registryAccess(), ConventionalEnchantmentTags.INCREASE_BLOCK_DROPS, server.registryAccess().registryOrThrow(Registries.ENCHANTMENT).get(Enchantments.FORTUNE))) {
 				throw new AssertionError("Failed to find fortune in c:increase_block_drops!");
 			}
 
-			if (TagUtil.isIn(ConventionalBiomeTags.IS_OVERWORLD, server.getRegistryManager().get(RegistryKeys.BIOME).get(BiomeKeys.BADLANDS))) {
+			if (TagUtil.isIn(ConventionalBiomeTags.IS_OVERWORLD, server.registryAccess().registryOrThrow(Registries.BIOME).get(Biomes.BADLANDS))) {
 				throw new AssertionError("Found a dynamic entry in a static registry?!");
 			}
 
 			// If this fails, the tag is missing a biome or the util is broken
-			if (!TagUtil.isIn(server.getRegistryManager(), ConventionalBiomeTags.IS_OVERWORLD, server.getRegistryManager().get(RegistryKeys.BIOME).get(BiomeKeys.BADLANDS))) {
-				throw new AssertionError("Failed to find an overworld biome (%s) in c:in_overworld!".formatted(BiomeKeys.BADLANDS));
+			if (!TagUtil.isIn(server.registryAccess(), ConventionalBiomeTags.IS_OVERWORLD, server.registryAccess().registryOrThrow(Registries.BIOME).get(Biomes.BADLANDS))) {
+				throw new AssertionError("Failed to find an overworld biome (%s) in c:in_overworld!".formatted(Biomes.BADLANDS));
 			}
 
-			if (!TagUtil.isIn(server.getRegistryManager(), ConventionalBlockTags.ORES, Blocks.DIAMOND_ORE)) {
+			if (!TagUtil.isIn(server.registryAccess(), ConventionalBlockTags.ORES, Blocks.DIAMOND_ORE)) {
 				throw new AssertionError("Failed to find diamond ore in c:ores!");
 			}
 

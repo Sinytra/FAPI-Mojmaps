@@ -16,13 +16,12 @@
 
 package net.fabricmc.fabric.api.tag.convention.v2;
 
-import net.minecraft.fluid.Fluid;
-import net.minecraft.registry.tag.TagKey;
-
 import net.fabricmc.fabric.impl.tag.convention.v2.TagRegistration;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.material.Fluid;
 
 /**
- * See {@link net.minecraft.registry.tag.FluidTags} for vanilla tags.
+ * See {@link net.minecraft.tags.FluidTags} for vanilla tags.
  * Note that addition to some vanilla tags implies having certain functionality.
  * <p></p>
  * Note, fluid tags should not be plural to match the vanilla standard.

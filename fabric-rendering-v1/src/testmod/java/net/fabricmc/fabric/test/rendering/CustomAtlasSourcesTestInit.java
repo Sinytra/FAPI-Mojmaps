@@ -16,18 +16,17 @@
 
 package net.fabricmc.fabric.test.rendering;
 
-import net.minecraft.item.Item;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.api.ModInitializer;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 
 public class CustomAtlasSourcesTestInit implements ModInitializer {
-	public static final Item DOUBLE_IRON_INGOT = new Item(new Item.Settings());
+	public static final Item DOUBLE_IRON_INGOT = new Item(new Item.Properties());
 
 	@Override
 	public void onInitialize() {
-		Registry.register(Registries.ITEM, Identifier.of("fabric-rendering-v1-testmod", "double_iron_ingot"), DOUBLE_IRON_INGOT);
+		Registry.register(BuiltInRegistries.ITEM, ResourceLocation.fromNamespaceAndPath("fabric-rendering-v1-testmod", "double_iron_ingot"), DOUBLE_IRON_INGOT);
 	}
 }

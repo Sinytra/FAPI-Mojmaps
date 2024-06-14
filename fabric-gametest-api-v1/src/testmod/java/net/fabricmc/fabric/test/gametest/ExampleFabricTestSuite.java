@@ -17,13 +17,11 @@
 package net.fabricmc.fabric.test.gametest;
 
 import java.lang.reflect.Method;
-
-import net.minecraft.block.Blocks;
-import net.minecraft.test.GameTest;
-import net.minecraft.test.TestContext;
-import net.minecraft.util.math.BlockPos;
-
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+import net.minecraft.core.BlockPos;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.level.block.Blocks;
 
 // optional to impl FabricGameTest
 public class ExampleFabricTestSuite implements FabricGameTest {
@@ -32,7 +30,7 @@ public class ExampleFabricTestSuite implements FabricGameTest {
 	 * This can be used as shown to run code before and after each test.
 	 */
 	@Override
-	public void invokeTestMethod(TestContext context, Method method) {
+	public void invokeTestMethod(GameTestHelper context, Method method) {
 		beforeEach(context);
 
 		FabricGameTest.super.invokeTestMethod(context, method);
@@ -40,24 +38,24 @@ public class ExampleFabricTestSuite implements FabricGameTest {
 		afterEach(context);
 	}
 
-	private void beforeEach(TestContext context) {
+	private void beforeEach(GameTestHelper context) {
 		System.out.println("Hello beforeEach");
-		context.setBlockState(0, 5, 0, Blocks.GOLD_BLOCK);
+		context.setBlock(0, 5, 0, Blocks.GOLD_BLOCK);
 	}
 
-	private void afterEach(TestContext context) {
-		context.addInstantFinalTask(() ->
-				context.checkBlock(new BlockPos(0, 2, 0), (block) -> block == Blocks.DIAMOND_BLOCK, "Expect block to be gold")
+	private void afterEach(GameTestHelper context) {
+		context.succeedWhen(() ->
+				context.assertBlock(new BlockPos(0, 2, 0), (block) -> block == Blocks.DIAMOND_BLOCK, "Expect block to be gold")
 		);
 	}
 
-	@GameTest(templateName = "fabric-gametest-api-v1-testmod:exampletestsuite.diamond")
-	public void diamond(TestContext context) {
+	@GameTest(template = "fabric-gametest-api-v1-testmod:exampletestsuite.diamond")
+	public void diamond(GameTestHelper context) {
 		// Nothing to do as the structure placed the block.
 	}
 
-	@GameTest(templateName = EMPTY_STRUCTURE)
-	public void noStructure(TestContext context) {
-		context.setBlockState(0, 2, 0, Blocks.DIAMOND_BLOCK);
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void noStructure(GameTestHelper context) {
+		context.setBlock(0, 2, 0, Blocks.DIAMOND_BLOCK);
 	}
 }

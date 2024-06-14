@@ -16,15 +16,14 @@
 
 package net.fabricmc.fabric.api.event.registry;
 
-import net.minecraft.registry.Registry;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.impl.registry.sync.ListenableRegistry;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceLocation;
 
 @FunctionalInterface
 public interface RegistryEntryAddedCallback<T> {
-	void onEntryAdded(int rawId, Identifier id, T object);
+	void onEntryAdded(int rawId, ResourceLocation id, T object);
 
 	static <T> Event<RegistryEntryAddedCallback<T>> event(Registry<T> registry) {
 		return ListenableRegistry.get(registry).fabric_getAddObjectEvent();

@@ -31,24 +31,22 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.render.chunk.ChunkRendererRegion;
-import net.minecraft.client.render.chunk.ChunkRendererRegionBuilder;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkSectionPos;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.WorldChunk;
-
 import net.fabricmc.fabric.impl.blockview.client.RenderDataMapConsumer;
+import net.minecraft.client.renderer.chunk.RenderChunkRegion;
+import net.minecraft.client.renderer.chunk.RenderRegionCache;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.chunk.LevelChunk;
 
-@Mixin(ChunkRendererRegionBuilder.class)
+@Mixin(RenderRegionCache.class)
 public abstract class ChunkRendererRegionBuilderMixin {
 	private static final AtomicInteger ERROR_COUNTER = new AtomicInteger();
 	private static final Logger LOGGER = LoggerFactory.getLogger(ChunkRendererRegionBuilderMixin.class);
 
-	@Inject(method = "build", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/chunk/ChunkRendererRegionBuilder$ClientChunk;getRenderedChunk()Lnet/minecraft/client/render/chunk/RenderedChunk;"))
-	private void copyDataForChunk(World world, ChunkSectionPos chunkSectionPos, CallbackInfoReturnable<ChunkRendererRegion> cir, @Local(ordinal = 1) ChunkRendererRegionBuilder.ClientChunk clientChunk, @Share("dataMap") LocalRef<Long2ObjectOpenHashMap<Object>> mapRef) {
+	@Inject(method = "createRegion", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/RenderRegionCache$ChunkInfo;renderChunk()Lnet/minecraft/client/renderer/chunk/RenderChunk;"))
+	private void copyDataForChunk(Level world, SectionPos chunkSectionPos, CallbackInfoReturnable<RenderChunkRegion> cir, @Local(ordinal = 1) RenderRegionCache.ChunkInfo clientChunk, @Share("dataMap") LocalRef<Long2ObjectOpenHashMap<Object>> mapRef) {
 		// Hash maps in chunks should generally not be modified outside of client thread
 		// but does happen in practice, due to mods or inconsistent vanilla behaviors, causing
 		// CMEs when we iterate the map. (Vanilla does not iterate these maps when it builds
@@ -57,7 +55,7 @@ public abstract class ChunkRendererRegionBuilderMixin {
 		// We handle this simply by retrying until it works. Ugly but effective.
 		while (true) {
 			try {
-				mapRef.set(mapChunk(clientChunk.getChunk(), chunkSectionPos, mapRef.get()));
+				mapRef.set(mapChunk(clientChunk.chunk(), chunkSectionPos, mapRef.get()));
 				break;
 			} catch (ConcurrentModificationException e) {
 				final int count = ERROR_COUNTER.incrementAndGet();
@@ -73,9 +71,9 @@ public abstract class ChunkRendererRegionBuilderMixin {
 		}
 	}
 
-	@Inject(method = "build", at = @At(value = "RETURN", ordinal = 1))
-	private void createDataMap(World world, ChunkSectionPos chunkSectionPos, CallbackInfoReturnable<ChunkRendererRegion> cir, @Share("dataMap") LocalRef<Long2ObjectOpenHashMap<Object>> mapRef) {
-		ChunkRendererRegion rendererRegion = cir.getReturnValue();
+	@Inject(method = "createRegion", at = @At(value = "RETURN", ordinal = 1))
+	private void createDataMap(Level world, SectionPos chunkSectionPos, CallbackInfoReturnable<RenderChunkRegion> cir, @Share("dataMap") LocalRef<Long2ObjectOpenHashMap<Object>> mapRef) {
+		RenderChunkRegion rendererRegion = cir.getReturnValue();
 		Long2ObjectOpenHashMap<Object> map = mapRef.get();
 
 		if (map != null) {
@@ -84,18 +82,18 @@ public abstract class ChunkRendererRegionBuilderMixin {
 	}
 
 	@Unique
-	private static Long2ObjectOpenHashMap<Object> mapChunk(WorldChunk chunk, ChunkSectionPos chunkSectionPos, Long2ObjectOpenHashMap<Object> map) {
+	private static Long2ObjectOpenHashMap<Object> mapChunk(LevelChunk chunk, SectionPos chunkSectionPos, Long2ObjectOpenHashMap<Object> map) {
 		// Skip the math below if the chunk contains no block entities
 		if (chunk.getBlockEntities().isEmpty()) {
 			return map;
 		}
 
-		final int xMin = ChunkSectionPos.getBlockCoord(chunkSectionPos.getSectionX() - 1);
-		final int yMin = ChunkSectionPos.getBlockCoord(chunkSectionPos.getSectionY() - 1);
-		final int zMin = ChunkSectionPos.getBlockCoord(chunkSectionPos.getSectionZ() - 1);
-		final int xMax = ChunkSectionPos.getBlockCoord(chunkSectionPos.getSectionX() + 1);
-		final int yMax = ChunkSectionPos.getBlockCoord(chunkSectionPos.getSectionY() + 1);
-		final int zMax = ChunkSectionPos.getBlockCoord(chunkSectionPos.getSectionZ() + 1);
+		final int xMin = SectionPos.sectionToBlockCoord(chunkSectionPos.x() - 1);
+		final int yMin = SectionPos.sectionToBlockCoord(chunkSectionPos.y() - 1);
+		final int zMin = SectionPos.sectionToBlockCoord(chunkSectionPos.z() - 1);
+		final int xMax = SectionPos.sectionToBlockCoord(chunkSectionPos.x() + 1);
+		final int yMax = SectionPos.sectionToBlockCoord(chunkSectionPos.y() + 1);
+		final int zMax = SectionPos.sectionToBlockCoord(chunkSectionPos.z() + 1);
 
 		for (Map.Entry<BlockPos, BlockEntity> entry : chunk.getBlockEntities().entrySet()) {
 			final BlockPos pos = entry.getKey();

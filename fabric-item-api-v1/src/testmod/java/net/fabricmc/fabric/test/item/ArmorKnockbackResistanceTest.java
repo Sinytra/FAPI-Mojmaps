@@ -18,28 +18,26 @@ package net.fabricmc.fabric.test.item;
 
 import java.util.EnumMap;
 import java.util.List;
-
-import net.minecraft.item.ArmorItem;
-import net.minecraft.item.ArmorMaterial;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Util;
-
 import net.fabricmc.api.ModInitializer;
+import net.minecraft.Util;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.ArmorMaterial;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
 
 public class ArmorKnockbackResistanceTest implements ModInitializer {
-	private static final RegistryEntry<ArmorMaterial> WOOD_ARMOR = Registry.registerReference(Registries.ARMOR_MATERIAL, Identifier.of("fabric-item-api-v1-testmod", "wood"), createTestArmorMaterial());
+	private static final Holder<ArmorMaterial> WOOD_ARMOR = Registry.registerForHolder(BuiltInRegistries.ARMOR_MATERIAL, ResourceLocation.fromNamespaceAndPath("fabric-item-api-v1-testmod", "wood"), createTestArmorMaterial());
 
 	@Override
 	public void onInitialize() {
-		Registry.register(Registries.ITEM, Identifier.of("fabric-item-api-v1-testmod",
-				"wooden_boots"), new ArmorItem(WOOD_ARMOR, ArmorItem.Type.BOOTS, new Item.Settings()));
+		Registry.register(BuiltInRegistries.ITEM, ResourceLocation.fromNamespaceAndPath("fabric-item-api-v1-testmod",
+				"wooden_boots"), new ArmorItem(WOOD_ARMOR, ArmorItem.Type.BOOTS, new Item.Properties()));
 	}
 
 	private static ArmorMaterial createTestArmorMaterial() {
@@ -52,8 +50,8 @@ public class ArmorKnockbackResistanceTest implements ModInitializer {
 		}),
 			0,
 			SoundEvents.ITEM_ARMOR_EQUIP_LEATHER,
-				() -> Ingredient.ofItems(Items.LEATHER),
-			List.of(new ArmorMaterial.Layer(Identifier.of("fabric-item-api-v1-testmod", "wood"))),
+				() -> Ingredient.of(Items.LEATHER),
+			List.of(new ArmorMaterial.Layer(ResourceLocation.fromNamespaceAndPath("fabric-item-api-v1-testmod", "wood"))),
 			0,
 			0.5F
 		);

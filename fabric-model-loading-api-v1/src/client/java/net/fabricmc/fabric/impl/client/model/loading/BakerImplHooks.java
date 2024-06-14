@@ -17,10 +17,9 @@
 package net.fabricmc.fabric.impl.client.model.loading;
 
 import java.util.function.Function;
-
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.util.SpriteIdentifier;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.Material;
 
 public interface BakerImplHooks {
-	Function<SpriteIdentifier, Sprite> fabric_getTextureGetter();
+	Function<Material, TextureAtlasSprite> fabric_getTextureGetter();
 }

@@ -16,22 +16,21 @@
 
 package net.fabricmc.fabric.mixin.resource.conditions;
 
+import net.minecraft.core.HolderLookup;
+import net.minecraft.world.item.crafting.RecipeManager;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-import net.minecraft.recipe.RecipeManager;
-import net.minecraft.registry.RegistryWrapper;
-
 @Mixin(RecipeManager.class)
 public class RecipeManagerMixin extends SinglePreparationResourceReloaderMixin {
 	@Shadow
 	@Final
-	private RegistryWrapper.WrapperLookup registryLookup;
+	private HolderLookup.Provider registries;
 
 	@Override
-	protected @Nullable RegistryWrapper.WrapperLookup fabric_getRegistryLookup() {
-		return this.registryLookup;
+	protected @Nullable HolderLookup.Provider fabric_getRegistryLookup() {
+		return this.registries;
 	}
 }

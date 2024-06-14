@@ -17,12 +17,10 @@
 package net.fabricmc.fabric.api.renderer.v1;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.renderer.v1.material.MaterialFinder;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MeshBuilder;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Interface for rendering plug-ins that provide enhanced capabilities
@@ -49,11 +47,11 @@ public interface Renderer {
 	MaterialFinder materialFinder();
 
 	/**
-	 * Return a material previously registered via {@link #registerMaterial(Identifier, RenderMaterial)}.
+	 * Return a material previously registered via {@link #registerMaterial(ResourceLocation, RenderMaterial)}.
 	 * Will return null if no material was found matching the given identifier.
 	 */
 	@Nullable
-	RenderMaterial materialById(Identifier id);
+	RenderMaterial materialById(ResourceLocation id);
 
 	/**
 	 * Register a material for re-use by other mods or models within a mod.
@@ -63,5 +61,5 @@ public interface Renderer {
 	 * <p>Returns false if a material with the given identifier is already present,
 	 * leaving the existing material intact.
 	 */
-	boolean registerMaterial(Identifier id, RenderMaterial material);
+	boolean registerMaterial(ResourceLocation id, RenderMaterial material);
 }

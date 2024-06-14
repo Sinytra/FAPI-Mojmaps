@@ -26,25 +26,23 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import net.minecraft.block.Block;
-import net.minecraft.client.render.model.UnbakedModel;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.client.model.loading.v1.BlockStateResolver;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelModifier;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelResolver;
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
+import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.Block;
 
 public class ModelLoadingPluginContextImpl implements ModelLoadingPlugin.Context {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ModelLoadingPluginContextImpl.class);
 
-	final Set<Identifier> extraModels = new LinkedHashSet<>();
-	final Map<Identifier, BlockStateResolver> blockStateResolvers = new HashMap<>();
+	final Set<ResourceLocation> extraModels = new LinkedHashSet<>();
+	final Map<ResourceLocation, BlockStateResolver> blockStateResolvers = new HashMap<>();
 
 	private final Event<ModelResolver> modelResolvers = EventFactory.createArrayBacked(ModelResolver.class, resolvers -> context -> {
 		for (ModelResolver resolver : resolvers) {
@@ -62,7 +60,7 @@ public class ModelLoadingPluginContextImpl implements ModelLoadingPlugin.Context
 		return null;
 	});
 
-	private static final Identifier[] MODEL_MODIFIER_PHASES = new Identifier[] { ModelModifier.OVERRIDE_PHASE, ModelModifier.DEFAULT_PHASE, ModelModifier.WRAP_PHASE, ModelModifier.WRAP_LAST_PHASE };
+	private static final ResourceLocation[] MODEL_MODIFIER_PHASES = new ResourceLocation[] { ModelModifier.OVERRIDE_PHASE, ModelModifier.DEFAULT_PHASE, ModelModifier.WRAP_PHASE, ModelModifier.WRAP_LAST_PHASE };
 
 	private final Event<ModelModifier.OnLoad> onLoadModifiers = EventFactory.createWithPhases(ModelModifier.OnLoad.class, modifiers -> (model, context) -> {
 		for (ModelModifier.OnLoad modifier : modifiers) {
@@ -102,14 +100,14 @@ public class ModelLoadingPluginContextImpl implements ModelLoadingPlugin.Context
 	}
 
 	@Override
-	public void addModels(Identifier... ids) {
-		for (Identifier id : ids) {
+	public void addModels(ResourceLocation... ids) {
+		for (ResourceLocation id : ids) {
 			extraModels.add(id);
 		}
 	}
 
 	@Override
-	public void addModels(Collection<? extends Identifier> ids) {
+	public void addModels(Collection<? extends ResourceLocation> ids) {
 		extraModels.addAll(ids);
 	}
 
@@ -118,13 +116,13 @@ public class ModelLoadingPluginContextImpl implements ModelLoadingPlugin.Context
 		Objects.requireNonNull(block, "block cannot be null");
 		Objects.requireNonNull(resolver, "resolver cannot be null");
 
-		Optional<RegistryKey<Block>> optionalKey = Registries.BLOCK.getKey(block);
+		Optional<ResourceKey<Block>> optionalKey = BuiltInRegistries.BLOCK.getResourceKey(block);
 
 		if (optionalKey.isEmpty()) {
 			throw new IllegalArgumentException("Received unregistered block");
 		}
 
-		Identifier blockId = optionalKey.get().getValue();
+		ResourceLocation blockId = optionalKey.get().location();
 
 		if (blockStateResolvers.put(blockId, resolver) != null) {
 			throw new IllegalArgumentException("Duplicate block state resolver for " + block);

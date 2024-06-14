@@ -17,16 +17,14 @@
 package net.fabricmc.fabric.impl.client.indigo.renderer.mesh;
 
 import com.google.common.base.Preconditions;
-
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.client.render.VertexFormats;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
 import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
 import net.fabricmc.fabric.impl.client.indigo.renderer.helper.GeometryHelper;
 import net.fabricmc.fabric.impl.client.indigo.renderer.material.RenderMaterialImpl;
+import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
 
 /**
  * Holds all the array offsets and bit-wise encoders/decoders for
@@ -57,7 +55,7 @@ public abstract class EncodingFormat {
 	public static final int TOTAL_STRIDE;
 
 	static {
-		final VertexFormat format = VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL;
+		final VertexFormat format = DefaultVertexFormat.BLOCK;
 		VERTEX_X = HEADER_STRIDE + 0;
 		VERTEX_Y = HEADER_STRIDE + 1;
 		VERTEX_Z = HEADER_STRIDE + 2;
@@ -66,7 +64,7 @@ public abstract class EncodingFormat {
 		VERTEX_V = VERTEX_U + 1;
 		VERTEX_LIGHTMAP = HEADER_STRIDE + 6;
 		VERTEX_NORMAL = HEADER_STRIDE + 7;
-		VERTEX_STRIDE = format.getVertexSizeByte() / 4;
+		VERTEX_STRIDE = format.getVertexSize() / 4;
 		QUAD_STRIDE = VERTEX_STRIDE * 4;
 		QUAD_STRIDE_BYTES = QUAD_STRIDE * 4;
 		TOTAL_STRIDE = HEADER_STRIDE + QUAD_STRIDE;
@@ -78,7 +76,7 @@ public abstract class EncodingFormat {
 	/** used for quick clearing of quad buffers. */
 	static final int[] EMPTY = new int[TOTAL_STRIDE];
 
-	private static final int DIRECTION_MASK = MathHelper.smallestEncompassingPowerOfTwo(ModelHelper.NULL_FACE_ID) - 1;
+	private static final int DIRECTION_MASK = Mth.smallestEncompassingPowerOfTwo(ModelHelper.NULL_FACE_ID) - 1;
 	private static final int DIRECTION_BIT_COUNT = Integer.bitCount(DIRECTION_MASK);
 	private static final int CULL_SHIFT = 0;
 	private static final int CULL_INVERSE_MASK = ~(DIRECTION_MASK << CULL_SHIFT);
@@ -92,7 +90,7 @@ public abstract class EncodingFormat {
 	private static final int GEOMETRY_MASK = (1 << GeometryHelper.FLAG_BIT_COUNT) - 1;
 	private static final int GEOMETRY_INVERSE_MASK = ~(GEOMETRY_MASK << GEOMETRY_SHIFT);
 	private static final int MATERIAL_SHIFT = GEOMETRY_SHIFT + GeometryHelper.FLAG_BIT_COUNT;
-	private static final int MATERIAL_MASK = MathHelper.smallestEncompassingPowerOfTwo(RenderMaterialImpl.VALUE_COUNT) - 1;
+	private static final int MATERIAL_MASK = Mth.smallestEncompassingPowerOfTwo(RenderMaterialImpl.VALUE_COUNT) - 1;
 	private static final int MATERIAL_BIT_COUNT = Integer.bitCount(MATERIAL_MASK);
 	private static final int MATERIAL_INVERSE_MASK = ~(MATERIAL_MASK << MATERIAL_SHIFT);
 

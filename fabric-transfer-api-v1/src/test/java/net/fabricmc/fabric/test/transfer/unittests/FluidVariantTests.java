@@ -20,11 +20,9 @@ import static net.fabricmc.fabric.test.transfer.TestUtil.assertEquals;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-
-import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.Fluids;
-
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
 
 class FluidVariantTests extends AbstractTransferApiTest {
 	@BeforeAll

@@ -20,20 +20,18 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.TitleScreen;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.resources.ResourceLocation;
 
 public final class ScreenTests implements ClientModInitializer {
-	public static final Identifier ARMOR_FULL_TEXTURE = Identifier.ofVanilla("hud/armor_full");
+	public static final ResourceLocation ARMOR_FULL_TEXTURE = ResourceLocation.withDefaultNamespace("hud/armor_full");
 	private static final Logger LOGGER = LoggerFactory.getLogger("FabricScreenApiTests");
 
 	@Override
@@ -46,14 +44,14 @@ public final class ScreenTests implements ClientModInitializer {
 		ScreenEvents.AFTER_INIT.register(this::afterInitScreen);
 	}
 
-	private void afterInitScreen(MinecraftClient client, Screen screen, int windowWidth, int windowHeight) {
+	private void afterInitScreen(Minecraft client, Screen screen, int windowWidth, int windowHeight) {
 		LOGGER.info("Initializing {}", screen.getClass().getName());
 
 		if (screen instanceof TitleScreen) {
-			final List<ClickableWidget> buttons = Screens.getButtons(screen);
+			final List<AbstractWidget> buttons = Screens.getButtons(screen);
 
 			// Shrink the realms button, should be the third button on the list
-			final ClickableWidget optionsButton = buttons.get(2);
+			final AbstractWidget optionsButton = buttons.get(2);
 			optionsButton.setWidth(98);
 
 			// Add a new button
@@ -76,7 +74,7 @@ public final class ScreenTests implements ClientModInitializer {
 			// Register render event to draw an icon on the screen
 			ScreenEvents.afterRender(screen).register((_screen, drawContext, mouseX, mouseY, tickDelta) -> {
 				// Render an armor icon to test
-				drawContext.drawGuiTexture(ScreenTests.ARMOR_FULL_TEXTURE, (screen.width / 2) - 124, (screen.height / 4) + 96, 20, 20);
+				drawContext.blitSprite(ScreenTests.ARMOR_FULL_TEXTURE, (screen.width / 2) - 124, (screen.height / 4) + 96, 20, 20);
 			});
 
 			ScreenKeyboardEvents.allowKeyPress(screen).register((_screen, key, scancode, modifiers) -> {

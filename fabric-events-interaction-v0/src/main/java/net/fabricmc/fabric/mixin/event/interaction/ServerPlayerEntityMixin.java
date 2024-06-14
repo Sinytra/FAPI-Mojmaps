@@ -20,22 +20,20 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.entity.Entity;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
 
-@Mixin(ServerPlayerEntity.class)
+@Mixin(ServerPlayer.class)
 public class ServerPlayerEntityMixin {
 	@Inject(method = "attack", at = @At("HEAD"), cancellable = true)
 	public void onPlayerInteractEntity(Entity target, CallbackInfo info) {
-		ServerPlayerEntity player = (ServerPlayerEntity) (Object) this;
-		ActionResult result = AttackEntityCallback.EVENT.invoker().interact(player, player.getEntityWorld(), Hand.MAIN_HAND, target, null);
+		ServerPlayer player = (ServerPlayer) (Object) this;
+		InteractionResult result = AttackEntityCallback.EVENT.invoker().interact(player, player.getCommandSenderWorld(), InteractionHand.MAIN_HAND, target, null);
 
-		if (result != ActionResult.PASS) {
+		if (result != InteractionResult.PASS) {
 			info.cancel();
 		}
 	}

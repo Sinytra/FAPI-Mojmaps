@@ -16,24 +16,23 @@
 
 package net.fabricmc.fabric.test.content.registry;
 
-import net.minecraft.block.Blocks;
-import net.minecraft.test.GameTest;
-import net.minecraft.test.GameTestException;
-import net.minecraft.test.TestContext;
-
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.fabricmc.fabric.api.registry.FlammableBlockRegistry;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestAssertException;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.level.block.Blocks;
 
 public class FlammableTest {
 	/**
 	 * Regression test for <a href="https://github.com/FabricMC/fabric/issues/2108">FlammableBlockRegistry ignoring tags on first load</a>.
 	 */
-	@GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE)
-	public void testFlammableTag(TestContext context) {
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void testFlammableTag(GameTestHelper context) {
 		if (FlammableBlockRegistry.getDefaultInstance().get(Blocks.SAND).getBurnChance() != 4) {
-			throw new GameTestException("Expected blocks in the sand tag to be flammable!");
+			throw new GameTestAssertException("Expected blocks in the sand tag to be flammable!");
 		}
 
-		context.complete();
+		context.succeed();
 	}
 }

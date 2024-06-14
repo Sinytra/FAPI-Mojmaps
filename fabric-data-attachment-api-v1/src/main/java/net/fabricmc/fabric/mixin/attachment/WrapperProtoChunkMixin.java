@@ -22,20 +22,18 @@ import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.world.chunk.WorldChunk;
-import net.minecraft.world.chunk.WrapperProtoChunk;
-
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.fabricmc.fabric.impl.attachment.AttachmentTargetImpl;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.chunk.ImposterProtoChunk;
+import net.minecraft.world.level.chunk.LevelChunk;
 
-@Mixin(WrapperProtoChunk.class)
+@Mixin(ImposterProtoChunk.class)
 public class WrapperProtoChunkMixin implements AttachmentTargetImpl {
 	@Shadow
 	@Final
-	private WorldChunk wrapped;
+	private LevelChunk wrapped;
 
 	@Override
 	@Nullable
@@ -55,12 +53,12 @@ public class WrapperProtoChunkMixin implements AttachmentTargetImpl {
 	}
 
 	@Override
-	public void fabric_writeAttachmentsToNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup) {
+	public void fabric_writeAttachmentsToNbt(CompoundTag nbt, HolderLookup.Provider wrapperLookup) {
 		((AttachmentTargetImpl) this.wrapped).fabric_writeAttachmentsToNbt(nbt, wrapperLookup);
 	}
 
 	@Override
-	public void fabric_readAttachmentsFromNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup) {
+	public void fabric_readAttachmentsFromNbt(CompoundTag nbt, HolderLookup.Provider wrapperLookup) {
 		((AttachmentTargetImpl) this.wrapped).fabric_readAttachmentsFromNbt(nbt, wrapperLookup);
 	}
 

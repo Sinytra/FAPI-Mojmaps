@@ -21,38 +21,36 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.network.NetworkPhase;
-import net.minecraft.network.NetworkSide;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.minecraft.network.ConnectionProtocol;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
-public class PayloadTypeRegistryImpl<B extends PacketByteBuf> implements PayloadTypeRegistry<B> {
-	public static final PayloadTypeRegistryImpl<PacketByteBuf> CONFIGURATION_C2S = new PayloadTypeRegistryImpl<>(NetworkPhase.CONFIGURATION, NetworkSide.SERVERBOUND);
-	public static final PayloadTypeRegistryImpl<PacketByteBuf> CONFIGURATION_S2C = new PayloadTypeRegistryImpl<>(NetworkPhase.CONFIGURATION, NetworkSide.CLIENTBOUND);
-	public static final PayloadTypeRegistryImpl<RegistryByteBuf> PLAY_C2S = new PayloadTypeRegistryImpl<>(NetworkPhase.PLAY, NetworkSide.SERVERBOUND);
-	public static final PayloadTypeRegistryImpl<RegistryByteBuf> PLAY_S2C = new PayloadTypeRegistryImpl<>(NetworkPhase.PLAY, NetworkSide.CLIENTBOUND);
+public class PayloadTypeRegistryImpl<B extends FriendlyByteBuf> implements PayloadTypeRegistry<B> {
+	public static final PayloadTypeRegistryImpl<FriendlyByteBuf> CONFIGURATION_C2S = new PayloadTypeRegistryImpl<>(ConnectionProtocol.CONFIGURATION, PacketFlow.SERVERBOUND);
+	public static final PayloadTypeRegistryImpl<FriendlyByteBuf> CONFIGURATION_S2C = new PayloadTypeRegistryImpl<>(ConnectionProtocol.CONFIGURATION, PacketFlow.CLIENTBOUND);
+	public static final PayloadTypeRegistryImpl<RegistryFriendlyByteBuf> PLAY_C2S = new PayloadTypeRegistryImpl<>(ConnectionProtocol.PLAY, PacketFlow.SERVERBOUND);
+	public static final PayloadTypeRegistryImpl<RegistryFriendlyByteBuf> PLAY_S2C = new PayloadTypeRegistryImpl<>(ConnectionProtocol.PLAY, PacketFlow.CLIENTBOUND);
 
-	private final Map<Identifier, CustomPayload.Type<B, ? extends CustomPayload>> packetTypes = new HashMap<>();
-	private final NetworkPhase state;
-	private final NetworkSide side;
+	private final Map<ResourceLocation, CustomPacketPayload.TypeAndCodec<B, ? extends CustomPacketPayload>> packetTypes = new HashMap<>();
+	private final ConnectionProtocol state;
+	private final PacketFlow side;
 
-	private PayloadTypeRegistryImpl(NetworkPhase state, NetworkSide side) {
+	private PayloadTypeRegistryImpl(ConnectionProtocol state, PacketFlow side) {
 		this.state = state;
 		this.side = side;
 	}
 
 	@Override
-	public <T extends CustomPayload> CustomPayload.Type<? super B, T> register(CustomPayload.Id<T> id, PacketCodec<? super B, T> codec) {
+	public <T extends CustomPacketPayload> CustomPacketPayload.TypeAndCodec<? super B, T> register(CustomPacketPayload.Type<T> id, StreamCodec<? super B, T> codec) {
 		Objects.requireNonNull(id, "id");
 		Objects.requireNonNull(codec, "codec");
 
-		final CustomPayload.Type<B, T> payloadType = new CustomPayload.Type<>(id, codec.cast());
+		final CustomPacketPayload.TypeAndCodec<B, T> payloadType = new CustomPacketPayload.TypeAndCodec<>(id, codec.cast());
 
 		if (packetTypes.containsKey(id.id())) {
 			throw new IllegalArgumentException("Packet type " + id + " is already registered!");
@@ -63,21 +61,21 @@ public class PayloadTypeRegistryImpl<B extends PacketByteBuf> implements Payload
 	}
 
 	@Nullable
-	public CustomPayload.Type<B, ? extends CustomPayload> get(Identifier id) {
+	public CustomPacketPayload.TypeAndCodec<B, ? extends CustomPacketPayload> get(ResourceLocation id) {
 		return packetTypes.get(id);
 	}
 
 	@Nullable
-	public <T extends CustomPayload> CustomPayload.Type<B, T> get(CustomPayload.Id<T> id) {
+	public <T extends CustomPacketPayload> CustomPacketPayload.TypeAndCodec<B, T> get(CustomPacketPayload.Type<T> id) {
 		//noinspection unchecked
-		return (CustomPayload.Type<B, T>) packetTypes.get(id.id());
+		return (CustomPacketPayload.TypeAndCodec<B, T>) packetTypes.get(id.id());
 	}
 
-	public NetworkPhase getPhase() {
+	public ConnectionProtocol getPhase() {
 		return state;
 	}
 
-	public NetworkSide getSide() {
+	public PacketFlow getSide() {
 		return side;
 	}
 }

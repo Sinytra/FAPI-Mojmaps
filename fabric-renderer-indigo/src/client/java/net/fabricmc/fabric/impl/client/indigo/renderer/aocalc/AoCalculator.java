@@ -19,35 +19,33 @@ package net.fabricmc.fabric.impl.client.indigo.renderer.aocalc;
 import static net.fabricmc.fabric.impl.client.indigo.renderer.helper.GeometryHelper.AXIS_ALIGNED_FLAG;
 import static net.fabricmc.fabric.impl.client.indigo.renderer.helper.GeometryHelper.CUBIC_FLAG;
 import static net.fabricmc.fabric.impl.client.indigo.renderer.helper.GeometryHelper.LIGHT_FACE_FLAG;
-import static net.minecraft.util.math.Direction.DOWN;
-import static net.minecraft.util.math.Direction.EAST;
-import static net.minecraft.util.math.Direction.NORTH;
-import static net.minecraft.util.math.Direction.SOUTH;
-import static net.minecraft.util.math.Direction.UP;
-import static net.minecraft.util.math.Direction.WEST;
+import static net.minecraft.core.Direction.DOWN;
+import static net.minecraft.core.Direction.EAST;
+import static net.minecraft.core.Direction.NORTH;
+import static net.minecraft.core.Direction.SOUTH;
+import static net.minecraft.core.Direction.UP;
+import static net.minecraft.core.Direction.WEST;
 
 import java.util.BitSet;
 
 import org.joml.Vector3f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.client.render.block.BlockModelRenderer;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.BlockRenderView;
-import net.minecraft.world.LightType;
-
 import net.fabricmc.fabric.impl.client.indigo.Indigo;
 import net.fabricmc.fabric.impl.client.indigo.renderer.aocalc.AoFace.WeightFunction;
 import net.fabricmc.fabric.impl.client.indigo.renderer.mesh.EncodingFormat;
 import net.fabricmc.fabric.impl.client.indigo.renderer.mesh.MutableQuadViewImpl;
 import net.fabricmc.fabric.impl.client.indigo.renderer.mesh.QuadViewImpl;
 import net.fabricmc.fabric.impl.client.indigo.renderer.render.BlockRenderInfo;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.block.ModelBlockRenderer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * Adaptation of inner, non-static class in BlockModelRenderer that serves same purpose.
@@ -59,19 +57,19 @@ public abstract class AoCalculator {
 	 */
 	private static final int[][] VERTEX_MAP = new int[6][4];
 	static {
-		VERTEX_MAP[DOWN.getId()] = new int[] { 0, 1, 2, 3 };
-		VERTEX_MAP[UP.getId()] = new int[] { 2, 3, 0, 1 };
-		VERTEX_MAP[NORTH.getId()] = new int[] { 3, 0, 1, 2 };
-		VERTEX_MAP[SOUTH.getId()] = new int[] { 0, 1, 2, 3 };
-		VERTEX_MAP[WEST.getId()] = new int[] { 3, 0, 1, 2 };
-		VERTEX_MAP[EAST.getId()] = new int[] { 1, 2, 3, 0 };
+		VERTEX_MAP[DOWN.get3DDataValue()] = new int[] { 0, 1, 2, 3 };
+		VERTEX_MAP[UP.get3DDataValue()] = new int[] { 2, 3, 0, 1 };
+		VERTEX_MAP[NORTH.get3DDataValue()] = new int[] { 3, 0, 1, 2 };
+		VERTEX_MAP[SOUTH.get3DDataValue()] = new int[] { 0, 1, 2, 3 };
+		VERTEX_MAP[WEST.get3DDataValue()] = new int[] { 3, 0, 1, 2 };
+		VERTEX_MAP[EAST.get3DDataValue()] = new int[] { 1, 2, 3, 0 };
 	}
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AoCalculator.class);
 
-	private final BlockModelRenderer.AmbientOcclusionCalculator vanillaCalc;
-	private final BlockPos.Mutable lightPos = new BlockPos.Mutable();
-	private final BlockPos.Mutable searchPos = new BlockPos.Mutable();
+	private final ModelBlockRenderer.AmbientOcclusionFace vanillaCalc;
+	private final BlockPos.MutableBlockPos lightPos = new BlockPos.MutableBlockPos();
+	private final BlockPos.MutableBlockPos searchPos = new BlockPos.MutableBlockPos();
 	protected final BlockRenderInfo blockInfo;
 
 	public abstract int light(BlockPos pos, BlockState state);
@@ -93,7 +91,7 @@ public abstract class AoCalculator {
 
 	public AoCalculator(BlockRenderInfo blockInfo) {
 		this.blockInfo = blockInfo;
-		this.vanillaCalc = new BlockModelRenderer.AmbientOcclusionCalculator();
+		this.vanillaCalc = new ModelBlockRenderer.AmbientOcclusionFace();
 
 		for (int i = 0; i < 24; i++) {
 			faceData[i] = new AoFaceData();
@@ -145,7 +143,7 @@ public abstract class AoCalculator {
 			calcVanilla(quad, vanillaAo, vanillaLight);
 
 			for (int i = 0; i < 4; i++) {
-				if (light[i] != vanillaLight[i] || !MathHelper.approximatelyEquals(ao[i], vanillaAo[i])) {
+				if (light[i] != vanillaLight[i] || !Mth.equal(ao[i], vanillaAo[i])) {
 					LOGGER.info(String.format("Mismatch for %s @ %s", blockInfo.blockState.toString(), blockInfo.blockPos.toString()));
 					LOGGER.info(String.format("Flags = %d, LightFace = %s", quad.geometryFlags(), quad.lightFace().toString()));
 					LOGGER.info(String.format("    Old Multiplier: %.2f, %.2f, %.2f, %.2f", vanillaAo[0], vanillaAo[1], vanillaAo[2], vanillaAo[3]));
@@ -175,17 +173,17 @@ public abstract class AoCalculator {
 		quad.toVanilla(vertexData, 0);
 
 		VanillaAoHelper.updateShape(blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, vertexData, lightFace, vanillaAoData, vanillaAoControlBits);
-		vanillaCalc.apply(blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, lightFace, vanillaAoData, vanillaAoControlBits, quad.hasShade());
+		vanillaCalc.calculate(blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, lightFace, vanillaAoData, vanillaAoControlBits, quad.hasShade());
 
 		System.arraycopy(vanillaCalc.brightness, 0, aoDest, 0, 4);
-		System.arraycopy(vanillaCalc.light, 0, lightDest, 0, 4);
+		System.arraycopy(vanillaCalc.lightmap, 0, lightDest, 0, 4);
 	}
 
 	private void calcFastVanilla(MutableQuadViewImpl quad) {
 		int flags = quad.geometryFlags();
 
 		// force to block face if shape is full cube - matches vanilla logic
-		if ((flags & LIGHT_FACE_FLAG) == 0 && (flags & AXIS_ALIGNED_FLAG) != 0 && blockInfo.blockState.isFullCube(blockInfo.blockView, blockInfo.blockPos)) {
+		if ((flags & LIGHT_FACE_FLAG) == 0 && (flags & AXIS_ALIGNED_FLAG) != 0 && blockInfo.blockState.isCollisionShapeFullBlock(blockInfo.blockView, blockInfo.blockPos)) {
 			flags |= LIGHT_FACE_FLAG;
 		}
 
@@ -215,7 +213,7 @@ public abstract class AoCalculator {
 	}
 
 	private void vanillaFullFace(QuadViewImpl quad, Direction lightFace, boolean isOnLightFace, boolean shade) {
-		computeFace(lightFace, isOnLightFace, shade).toArray(ao, light, VERTEX_MAP[lightFace.getId()]);
+		computeFace(lightFace, isOnLightFace, shade).toArray(ao, light, VERTEX_MAP[lightFace.get3DDataValue()]);
 	}
 
 	private void vanillaPartialFace(QuadViewImpl quad, Direction lightFace, boolean isOnLightFace, boolean shade) {
@@ -247,9 +245,9 @@ public abstract class AoCalculator {
 	private AoFaceData gatherInsetFace(QuadViewImpl quad, int vertexIndex, Direction lightFace, boolean shade) {
 		final float w1 = AoFace.get(lightFace).depthFunc.apply(quad, vertexIndex);
 
-		if (MathHelper.approximatelyEquals(w1, 0)) {
+		if (Mth.equal(w1, 0)) {
 			return computeFace(lightFace, true, shade);
-		} else if (MathHelper.approximatelyEquals(w1, 1)) {
+		} else if (Mth.equal(w1, 1)) {
 			return computeFace(lightFace, false, shade);
 		} else {
 			final float w0 = 1 - w1;
@@ -285,7 +283,7 @@ public abstract class AoCalculator {
 
 			final float x = normal.x();
 
-			if (!MathHelper.approximatelyEquals(0f, x)) {
+			if (!Mth.equal(0f, x)) {
 				final Direction face = x > 0 ? Direction.EAST : Direction.WEST;
 				final AoFaceData fd = gatherInsetFace(quad, i, face, shade);
 				AoFace.get(face).weightFunc.apply(quad, i, w);
@@ -303,7 +301,7 @@ public abstract class AoCalculator {
 
 			final float y = normal.y();
 
-			if (!MathHelper.approximatelyEquals(0f, y)) {
+			if (!Mth.equal(0f, y)) {
 				final Direction face = y > 0 ? Direction.UP : Direction.DOWN;
 				final AoFaceData fd = gatherInsetFace(quad, i, face, shade);
 				AoFace.get(face).weightFunc.apply(quad, i, w);
@@ -321,7 +319,7 @@ public abstract class AoCalculator {
 
 			final float z = normal.z();
 
-			if (!MathHelper.approximatelyEquals(0f, z)) {
+			if (!Mth.equal(0f, z)) {
 				final Direction face = z > 0 ? Direction.SOUTH : Direction.NORTH;
 				final AoFaceData fd = gatherInsetFace(quad, i, face, shade);
 				AoFace.get(face).weightFunc.apply(quad, i, w);
@@ -343,7 +341,7 @@ public abstract class AoCalculator {
 	}
 
 	private AoFaceData computeFace(Direction lightFace, boolean isOnBlockFace, boolean shade) {
-		final int faceDataIndex = shade ? (isOnBlockFace ? lightFace.getId() : lightFace.getId() + 6) : (isOnBlockFace ? lightFace.getId() + 12 : lightFace.getId() + 18);
+		final int faceDataIndex = shade ? (isOnBlockFace ? lightFace.get3DDataValue() : lightFace.get3DDataValue() + 6) : (isOnBlockFace ? lightFace.get3DDataValue() + 12 : lightFace.get3DDataValue() + 18);
 		final int mask = 1 << faceDataIndex;
 		final AoFaceData result = faceData[faceDataIndex];
 
@@ -364,15 +362,15 @@ public abstract class AoCalculator {
 	 * Except for parameterization, the logic itself is practically identical to vanilla.
 	 */
 	private void computeFace(AoFaceData result, Direction lightFace, boolean isOnBlockFace, boolean shade) {
-		final BlockRenderView world = blockInfo.blockView;
+		final BlockAndTintGetter world = blockInfo.blockView;
 		final BlockPos pos = blockInfo.blockPos;
 		final BlockState blockState = blockInfo.blockState;
-		final BlockPos.Mutable lightPos = this.lightPos;
-		final BlockPos.Mutable searchPos = this.searchPos;
+		final BlockPos.MutableBlockPos lightPos = this.lightPos;
+		final BlockPos.MutableBlockPos searchPos = this.searchPos;
 		BlockState searchState;
 
 		if (isOnBlockFace) {
-			lightPos.set(pos, lightFace);
+			lightPos.setWithOffset(pos, lightFace);
 		} else {
 			lightPos.set(pos);
 		}
@@ -383,7 +381,7 @@ public abstract class AoCalculator {
 		// direction of the light face, but it was actually mis-sampling and causing
 		// visible artifacts in certain situations
 
-		searchPos.set(lightPos, aoFace.neighbors[0]);
+		searchPos.setWithOffset(lightPos, aoFace.neighbors[0]);
 		searchState = world.getBlockState(searchPos);
 		final int light0 = light(searchPos, searchState);
 		final float ao0 = ao(searchPos, searchState);
@@ -394,9 +392,9 @@ public abstract class AoCalculator {
 			searchState = world.getBlockState(searchPos);
 		}
 
-		final boolean isClear0 = !searchState.shouldBlockVision(world, searchPos) || searchState.getOpacity(world, searchPos) == 0;
+		final boolean isClear0 = !searchState.isViewBlocking(world, searchPos) || searchState.getLightBlock(world, searchPos) == 0;
 
-		searchPos.set(lightPos, aoFace.neighbors[1]);
+		searchPos.setWithOffset(lightPos, aoFace.neighbors[1]);
 		searchState = world.getBlockState(searchPos);
 		final int light1 = light(searchPos, searchState);
 		final float ao1 = ao(searchPos, searchState);
@@ -407,9 +405,9 @@ public abstract class AoCalculator {
 			searchState = world.getBlockState(searchPos);
 		}
 
-		final boolean isClear1 = !searchState.shouldBlockVision(world, searchPos) || searchState.getOpacity(world, searchPos) == 0;
+		final boolean isClear1 = !searchState.isViewBlocking(world, searchPos) || searchState.getLightBlock(world, searchPos) == 0;
 
-		searchPos.set(lightPos, aoFace.neighbors[2]);
+		searchPos.setWithOffset(lightPos, aoFace.neighbors[2]);
 		searchState = world.getBlockState(searchPos);
 		final int light2 = light(searchPos, searchState);
 		final float ao2 = ao(searchPos, searchState);
@@ -420,9 +418,9 @@ public abstract class AoCalculator {
 			searchState = world.getBlockState(searchPos);
 		}
 
-		final boolean isClear2 = !searchState.shouldBlockVision(world, searchPos) || searchState.getOpacity(world, searchPos) == 0;
+		final boolean isClear2 = !searchState.isViewBlocking(world, searchPos) || searchState.getLightBlock(world, searchPos) == 0;
 
-		searchPos.set(lightPos, aoFace.neighbors[3]);
+		searchPos.setWithOffset(lightPos, aoFace.neighbors[3]);
 		searchState = world.getBlockState(searchPos);
 		final int light3 = light(searchPos, searchState);
 		final float ao3 = ao(searchPos, searchState);
@@ -433,7 +431,7 @@ public abstract class AoCalculator {
 			searchState = world.getBlockState(searchPos);
 		}
 
-		final boolean isClear3 = !searchState.shouldBlockVision(world, searchPos) || searchState.getOpacity(world, searchPos) == 0;
+		final boolean isClear3 = !searchState.isViewBlocking(world, searchPos) || searchState.getLightBlock(world, searchPos) == 0;
 
 		// c = corner - values at corners of face
 		int cLight0, cLight1, cLight2, cLight3;
@@ -495,10 +493,10 @@ public abstract class AoCalculator {
 		// Doesn't use light pos because logic not based solely on this block's geometry
 		int lightCenter;
 		boolean emCenter;
-		searchPos.set(pos, lightFace);
+		searchPos.setWithOffset(pos, lightFace);
 		searchState = world.getBlockState(searchPos);
 
-		if (isOnBlockFace || !searchState.isOpaqueFullCube(world, searchPos)) {
+		if (isOnBlockFace || !searchState.isSolidRender(world, searchPos)) {
 			lightCenter = light(searchPos, searchState);
 			emCenter = hasEmissiveLighting(world, searchPos, searchState);
 		} else {
@@ -507,7 +505,7 @@ public abstract class AoCalculator {
 		}
 
 		float aoCenter = ao(lightPos, world.getBlockState(lightPos));
-		float worldBrightness = world.getBrightness(lightFace, shade);
+		float worldBrightness = world.getShade(lightFace, shade);
 
 		result.a0 = ((ao3 + ao0 + cAo1 + aoCenter) * 0.25F) * worldBrightness;
 		result.a1 = ((ao2 + ao0 + cAo0 + aoCenter) * 0.25F) * worldBrightness;
@@ -520,15 +518,15 @@ public abstract class AoCalculator {
 		result.l3(meanBrightness(light3, light1, cLight3, lightCenter, em3, em1, cEm3, emCenter));
 	}
 
-	public static int getLightmapCoordinates(BlockRenderView world, BlockState state, BlockPos pos) {
+	public static int getLightmapCoordinates(BlockAndTintGetter world, BlockState state, BlockPos pos) {
 		if (Indigo.FIX_EMISSIVE_LIGHTING) {
 			// Same as WorldRenderer.getLightmapCoordinates but without the hasEmissiveLighting check.
 			// We don't want emissive lighting to influence the minimum lightmap in a quad,
 			// so when the fix is enabled we apply emissive lighting after the quad minimum is computed.
 			// See AoCalculator#meanBrightness.
-			int i = world.getLightLevel(LightType.SKY, pos);
-			int j = world.getLightLevel(LightType.BLOCK, pos);
-			int k = state.getLuminance();
+			int i = world.getBrightness(LightLayer.SKY, pos);
+			int j = world.getBrightness(LightLayer.BLOCK, pos);
+			int k = state.getLightEmission();
 
 			if (j < k) {
 				j = k;
@@ -536,13 +534,13 @@ public abstract class AoCalculator {
 
 			return i << 20 | j << 4;
 		} else {
-			return WorldRenderer.getLightmapCoordinates(world, state, pos);
+			return LevelRenderer.getLightColor(world, state, pos);
 		}
 	}
 
-	private boolean hasEmissiveLighting(BlockRenderView world, BlockPos pos, BlockState state) {
+	private boolean hasEmissiveLighting(BlockAndTintGetter world, BlockPos pos, BlockState state) {
 		if (Indigo.FIX_EMISSIVE_LIGHTING) {
-			return state.hasEmissiveLighting(world, pos);
+			return state.emissiveRendering(world, pos);
 		} else {
 			// When the fix is disabled, emissive lighting was already applied and does not need to be accounted for.
 			return false;
@@ -569,10 +567,10 @@ public abstract class AoCalculator {
 			if (Indigo.FIX_EMISSIVE_LIGHTING) {
 				// Apply the fullbright lightmap from emissive blocks at the very end so it cannot influence
 				// the minimum lightmap and produce incorrect results (for example, sculk sensors in a dark room)
-				if (emA) lightA = LightmapTextureManager.MAX_LIGHT_COORDINATE;
-				if (emB) lightB = LightmapTextureManager.MAX_LIGHT_COORDINATE;
-				if (emC) lightC = LightmapTextureManager.MAX_LIGHT_COORDINATE;
-				if (emD) lightD = LightmapTextureManager.MAX_LIGHT_COORDINATE;
+				if (emA) lightA = LightTexture.FULL_BRIGHT;
+				if (emB) lightB = LightTexture.FULL_BRIGHT;
+				if (emC) lightC = LightTexture.FULL_BRIGHT;
+				if (emD) lightD = LightTexture.FULL_BRIGHT;
 			}
 
 			return meanInnerBrightness(lightA, lightB, lightC, lightD);

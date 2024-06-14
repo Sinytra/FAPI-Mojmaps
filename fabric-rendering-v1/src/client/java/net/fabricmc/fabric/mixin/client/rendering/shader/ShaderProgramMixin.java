@@ -18,28 +18,26 @@ package net.fabricmc.fabric.mixin.client.rendering.shader;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mojang.blaze3d.shaders.Program;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
-
-import net.minecraft.client.gl.ShaderProgram;
-import net.minecraft.client.gl.ShaderStage;
-import net.minecraft.resource.ResourceFactory;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.impl.client.rendering.FabricShaderProgram;
+import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceProvider;
 
-@Mixin(ShaderProgram.class)
+@Mixin(ShaderInstance.class)
 abstract class ShaderProgramMixin {
 	@Shadow
 	@Final
 	private String name;
 
 	// Allow loading FabricShaderPrograms from arbitrary namespaces.
-	@WrapOperation(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/Identifier;ofVanilla(Ljava/lang/String;)Lnet/minecraft/util/Identifier;"), allow = 1)
-	private Identifier modifyId(String id, Operation<Identifier> original) {
+	@WrapOperation(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/resources/ResourceLocation;withDefaultNamespace(Ljava/lang/String;)Lnet/minecraft/resources/ResourceLocation;"), allow = 1)
+	private ResourceLocation modifyId(String id, Operation<ResourceLocation> original) {
 		if ((Object) this instanceof FabricShaderProgram) {
 			return FabricShaderProgram.rewriteAsId(id, name);
 		}
@@ -48,19 +46,19 @@ abstract class ShaderProgramMixin {
 	}
 
 	// Allow loading shader stages from arbitrary namespaces.
-	@ModifyVariable(method = "loadShader", at = @At("STORE"), ordinal = 1)
-	private static String modifyStageId(String id, ResourceFactory factory, ShaderStage.Type type, String name) {
-		if (name.contains(String.valueOf(Identifier.NAMESPACE_SEPARATOR))) {
+	@ModifyVariable(method = "getOrCreate", at = @At("STORE"), ordinal = 1)
+	private static String modifyStageId(String id, ResourceProvider factory, Program.Type type, String name) {
+		if (name.contains(String.valueOf(ResourceLocation.NAMESPACE_SEPARATOR))) {
 			return FabricShaderProgram.rewriteAsId(id, name).toString();
 		}
 
 		return id;
 	}
 
-	@WrapOperation(method = "loadShader", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/Identifier;ofVanilla(Ljava/lang/String;)Lnet/minecraft/util/Identifier;"), allow = 1)
-	private static Identifier allowNoneMinecraftId(String id, Operation<Identifier> original) {
-		if (id.contains(String.valueOf(Identifier.NAMESPACE_SEPARATOR))) {
-			return Identifier.of(id);
+	@WrapOperation(method = "getOrCreate", at = @At(value = "INVOKE", target = "Lnet/minecraft/resources/ResourceLocation;withDefaultNamespace(Ljava/lang/String;)Lnet/minecraft/resources/ResourceLocation;"), allow = 1)
+	private static ResourceLocation allowNoneMinecraftId(String id, Operation<ResourceLocation> original) {
+		if (id.contains(String.valueOf(ResourceLocation.NAMESPACE_SEPARATOR))) {
+			return ResourceLocation.parse(id);
 		}
 
 		return original.call(id);

@@ -16,23 +16,21 @@
 
 package net.fabricmc.fabric.impl.gamerule;
 
-import static net.minecraft.server.command.CommandManager.literal;
+import static net.minecraft.commands.Commands.literal;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
-
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.Text;
-import net.minecraft.world.GameRules;
-
 import net.fabricmc.fabric.api.gamerule.v1.rule.EnumRule;
 import net.fabricmc.fabric.mixin.gamerule.GameRuleCommandAccessor;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.GameRules;
 
 public final class EnumRuleCommand {
-	public static <E extends Enum<E>> void register(LiteralArgumentBuilder<ServerCommandSource> literalArgumentBuilder, GameRules.Key<EnumRule<E>> key, EnumRuleType<E> type) {
-		literalArgumentBuilder.then(literal(key.getName()).executes(context -> {
+	public static <E extends Enum<E>> void register(LiteralArgumentBuilder<CommandSourceStack> literalArgumentBuilder, GameRules.Key<EnumRule<E>> key, EnumRuleType<E> type) {
+		literalArgumentBuilder.then(literal(key.getId()).executes(context -> {
 			// We can use the vanilla query method
 			return GameRuleCommandAccessor.invokeExecuteQuery(context.getSource(), key);
 		}));
@@ -41,18 +39,18 @@ public final class EnumRuleCommand {
 		type.register(literalArgumentBuilder, key);
 	}
 
-	public static <E extends Enum<E>> int executeAndSetEnum(CommandContext<ServerCommandSource> context, E value, GameRules.Key<EnumRule<E>> key) throws CommandSyntaxException {
+	public static <E extends Enum<E>> int executeAndSetEnum(CommandContext<CommandSourceStack> context, E value, GameRules.Key<EnumRule<E>> key) throws CommandSyntaxException {
 		// Mostly copied from vanilla, but tweaked so we can use literals
-		ServerCommandSource serverCommandSource = context.getSource();
-		EnumRule<E> rule = serverCommandSource.getServer().getGameRules().get(key);
+		CommandSourceStack serverCommandSource = context.getSource();
+		EnumRule<E> rule = serverCommandSource.getServer().getGameRules().getRule(key);
 
 		try {
 			rule.set(value, serverCommandSource.getServer());
 		} catch (IllegalArgumentException e) {
-			throw new SimpleCommandExceptionType(Text.literal(e.getMessage())).create();
+			throw new SimpleCommandExceptionType(Component.literal(e.getMessage())).create();
 		}
 
-		serverCommandSource.sendFeedback(() -> Text.translatable("commands.gamerule.set", key.getName(), rule.toString()), true);
+		serverCommandSource.sendSuccess(() -> Component.translatable("commands.gamerule.set", key.getId(), rule.toString()), true);
 		return rule.getCommandResult();
 	}
 }

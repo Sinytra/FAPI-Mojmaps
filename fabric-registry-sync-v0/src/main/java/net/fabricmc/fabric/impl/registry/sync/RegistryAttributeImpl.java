@@ -19,16 +19,14 @@ package net.fabricmc.fabric.impl.registry.sync;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
-
-import net.minecraft.registry.RegistryKey;
-
 import net.fabricmc.fabric.api.event.registry.RegistryAttribute;
 import net.fabricmc.fabric.api.event.registry.RegistryAttributeHolder;
+import net.minecraft.resources.ResourceKey;
 
 public final class RegistryAttributeImpl implements RegistryAttributeHolder {
-	private static final Map<RegistryKey<?>, RegistryAttributeHolder> HOLDER_MAP = new HashMap<>();
+	private static final Map<ResourceKey<?>, RegistryAttributeHolder> HOLDER_MAP = new HashMap<>();
 
-	public static RegistryAttributeHolder getHolder(RegistryKey<?> registryKey) {
+	public static RegistryAttributeHolder getHolder(ResourceKey<?> registryKey) {
 		return HOLDER_MAP.computeIfAbsent(registryKey, key -> new RegistryAttributeImpl());
 	}
 

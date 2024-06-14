@@ -22,20 +22,18 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.registry.ReloadableRegistries;
-import net.minecraft.server.DataPackContents;
-
 import net.fabricmc.fabric.api.event.lifecycle.v1.CommonLifecycleEvents;
+import net.minecraft.server.ReloadableServerRegistries;
+import net.minecraft.server.ReloadableServerResources;
 
-@Mixin(DataPackContents.class)
+@Mixin(ReloadableServerResources.class)
 public class DataPackContentsMixin {
 	@Shadow
 	@Final
-	private ReloadableRegistries.Lookup reloadableRegistries;
+	private ReloadableServerRegistries.Holder fullRegistryHolder;
 
-	@Inject(method = "refresh", at = @At("TAIL"))
+	@Inject(method = "updateRegistryTags()V", at = @At("TAIL"))
 	private void hookRefresh(CallbackInfo ci) {
-		CommonLifecycleEvents.TAGS_LOADED.invoker().onTagsLoaded(this.reloadableRegistries.getRegistryManager(), false);
+		CommonLifecycleEvents.TAGS_LOADED.invoker().onTagsLoaded(this.fullRegistryHolder.get(), false);
 	}
 }

@@ -16,20 +16,18 @@
 
 package net.fabricmc.fabric.api.client.rendering.v1;
 
+import com.mojang.blaze3d.vertex.VertexFormat;
 import java.io.IOException;
 import java.util.function.Consumer;
 
 import org.jetbrains.annotations.ApiStatus;
-
-import net.minecraft.client.gl.ShaderProgram;
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
+import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.resources.ResourceLocation;
 
 /**
- * Called when core shaders ({@linkplain ShaderProgram shader programs} loaded from {@code assets/<namespace>/shaders/core})
+ * Called when core shaders ({@linkplain ShaderInstance shader programs} loaded from {@code assets/<namespace>/shaders/core})
  * are loaded to register custom modded shaders.
  *
  * <p>Fabric API also modifies the {@code #moj_import} feature in core shaders to accept
@@ -68,6 +66,6 @@ public interface CoreShaderRegistrationCallback {
 		 * @param vertexFormat the vertex format used by the shader
 		 * @param loadCallback a callback that is called when the shader program has been successfully loaded
 		 */
-		void register(Identifier id, VertexFormat vertexFormat, Consumer<ShaderProgram> loadCallback) throws IOException;
+		void register(ResourceLocation id, VertexFormat vertexFormat, Consumer<ShaderInstance> loadCallback) throws IOException;
 	}
 }

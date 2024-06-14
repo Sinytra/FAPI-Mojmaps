@@ -16,8 +16,8 @@
 
 package net.fabricmc.fabric.impl.client.model.loading;
 
-import net.minecraft.client.util.ModelIdentifier;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.resources.ResourceLocation;
 
 public final class ModelLoadingConstants {
 	/**
@@ -32,11 +32,11 @@ public final class ModelLoadingConstants {
 	private ModelLoadingConstants() {
 	}
 
-	public static ModelIdentifier toResourceModelId(Identifier id) {
-		return new ModelIdentifier(id, RESOURCE_SPECIAL_VARIANT);
+	public static ModelResourceLocation toResourceModelId(ResourceLocation id) {
+		return new ModelResourceLocation(id, RESOURCE_SPECIAL_VARIANT);
 	}
 
-	public static boolean isResourceModelId(ModelIdentifier id) {
+	public static boolean isResourceModelId(ModelResourceLocation id) {
 		return id.variant().equals(RESOURCE_SPECIAL_VARIANT);
 	}
 }

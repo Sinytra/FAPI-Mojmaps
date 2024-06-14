@@ -19,14 +19,12 @@ package net.fabricmc.fabric.api.client.model.loading.v1;
 import java.util.Collection;
 
 import org.jetbrains.annotations.ApiStatus;
-
-import net.minecraft.block.Block;
-import net.minecraft.client.render.model.json.JsonUnbakedModel;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.impl.client.model.loading.ModelLoadingPluginManager;
+import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.world.level.block.Block;
 
 /**
  * A model loading plugin is used to extend the model loading process through the passed {@link Context} object.
@@ -53,15 +51,15 @@ public interface ModelLoadingPlugin {
 	interface Context {
 		/**
 		 * Adds one or more models that will be loaded, baked, and made available through
-		 * {@link FabricBakedModelManager#getModel(Identifier)}.
+		 * {@link FabricBakedModelManager#getModel(ResourceLocation)}.
 		 */
-		void addModels(Identifier... ids);
+		void addModels(ResourceLocation... ids);
 
 		/**
 		 * Adds multiple models that will be loaded, baked, and made available through
-		 * {@link FabricBakedModelManager#getModel(Identifier)}.
+		 * {@link FabricBakedModelManager#getModel(ResourceLocation)}.
 		 */
-		void addModels(Collection<? extends Identifier> ids);
+		void addModels(Collection<? extends ResourceLocation> ids);
 
 		/**
 		 * Registers a block state resolver for a block.
@@ -85,7 +83,7 @@ public interface ModelLoadingPlugin {
 		 * Event access to replace the unbaked model used for baking without replacing the cached model.
 		 *
 		 * <p>This is useful for mods which wish to wrap a model without affecting other models that use it as a parent
-		 * (e.g. wrap a block's model into a non-{@link JsonUnbakedModel} class but still allow the item model to be
+		 * (e.g. wrap a block's model into a non-{@link BlockModel} class but still allow the item model to be
 		 * loaded and baked without exceptions).
 		 */
 		Event<ModelModifier.BeforeBake> modifyModelBeforeBake();

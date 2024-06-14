@@ -16,15 +16,14 @@
 
 package net.fabricmc.fabric.api.renderer.v1.material;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.item.ItemStack;
-
 import net.fabricmc.fabric.api.renderer.v1.Renderer;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.fabricmc.fabric.api.util.TriState;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * Finds standard {@link RenderMaterial} instances used to communicate
@@ -71,7 +70,7 @@ public interface MaterialFinder extends MaterialView {
 	 * Controls whether vertex color(s) will be modified for ambient occlusion.
 	 *
 	 * <p>By default, ambient occlusion will be used if {@link BakedModel#useAmbientOcclusion() the model uses ambient occlusion}
-	 * and the block state has {@link BlockState#getLuminance() a luminance} of 0.
+	 * and the block state has {@link BlockState#getLightEmission() a luminance} of 0.
 	 * Set to {@link TriState#TRUE} or {@link TriState#FALSE} to override this behavior.
 	 *
 	 * <p>This property is respected only in block contexts. It will not have an effect in other contexts.
@@ -81,7 +80,7 @@ public interface MaterialFinder extends MaterialView {
 	/**
 	 * Controls whether glint should be applied.
 	 *
-	 * <p>By default, glint will be applied in item contexts if {@link ItemStack#hasGlint() the item stack has glint}.
+	 * <p>By default, glint will be applied in item contexts if {@link ItemStack#hasFoil() the item stack has glint}.
 	 * Set to {@link TriState#TRUE} or {@link TriState#FALSE} to override this behavior.
 	 *
 	 * <p>This property is guaranteed to be respected in item contexts. Some renderers may also respect it in block
@@ -115,7 +114,7 @@ public interface MaterialFinder extends MaterialView {
 	 * @deprecated Use {@link #blendMode(BlendMode)} instead.
 	 */
 	@Deprecated
-	default MaterialFinder blendMode(int spriteIndex, RenderLayer renderLayer) {
+	default MaterialFinder blendMode(int spriteIndex, RenderType renderLayer) {
 		return blendMode(BlendMode.fromRenderLayer(renderLayer));
 	}
 

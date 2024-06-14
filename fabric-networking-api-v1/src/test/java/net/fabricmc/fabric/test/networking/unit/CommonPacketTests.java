@@ -39,16 +39,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-
-import net.minecraft.client.network.ClientConfigurationNetworkHandler;
-import net.minecraft.network.NetworkPhase;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.server.network.ServerConfigurationNetworkHandler;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.client.networking.v1.ClientConfigurationNetworking;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
@@ -64,18 +54,26 @@ import net.fabricmc.fabric.impl.networking.client.ClientConfigurationNetworkAddo
 import net.fabricmc.fabric.impl.networking.client.ClientNetworkingImpl;
 import net.fabricmc.fabric.impl.networking.server.ServerConfigurationNetworkAddon;
 import net.fabricmc.fabric.impl.networking.server.ServerNetworkingImpl;
+import net.minecraft.client.multiplayer.ClientConfigurationPacketListenerImpl;
+import net.minecraft.network.ConnectionProtocol;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.network.ServerConfigurationPacketListenerImpl;
 
 public class CommonPacketTests {
-	private static final CustomPayload.Type<PacketByteBuf, CommonVersionPayload> VERSION_PAYLOAD_TYPE = new CustomPayload.Type<>(CommonVersionPayload.ID, CommonVersionPayload.CODEC);
-	private static final CustomPayload.Type<PacketByteBuf, CommonRegisterPayload> REGISTER_PAYLOAD_TYPE = new CustomPayload.Type<>(CommonRegisterPayload.ID, CommonRegisterPayload.CODEC);
+	private static final CustomPacketPayload.TypeAndCodec<FriendlyByteBuf, CommonVersionPayload> VERSION_PAYLOAD_TYPE = new CustomPacketPayload.TypeAndCodec<>(CommonVersionPayload.ID, CommonVersionPayload.CODEC);
+	private static final CustomPacketPayload.TypeAndCodec<FriendlyByteBuf, CommonRegisterPayload> REGISTER_PAYLOAD_TYPE = new CustomPacketPayload.TypeAndCodec<>(CommonRegisterPayload.ID, CommonRegisterPayload.CODEC);
 
 	private PacketSender packetSender;
 	private ChannelInfoHolder channelInfoHolder;
 
-	private ClientConfigurationNetworkHandler clientNetworkHandler;
+	private ClientConfigurationPacketListenerImpl clientNetworkHandler;
 	private ClientConfigurationNetworkAddon clientAddon;
 
-	private ServerConfigurationNetworkHandler serverNetworkHandler;
+	private ServerConfigurationPacketListenerImpl serverNetworkHandler;
 	private ServerConfigurationNetworkAddon serverAddon;
 
 	private ClientConfigurationNetworking.Context clientContext;
@@ -95,20 +93,20 @@ public class CommonPacketTests {
 		});
 	}
 
-	private record TestPayload(String data) implements CustomPayload {
-		static final CustomPayload.Id<TestPayload> ID = new CustomPayload.Id<>(Identifier.of("fabric", "global_client"));
-		static final PacketCodec<RegistryByteBuf, TestPayload> CODEC = CustomPayload.codecOf(TestPayload::write, TestPayload::new);
+	private record TestPayload(String data) implements CustomPacketPayload {
+		static final CustomPacketPayload.Type<TestPayload> ID = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("fabric", "global_client"));
+		static final StreamCodec<RegistryFriendlyByteBuf, TestPayload> CODEC = CustomPacketPayload.codec(TestPayload::write, TestPayload::new);
 
-		TestPayload(RegistryByteBuf buf) {
-			this(buf.readString());
+		TestPayload(RegistryFriendlyByteBuf buf) {
+			this(buf.readUtf());
 		}
 
-		private void write(RegistryByteBuf buf) {
-			buf.writeString(data);
+		private void write(RegistryFriendlyByteBuf buf) {
+			buf.writeUtf(data);
 		}
 
 		@Override
-		public Id<? extends CustomPayload> getId() {
+		public Type<? extends CustomPacketPayload> type() {
 			return ID;
 		}
 	}
@@ -118,12 +116,12 @@ public class CommonPacketTests {
 		packetSender = mock(PacketSender.class);
 		channelInfoHolder = new MockChannelInfoHolder();
 
-		clientNetworkHandler = mock(ClientConfigurationNetworkHandler.class);
+		clientNetworkHandler = mock(ClientConfigurationPacketListenerImpl.class);
 		clientAddon = mock(ClientConfigurationNetworkAddon.class);
 		when(ClientNetworkingImpl.getAddon(clientNetworkHandler)).thenReturn(clientAddon);
 		when(clientAddon.getChannelInfoHolder()).thenReturn(channelInfoHolder);
 
-		serverNetworkHandler = mock(ServerConfigurationNetworkHandler.class);
+		serverNetworkHandler = mock(ServerConfigurationPacketListenerImpl.class);
 		serverAddon = mock(ServerConfigurationNetworkAddon.class);
 		when(ServerNetworkingImpl.getAddon(serverNetworkHandler)).thenReturn(serverAddon);
 		when(serverAddon.getChannelInfoHolder()).thenReturn(channelInfoHolder);
@@ -133,7 +131,7 @@ public class CommonPacketTests {
 		clientContext = () -> packetSender;
 		serverContext = new ServerConfigurationNetworking.Context() {
 			@Override
-			public ServerConfigurationNetworkHandler networkHandler() {
+			public ServerConfigurationPacketListenerImpl networkHandler() {
 				return serverNetworkHandler;
 			}
 
@@ -151,8 +149,8 @@ public class CommonPacketTests {
 		assertNotNull(packetHandler);
 
 		// Receive a packet from the server
-		PacketByteBuf buf = PacketByteBufs.create();
-		buf.writeIntArray(new int[]{1, 2, 3});
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarIntArray(new int[]{1, 2, 3});
 
 		CommonVersionPayload payload = CommonVersionPayload.CODEC.decode(buf);
 		packetHandler.receive(payload, clientContext);
@@ -161,8 +159,8 @@ public class CommonPacketTests {
 		assertEquals(0, buf.readableBytes());
 
 		// Check the response we are sending back to the server
-		PacketByteBuf response = readResponse(packetSender, VERSION_PAYLOAD_TYPE);
-		assertArrayEquals(new int[]{1}, response.readIntArray());
+		FriendlyByteBuf response = readResponse(packetSender, VERSION_PAYLOAD_TYPE);
+		assertArrayEquals(new int[]{1}, response.readVarIntArray());
 		assertEquals(0, response.readableBytes());
 
 		assertEquals(1, getNegotiatedVersion(clientAddon));
@@ -175,8 +173,8 @@ public class CommonPacketTests {
 		assertNotNull(packetHandler);
 
 		// Receive a packet from the server
-		PacketByteBuf buf = PacketByteBufs.create();
-		buf.writeIntArray(new int[]{2, 3}); // We only support version 1
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarIntArray(new int[]{2, 3}); // We only support version 1
 
 		assertThrows(UnsupportedOperationException.class, () -> {
 			CommonVersionPayload payload = CommonVersionPayload.CODEC.decode(buf);
@@ -194,8 +192,8 @@ public class CommonPacketTests {
 		assertNotNull(packetHandler);
 
 		// Receive a packet from the client
-		PacketByteBuf buf = PacketByteBufs.create();
-		buf.writeIntArray(new int[]{1, 2, 3});
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarIntArray(new int[]{1, 2, 3});
 
 		CommonVersionPayload payload = CommonVersionPayload.CODEC.decode(buf);
 		packetHandler.receive(payload, serverContext);
@@ -212,8 +210,8 @@ public class CommonPacketTests {
 		assertNotNull(packetHandler);
 
 		// Receive a packet from the client
-		PacketByteBuf buf = PacketByteBufs.create();
-		buf.writeIntArray(new int[]{3}); // Server only supports version 1
+		FriendlyByteBuf buf = PacketByteBufs.create();
+		buf.writeVarIntArray(new int[]{3}); // Server only supports version 1
 
 		assertThrows(UnsupportedOperationException.class, () -> {
 			CommonVersionPayload payload = CommonVersionPayload.CODEC.decode(buf);
@@ -233,23 +231,23 @@ public class CommonPacketTests {
 		when(clientAddon.getNegotiatedVersion()).thenReturn(1);
 
 		// Receive a packet from the server
-		PacketByteBuf buf = PacketByteBufs.create();
+		FriendlyByteBuf buf = PacketByteBufs.create();
 		buf.writeVarInt(1); // Version
-		buf.writeString("play"); // Target phase
-		buf.writeCollection(List.of(Identifier.of("fabric", "test")), PacketByteBuf::writeIdentifier);
+		buf.writeUtf("play"); // Target phase
+		buf.writeCollection(List.of(ResourceLocation.fromNamespaceAndPath("fabric", "test")), FriendlyByteBuf::writeResourceLocation);
 
 		CommonRegisterPayload payload = CommonRegisterPayload.CODEC.decode(buf);
 		packetHandler.receive(payload, clientContext);
 
 		// Assert the entire packet was read
 		assertEquals(0, buf.readableBytes());
-		assertIterableEquals(List.of(Identifier.of("fabric", "test")), channelInfoHolder.fabric_getPendingChannelsNames(NetworkPhase.PLAY));
+		assertIterableEquals(List.of(ResourceLocation.fromNamespaceAndPath("fabric", "test")), channelInfoHolder.fabric_getPendingChannelsNames(ConnectionProtocol.PLAY));
 
 		// Check the response we are sending back to the server
-		PacketByteBuf response = readResponse(packetSender, REGISTER_PAYLOAD_TYPE);
+		FriendlyByteBuf response = readResponse(packetSender, REGISTER_PAYLOAD_TYPE);
 		assertEquals(1, response.readVarInt());
-		assertEquals("play", response.readString());
-		assertIterableEquals(List.of(Identifier.of("fabric", "global_client")), response.readCollection(HashSet::new, PacketByteBuf::readIdentifier));
+		assertEquals("play", response.readUtf());
+		assertIterableEquals(List.of(ResourceLocation.fromNamespaceAndPath("fabric", "global_client")), response.readCollection(HashSet::new, FriendlyByteBuf::readResourceLocation));
 		assertEquals(0, response.readableBytes());
 	}
 
@@ -260,13 +258,13 @@ public class CommonPacketTests {
 		assertNotNull(packetHandler);
 
 		when(clientAddon.getNegotiatedVersion()).thenReturn(1);
-		when(clientAddon.createRegisterPayload()).thenAnswer(i -> new CommonRegisterPayload(1, "configuration", Set.of(Identifier.of("fabric", "global_configuration_client"))));
+		when(clientAddon.createRegisterPayload()).thenAnswer(i -> new CommonRegisterPayload(1, "configuration", Set.of(ResourceLocation.fromNamespaceAndPath("fabric", "global_configuration_client"))));
 
 		// Receive a packet from the server
-		PacketByteBuf buf = PacketByteBufs.create();
+		FriendlyByteBuf buf = PacketByteBufs.create();
 		buf.writeVarInt(1); // Version
-		buf.writeString("configuration"); // Target phase
-		buf.writeCollection(List.of(Identifier.of("fabric", "test")), PacketByteBuf::writeIdentifier);
+		buf.writeUtf("configuration"); // Target phase
+		buf.writeCollection(List.of(ResourceLocation.fromNamespaceAndPath("fabric", "test")), FriendlyByteBuf::writeResourceLocation);
 
 		CommonRegisterPayload payload = CommonRegisterPayload.CODEC.decode(buf);
 		packetHandler.receive(payload, clientContext);
@@ -276,10 +274,10 @@ public class CommonPacketTests {
 		verify(clientAddon, times(1)).onCommonRegisterPacket(any());
 
 		// Check the response we are sending back to the server
-		PacketByteBuf response = readResponse(packetSender, REGISTER_PAYLOAD_TYPE);
+		FriendlyByteBuf response = readResponse(packetSender, REGISTER_PAYLOAD_TYPE);
 		assertEquals(1, response.readVarInt());
-		assertEquals("configuration", response.readString());
-		assertIterableEquals(List.of(Identifier.of("fabric", "global_configuration_client")), response.readCollection(HashSet::new, PacketByteBuf::readIdentifier));
+		assertEquals("configuration", response.readUtf());
+		assertIterableEquals(List.of(ResourceLocation.fromNamespaceAndPath("fabric", "global_configuration_client")), response.readCollection(HashSet::new, FriendlyByteBuf::readResourceLocation));
 		assertEquals(0, response.readableBytes());
 	}
 
@@ -292,17 +290,17 @@ public class CommonPacketTests {
 		when(serverAddon.getNegotiatedVersion()).thenReturn(1);
 
 		// Receive a packet from the client
-		PacketByteBuf buf = PacketByteBufs.create();
+		FriendlyByteBuf buf = PacketByteBufs.create();
 		buf.writeVarInt(1); // Version
-		buf.writeString("play"); // Target phase
-		buf.writeCollection(List.of(Identifier.of("fabric", "test")), PacketByteBuf::writeIdentifier);
+		buf.writeUtf("play"); // Target phase
+		buf.writeCollection(List.of(ResourceLocation.fromNamespaceAndPath("fabric", "test")), FriendlyByteBuf::writeResourceLocation);
 
 		CommonRegisterPayload payload = CommonRegisterPayload.CODEC.decode(buf);
 		packetHandler.receive(payload, serverContext);
 
 		// Assert the entire packet was read
 		assertEquals(0, buf.readableBytes());
-		assertIterableEquals(List.of(Identifier.of("fabric", "test")), channelInfoHolder.fabric_getPendingChannelsNames(NetworkPhase.PLAY));
+		assertIterableEquals(List.of(ResourceLocation.fromNamespaceAndPath("fabric", "test")), channelInfoHolder.fabric_getPendingChannelsNames(ConnectionProtocol.PLAY));
 	}
 
 	// Test handing the configuration registry packet on the server configuration handler
@@ -314,10 +312,10 @@ public class CommonPacketTests {
 		when(serverAddon.getNegotiatedVersion()).thenReturn(1);
 
 		// Receive a packet from the client
-		PacketByteBuf buf = PacketByteBufs.create();
+		FriendlyByteBuf buf = PacketByteBufs.create();
 		buf.writeVarInt(1); // Version
-		buf.writeString("configuration"); // Target phase
-		buf.writeCollection(List.of(Identifier.of("fabric", "test")), PacketByteBuf::writeIdentifier);
+		buf.writeUtf("configuration"); // Target phase
+		buf.writeCollection(List.of(ResourceLocation.fromNamespaceAndPath("fabric", "test")), FriendlyByteBuf::writeResourceLocation);
 
 		CommonRegisterPayload payload = CommonRegisterPayload.CODEC.decode(buf);
 		packetHandler.receive(payload, serverContext);
@@ -362,12 +360,12 @@ public class CommonPacketTests {
 		assertEquals(3, CommonPacketsImpl.getHighestCommonVersion(a, b));
 	}
 
-	private static <T extends CustomPayload> PacketByteBuf readResponse(PacketSender packetSender, CustomPayload.Type<PacketByteBuf, T> type) {
-		ArgumentCaptor<CustomPayload> responseCaptor = ArgumentCaptor.forClass(CustomPayload.class);
+	private static <T extends CustomPacketPayload> FriendlyByteBuf readResponse(PacketSender packetSender, CustomPacketPayload.TypeAndCodec<FriendlyByteBuf, T> type) {
+		ArgumentCaptor<CustomPacketPayload> responseCaptor = ArgumentCaptor.forClass(CustomPacketPayload.class);
 		verify(packetSender, times(1)).sendPacket(responseCaptor.capture());
 
 		final T payload = (T) responseCaptor.getValue();
-		final PacketByteBuf buf = PacketByteBufs.create();
+		final FriendlyByteBuf buf = PacketByteBufs.create();
 		type.codec().encode(buf, payload);
 
 		return buf;
@@ -380,10 +378,10 @@ public class CommonPacketTests {
 	}
 
 	private static class MockChannelInfoHolder implements ChannelInfoHolder {
-		private final Map<NetworkPhase, Collection<Identifier>> playChannels = new ConcurrentHashMap<>();
+		private final Map<ConnectionProtocol, Collection<ResourceLocation>> playChannels = new ConcurrentHashMap<>();
 
 		@Override
-		public Collection<Identifier> fabric_getPendingChannelsNames(NetworkPhase state) {
+		public Collection<ResourceLocation> fabric_getPendingChannelsNames(ConnectionProtocol state) {
 			return this.playChannels.computeIfAbsent(state, (key) -> Collections.newSetFromMap(new ConcurrentHashMap<>()));
 		}
 	}

@@ -17,19 +17,17 @@
 package net.fabricmc.fabric.api.gamerule.v1;
 
 import java.util.Optional;
-
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.GameRules;
-
 import net.fabricmc.fabric.impl.gamerule.RuleKeyExtensions;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.GameRules;
 
 /**
  * Utility class for creating custom game rule categories outside of the categories {@link GameRules.Category Minecraft provides}.
  */
 public final class CustomGameRuleCategory {
-	private final Identifier id;
-	private final Text name;
+	private final ResourceLocation id;
+	private final Component name;
 
 	/**
 	 * Creates a custom game rule category.
@@ -37,16 +35,16 @@ public final class CustomGameRuleCategory {
 	 * @param id the id of this category
 	 * @param name the name of this category
 	 */
-	public CustomGameRuleCategory(Identifier id, Text name) {
+	public CustomGameRuleCategory(ResourceLocation id, Component name) {
 		this.id = id;
 		this.name = name;
 	}
 
-	public Identifier getId() {
+	public ResourceLocation getId() {
 		return this.id;
 	}
 
-	public Text getName() {
+	public Component getName() {
 		return this.name;
 	}
 
@@ -72,7 +70,7 @@ public final class CustomGameRuleCategory {
 	 * @param <T> the type of value the rule holds
 	 * @return the custom category this rule belongs to. Otherwise {@link Optional#empty() empty}
 	 */
-	public static <T extends GameRules.Rule<T>> Optional<CustomGameRuleCategory> getCategory(GameRules.Key<T> key) {
+	public static <T extends GameRules.Value<T>> Optional<CustomGameRuleCategory> getCategory(GameRules.Key<T> key) {
 		return Optional.ofNullable(((RuleKeyExtensions) (Object) key).fabric_getCustomCategory());
 	}
 }

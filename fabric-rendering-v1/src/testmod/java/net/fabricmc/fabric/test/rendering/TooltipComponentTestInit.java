@@ -19,46 +19,44 @@ package net.fabricmc.fabric.test.rendering;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Optional;
-
-import net.minecraft.item.ArmorItem;
-import net.minecraft.item.ArmorMaterial;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.item.tooltip.TooltipData;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Util;
-
 import net.fabricmc.api.ModInitializer;
+import net.minecraft.Util;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
+import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.ArmorMaterial;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
 
 public class TooltipComponentTestInit implements ModInitializer {
 	public static Item CUSTOM_TOOLTIP_ITEM = new CustomTooltipItem();
-	public static RegistryEntry<ArmorMaterial> TEST_ARMOR_MATERIAL = Registry.registerReference(Registries.ARMOR_MATERIAL, Identifier.of("fabric-rendering-v1-testmod", "test_material"), createTestArmorMaterial());
-	public static Item CUSTOM_ARMOR_ITEM = new ArmorItem(TEST_ARMOR_MATERIAL, ArmorItem.Type.CHESTPLATE, new Item.Settings());
+	public static Holder<ArmorMaterial> TEST_ARMOR_MATERIAL = Registry.registerForHolder(BuiltInRegistries.ARMOR_MATERIAL, ResourceLocation.fromNamespaceAndPath("fabric-rendering-v1-testmod", "test_material"), createTestArmorMaterial());
+	public static Item CUSTOM_ARMOR_ITEM = new ArmorItem(TEST_ARMOR_MATERIAL, ArmorItem.Type.CHESTPLATE, new Item.Properties());
 
 	@Override
 	public void onInitialize() {
-		Registry.register(Registries.ITEM, Identifier.of("fabric-rendering-v1-testmod", "custom_tooltip"), CUSTOM_TOOLTIP_ITEM);
-		Registry.register(Registries.ITEM, Identifier.of("fabric-rendering-v1-testmod", "test_chest"), CUSTOM_ARMOR_ITEM);
+		Registry.register(BuiltInRegistries.ITEM, ResourceLocation.fromNamespaceAndPath("fabric-rendering-v1-testmod", "custom_tooltip"), CUSTOM_TOOLTIP_ITEM);
+		Registry.register(BuiltInRegistries.ITEM, ResourceLocation.fromNamespaceAndPath("fabric-rendering-v1-testmod", "test_chest"), CUSTOM_ARMOR_ITEM);
 	}
 
 	private static class CustomTooltipItem extends Item {
 		CustomTooltipItem() {
-			super(new Settings());
+			super(new Properties());
 		}
 
 		@Override
-		public Optional<TooltipData> getTooltipData(ItemStack stack) {
-			return Optional.of(new Data(stack.getTranslationKey()));
+		public Optional<TooltipComponent> getTooltipImage(ItemStack stack) {
+			return Optional.of(new Data(stack.getDescriptionId()));
 		}
 	}
 
-	public record Data(String string) implements TooltipData {
+	public record Data(String string) implements TooltipComponent {
 	}
 
 	private static ArmorMaterial createTestArmorMaterial() {
@@ -71,8 +69,8 @@ public class TooltipComponentTestInit implements ModInitializer {
 		}),
 			0,
 			SoundEvents.ITEM_ARMOR_EQUIP_LEATHER,
-				() -> Ingredient.ofItems(Items.LEATHER),
-			List.of(new ArmorMaterial.Layer(Identifier.of("fabric-rendering-v1-testmod", "test_material"))),
+				() -> Ingredient.of(Items.LEATHER),
+			List.of(new ArmorMaterial.Layer(ResourceLocation.fromNamespaceAndPath("fabric-rendering-v1-testmod", "test_material"))),
 			0,
 			0
 		);

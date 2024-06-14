@@ -16,12 +16,11 @@
 
 package net.fabricmc.fabric.mixin.gametest;
 
+import net.minecraft.gametest.framework.TestCommand;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
-
-import net.minecraft.server.command.TestCommand;
 
 @Mixin(TestCommand.class)
 public class TestCommandMixin {
@@ -29,7 +28,7 @@ public class TestCommandMixin {
 	private static final String OUTPUT_DIR = System.getProperty("fabric-api.gametest.structures.output-dir");
 
 	@ModifyArg(
-			method = "executeExport(Lnet/minecraft/server/command/ServerCommandSource;Ljava/lang/String;)I",
+			method = "exportTestStructure(Lnet/minecraft/commands/CommandSourceStack;Ljava/lang/String;)I",
 			at = @At(
 					value = "INVOKE",
 					target = "Ljava/nio/file/Paths;get(Ljava/lang/String;[Ljava/lang/String;)Ljava/nio/file/Path;"

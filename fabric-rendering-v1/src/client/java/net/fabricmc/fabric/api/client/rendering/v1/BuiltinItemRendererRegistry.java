@@ -17,15 +17,13 @@
 package net.fabricmc.fabric.api.client.rendering.v1;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.model.json.ModelTransformationMode;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemConvertible;
-import net.minecraft.item.ItemStack;
-
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.fabricmc.fabric.impl.client.rendering.BuiltinItemRendererRegistryImpl;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ItemLike;
 
 /**
  * This registry holds {@linkplain DynamicItemRenderer builtin item renderers} for items.
@@ -46,7 +44,7 @@ public interface BuiltinItemRendererRegistry {
 	 * @param renderer the renderer
 	 * @throws IllegalArgumentException if the item already has a registered renderer
 	 * @throws NullPointerException if either the item or the renderer is null
-	 * @deprecated Please use {@link BuiltinItemRendererRegistry#register(ItemConvertible, DynamicItemRenderer)} instead.
+	 * @deprecated Please use {@link BuiltinItemRendererRegistry#register(ItemLike, DynamicItemRenderer)} instead.
 	 */
 	@Deprecated
 	void register(Item item, BuiltinItemRenderer renderer);
@@ -60,10 +58,10 @@ public interface BuiltinItemRendererRegistry {
 	 * @param renderer the renderer
 	 * @throws IllegalArgumentException if the item already has a registered renderer
 	 * @throws NullPointerException if either the item or the renderer is null
-	 * @deprecated Please use {@link BuiltinItemRendererRegistry#register(ItemConvertible, DynamicItemRenderer)} instead.
+	 * @deprecated Please use {@link BuiltinItemRendererRegistry#register(ItemLike, DynamicItemRenderer)} instead.
 	 */
 	@Deprecated
-	void register(ItemConvertible item, BuiltinItemRenderer renderer);
+	void register(ItemLike item, BuiltinItemRenderer renderer);
 
 	/**
 	 * Registers the renderer for the item.
@@ -75,20 +73,20 @@ public interface BuiltinItemRendererRegistry {
 	 * @throws IllegalArgumentException if the item already has a registered renderer
 	 * @throws NullPointerException if either the item or the renderer is null
 	 */
-	void register(ItemConvertible item, DynamicItemRenderer renderer);
+	void register(ItemLike item, DynamicItemRenderer renderer);
 
 	/**
 	 * Returns the renderer for the item, or {@code null} if the item has no renderer.
 	 */
 	@Nullable
-	DynamicItemRenderer get(ItemConvertible item);
+	DynamicItemRenderer get(ItemLike item);
 
 	/**
 	 * Dynamic item renderers render items with custom code.
 	 * They allow using non-model rendering, such as BERs, for items.
 	 *
 	 * <p>An item with a dynamic renderer must have a model extending {@code minecraft:builtin/entity}.
-	 * The renderers are registered with {@link BuiltinItemRendererRegistry#register(ItemConvertible, DynamicItemRenderer)}.
+	 * The renderers are registered with {@link BuiltinItemRendererRegistry#register(ItemLike, DynamicItemRenderer)}.
 	 */
 	@FunctionalInterface
 	interface DynamicItemRenderer {
@@ -100,8 +98,8 @@ public interface BuiltinItemRendererRegistry {
 		 * @param matrices        the matrix stack
 		 * @param vertexConsumers the vertex consumer provider
 		 * @param light           packed lightmap coordinates
-		 * @param overlay         the overlay UV passed to {@link net.minecraft.client.render.VertexConsumer#overlay(int)}
+		 * @param overlay         the overlay UV passed to {@link com.mojang.blaze3d.vertex.VertexConsumer#setOverlay(int)}
 		 */
-		void render(ItemStack stack, ModelTransformationMode mode, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay);
+		void render(ItemStack stack, ItemDisplayContext mode, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay);
 	}
 }

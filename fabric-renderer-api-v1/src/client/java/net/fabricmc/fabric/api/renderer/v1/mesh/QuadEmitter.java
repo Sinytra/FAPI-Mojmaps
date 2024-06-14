@@ -19,14 +19,12 @@ package net.fabricmc.fabric.api.renderer.v1.mesh;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
-
-import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec2f;
-
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.Direction;
+import net.minecraft.world.phys.Vec2;
 
 /**
  * Specialized {@link MutableQuadView} obtained via {@link MeshBuilder#getEmitter()}
@@ -69,7 +67,7 @@ public interface QuadEmitter extends MutableQuadView {
 	}
 
 	@Override
-	QuadEmitter spriteBake(Sprite sprite, int bakeFlags);
+	QuadEmitter spriteBake(TextureAtlasSprite sprite, int bakeFlags);
 
 	default QuadEmitter uvUnitSquare() {
 		uv(0, 0, 0);
@@ -216,14 +214,14 @@ public interface QuadEmitter extends MutableQuadView {
 
 	@Override
 	@Deprecated
-	default QuadEmitter sprite(int vertexIndex, int spriteIndex, Vec2f uv) {
+	default QuadEmitter sprite(int vertexIndex, int spriteIndex, Vec2 uv) {
 		MutableQuadView.super.sprite(vertexIndex, spriteIndex, uv);
 		return this;
 	}
 
 	@Override
 	@Deprecated
-	default QuadEmitter spriteBake(int spriteIndex, Sprite sprite, int bakeFlags) {
+	default QuadEmitter spriteBake(int spriteIndex, TextureAtlasSprite sprite, int bakeFlags) {
 		MutableQuadView.super.spriteBake(spriteIndex, sprite, bakeFlags);
 		return this;
 	}

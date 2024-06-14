@@ -22,17 +22,15 @@ import java.util.Locale;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import net.minecraft.item.Item;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Language;
-
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.locale.Language;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
 
 public class TranslationConventionLogWarnings implements ModInitializer {
 	private static final Logger LOGGER = LoggerFactory.getLogger(TranslationConventionLogWarnings.class);
@@ -77,15 +75,15 @@ public class TranslationConventionLogWarnings implements ModInitializer {
 		// Log missing item tag translations only when world is started.
 		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
 			Language language = Language.getInstance();
-			Registry<Item> itemRegistry = server.getRegistryManager().get(RegistryKeys.ITEM);
+			Registry<Item> itemRegistry = server.registryAccess().registryOrThrow(Registries.ITEM);
 			List<TagKey<Item>> untranslatedItemTags = new ObjectArrayList<>();
-			itemRegistry.streamTags().forEach(itemTagKey -> {
+			itemRegistry.getTagNames().forEach(itemTagKey -> {
 				// We do not translate vanilla's tags at this moment.
-				if (itemTagKey.id().getNamespace().equals(Identifier.DEFAULT_NAMESPACE)) {
+				if (itemTagKey.location().getNamespace().equals(ResourceLocation.DEFAULT_NAMESPACE)) {
 					return;
 				}
 
-				if (!language.hasTranslation(itemTagKey.getTranslationKey())) {
+				if (!language.has(itemTagKey.getTranslationKey())) {
 					untranslatedItemTags.add(itemTagKey);
 				}
 			});
@@ -108,7 +106,7 @@ public class TranslationConventionLogWarnings implements ModInitializer {
 				stringBuilder.append("\nUntranslated item tags:");
 
 				for (TagKey<Item> tagKey : untranslatedItemTags) {
-					stringBuilder.append("\n     ").append(tagKey.id());
+					stringBuilder.append("\n     ").append(tagKey.location());
 				}
 			}
 

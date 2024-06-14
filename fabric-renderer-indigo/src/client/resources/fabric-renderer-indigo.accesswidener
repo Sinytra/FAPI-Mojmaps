@@ -1,11 +1,7 @@
 accessWidener	v2	named
-
-accessible class net/minecraft/client/render/chunk/ChunkBuilder$BuiltChunk$RebuildTask
-
-accessible class net/minecraft/client/render/block/BlockModelRenderer$AmbientOcclusionCalculator
-accessible field net/minecraft/client/render/block/BlockModelRenderer$AmbientOcclusionCalculator brightness [F
-accessible field net/minecraft/client/render/block/BlockModelRenderer$AmbientOcclusionCalculator light [I
-
-accessible method net/minecraft/client/render/block/BlockModelRenderer getQuadDimensions (Lnet/minecraft/world/BlockRenderView;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;[ILnet/minecraft/util/math/Direction;[FLjava/util/BitSet;)V
-
-accessible method net/minecraft/client/render/item/ItemRenderer renderBakedItemModel (Lnet/minecraft/client/render/model/BakedModel;Lnet/minecraft/item/ItemStack;IILnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumer;)V
+accessible	class	net/minecraft/client/renderer/chunk/SectionRenderDispatcher$RenderSection$RebuildTask
+accessible	class	net/minecraft/client/renderer/block/ModelBlockRenderer$AmbientOcclusionFace
+accessible	field	net/minecraft/client/renderer/block/ModelBlockRenderer$AmbientOcclusionFace	brightness	[F
+accessible	field	net/minecraft/client/renderer/block/ModelBlockRenderer$AmbientOcclusionFace	lightmap	[I
+accessible	method	net/minecraft/client/renderer/block/ModelBlockRenderer	calculateShape	(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;[ILnet/minecraft/core/Direction;[FLjava/util/BitSet;)V
+accessible	method	net/minecraft/client/renderer/entity/ItemRenderer	renderModelLists	(Lnet/minecraft/client/resources/model/BakedModel;Lnet/minecraft/world/item/ItemStack;IILcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;)V

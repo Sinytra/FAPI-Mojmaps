@@ -22,23 +22,6 @@ import java.io.IOException;
 import com.mojang.serialization.Codec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.WorldSavePath;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.ChunkStatus;
-import net.minecraft.world.chunk.ProtoChunk;
-import net.minecraft.world.chunk.WorldChunk;
-import net.minecraft.world.chunk.WrapperProtoChunk;
-import net.minecraft.world.gen.GenerationStep;
-import net.minecraft.world.gen.feature.DefaultFeatureConfig;
-
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
@@ -46,16 +29,31 @@ import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
 import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ImposterProtoChunk;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.ProtoChunk;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
+import net.minecraft.world.level.levelgen.GenerationStep;
+import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
+import net.minecraft.world.level.storage.LevelResource;
 
 public class AttachmentTestMod implements ModInitializer {
 	public static final String MOD_ID = "fabric-data-attachment-api-v1-testmod";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 	public static final AttachmentType<String> PERSISTENT = AttachmentRegistry.createPersistent(
-			Identifier.of(MOD_ID, "persistent"),
+			ResourceLocation.fromNamespaceAndPath(MOD_ID, "persistent"),
 			Codec.STRING
 	);
 	public static final AttachmentType<String> FEATURE_ATTACHMENT = AttachmentRegistry.create(
-			Identifier.of(MOD_ID, "feature")
+			ResourceLocation.fromNamespaceAndPath(MOD_ID, "feature")
 	);
 
 	public static final ChunkPos FAR_CHUNK_POS = new ChunkPos(300, 0);
@@ -65,16 +63,16 @@ public class AttachmentTestMod implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		Registry.register(Registries.FEATURE, Identifier.of(MOD_ID, "set_attachment"), new SetAttachmentFeature(DefaultFeatureConfig.CODEC));
+		Registry.register(BuiltInRegistries.FEATURE, ResourceLocation.fromNamespaceAndPath(MOD_ID, "set_attachment"), new SetAttachmentFeature(NoneFeatureConfiguration.CODEC));
 
 		BiomeModifications.addFeature(
 				BiomeSelectors.foundInOverworld(),
-				GenerationStep.Feature.VEGETAL_DECORATION,
-				RegistryKey.of(RegistryKeys.PLACED_FEATURE, Identifier.of(MOD_ID, "set_attachment"))
+				GenerationStep.Decoration.VEGETAL_DECORATION,
+				ResourceKey.create(Registries.PLACED_FEATURE, ResourceLocation.fromNamespaceAndPath(MOD_ID, "set_attachment"))
 		);
 
 		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
-			File saveRoot = server.getSavePath(WorldSavePath.ROOT).toFile();
+			File saveRoot = server.getWorldPath(LevelResource.ROOT).toFile();
 			File markerFile = new File(saveRoot, MOD_ID + "_MARKER");
 			boolean firstLaunch;
 
@@ -84,8 +82,8 @@ public class AttachmentTestMod implements ModInitializer {
 				throw new RuntimeException(e);
 			}
 
-			ServerWorld overworld = server.getOverworld();
-			WorldChunk chunk = overworld.getChunk(0, 0);
+			ServerLevel overworld = server.overworld();
+			LevelChunk chunk = overworld.getChunk(0, 0);
 
 			if (firstLaunch) {
 				LOGGER.info("First launch, testing attachment by feature");
@@ -104,7 +102,7 @@ public class AttachmentTestMod implements ModInitializer {
 
 				chunk.setAttached(PERSISTENT, "chunk_data");
 
-				ProtoChunk protoChunk = (ProtoChunk) overworld.getChunkManager().getChunk(FAR_CHUNK_POS.x, FAR_CHUNK_POS.z, ChunkStatus.STRUCTURE_STARTS, true);
+				ProtoChunk protoChunk = (ProtoChunk) overworld.getChunkSource().getChunk(FAR_CHUNK_POS.x, FAR_CHUNK_POS.z, ChunkStatus.STRUCTURE_STARTS, true);
 				protoChunk.setAttached(PERSISTENT, "protochunk_data");
 			} else {
 				LOGGER.info("Second launch, testing persistent attachments");
@@ -112,12 +110,12 @@ public class AttachmentTestMod implements ModInitializer {
 				if (!"world_data".equals(overworld.getAttached(PERSISTENT))) throw new AssertionError("World attachment did not persist");
 				if (!"chunk_data".equals(chunk.getAttached(PERSISTENT))) throw new AssertionError("WorldChunk attachment did not persist");
 
-				WrapperProtoChunk wrapperProtoChunk = (WrapperProtoChunk) overworld.getChunkManager().getChunk(0, 0, ChunkStatus.EMPTY, true);
+				ImposterProtoChunk wrapperProtoChunk = (ImposterProtoChunk) overworld.getChunkSource().getChunk(0, 0, ChunkStatus.EMPTY, true);
 				if (!"chunk_data".equals(wrapperProtoChunk.getAttached(PERSISTENT))) throw new AssertionError("Attachment is not accessible through WrapperProtoChunk");
 
-				Chunk farChunk = overworld.getChunkManager().getChunk(FAR_CHUNK_POS.x, FAR_CHUNK_POS.z, ChunkStatus.EMPTY, true);
+				ChunkAccess farChunk = overworld.getChunkSource().getChunk(FAR_CHUNK_POS.x, FAR_CHUNK_POS.z, ChunkStatus.EMPTY, true);
 
-				if (farChunk instanceof WrapperProtoChunk) {
+				if (farChunk instanceof ImposterProtoChunk) {
 					LOGGER.warn("Far chunk already generated, can't test persistence in ProtoChunk.");
 				} else {
 					if (!"protochunk_data".equals(farChunk.getAttached(PERSISTENT))) throw new AssertionError("ProtoChunk attachment did not persist");

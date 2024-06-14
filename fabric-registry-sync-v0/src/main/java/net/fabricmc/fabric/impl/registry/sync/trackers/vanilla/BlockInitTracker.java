@@ -17,16 +17,14 @@
 package net.fabricmc.fabric.impl.registry.sync.trackers.vanilla;
 
 import java.util.List;
-
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
-
 import net.fabricmc.fabric.api.event.registry.RegistryEntryAddedCallback;
 import net.fabricmc.fabric.mixin.registry.sync.DebugChunkGeneratorAccessor;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 
 public final class BlockInitTracker implements RegistryEntryAddedCallback<Block> {
 	private final Registry<Block> registry;
@@ -41,23 +39,23 @@ public final class BlockInitTracker implements RegistryEntryAddedCallback<Block>
 	}
 
 	@Override
-	public void onEntryAdded(int rawId, Identifier id, Block object) {
+	public void onEntryAdded(int rawId, ResourceLocation id, Block object) {
 		// if false, getLootTableKey() will generate an invalid loot table key
-		assert id.equals(registry.getId(object));
+		assert id.equals(registry.getKey(object));
 
-		object.getLootTableKey();
+		object.getLootTable();
 	}
 
 	public static void postFreeze() {
-		final List<BlockState> blockStateList = Registries.BLOCK.stream()
-				.flatMap((block) -> block.getStateManager().getStates().stream())
+		final List<BlockState> blockStateList = BuiltInRegistries.BLOCK.stream()
+				.flatMap((block) -> block.getStateDefinition().getPossibleStates().stream())
 				.toList();
 
-		final int xLength = MathHelper.ceil(MathHelper.sqrt(blockStateList.size()));
-		final int zLength = MathHelper.ceil(blockStateList.size() / (float) xLength);
+		final int xLength = Mth.ceil(Mth.sqrt(blockStateList.size()));
+		final int zLength = Mth.ceil(blockStateList.size() / (float) xLength);
 
-		DebugChunkGeneratorAccessor.setBLOCK_STATES(blockStateList);
-		DebugChunkGeneratorAccessor.setX_SIDE_LENGTH(xLength);
-		DebugChunkGeneratorAccessor.setZ_SIDE_LENGTH(zLength);
+		DebugChunkGeneratorAccessor.setALL_BLOCKS(blockStateList);
+		DebugChunkGeneratorAccessor.setGRID_WIDTH(xLength);
+		DebugChunkGeneratorAccessor.setGRID_HEIGHT(zLength);
 	}
 }

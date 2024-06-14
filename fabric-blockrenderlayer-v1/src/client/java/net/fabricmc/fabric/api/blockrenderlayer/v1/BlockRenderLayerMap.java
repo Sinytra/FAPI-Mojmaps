@@ -16,19 +16,18 @@
 
 package net.fabricmc.fabric.api.blockrenderlayer.v1;
 
-import net.minecraft.block.Block;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.RenderLayers;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.item.Item;
-
 import net.fabricmc.fabric.impl.blockrenderlayer.BlockRenderLayerMapImpl;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.material.Fluid;
 
 /**
  * Use to associate blocks or fluids with block render layer other than default.
  *
- * <p>{@link RenderLayers} control how sprite pixels for fluids and blocks are blended
- * with the scene. Consult the vanilla {@link RenderLayers} implementation for examples.
+ * <p>{@link ItemBlockRenderTypes} control how sprite pixels for fluids and blocks are blended
+ * with the scene. Consult the vanilla {@link ItemBlockRenderTypes} implementation for examples.
  *
  * <p>The Fabric Renderer API can be used to control this at a per-quad level at the code
  * via {@code BlendMode}.
@@ -45,7 +44,7 @@ public interface BlockRenderLayerMap {
 	 * @param block Identifies block to be mapped.
 	 * @param renderLayer Render layer.  Should be one of the layers used for terrain rendering.
 	 */
-	void putBlock(Block block, RenderLayer renderLayer);
+	void putBlock(Block block, RenderType renderLayer);
 
 	/**
 	 * Map (or re-map) multiple block states with a render layer.  Re-mapping is not recommended but if done, last one in wins.
@@ -54,21 +53,21 @@ public interface BlockRenderLayerMap {
 	 * @param renderLayer Render layer.  Should be one of the layers used for terrain rendering.
 	 * @param blocks Identifies blocks to be mapped.
 	 */
-	void putBlocks(RenderLayer renderLayer, Block... blocks);
+	void putBlocks(RenderType renderLayer, Block... blocks);
 
 	/**
-	 * @deprecated For blocks, calling {@link #putBlock(Block, RenderLayer)} is enough.
+	 * @deprecated For blocks, calling {@link #putBlock(Block, RenderType)} is enough.
 	 * Other items always use a translucent render layer.
 	 */
 	@Deprecated(forRemoval = true)
-	void putItem(Item item, RenderLayer renderLayer);
+	void putItem(Item item, RenderType renderLayer);
 
 	/**
-	 * @deprecated For blocks, calling {@link #putBlocks(RenderLayer, Block...)} is enough.
+	 * @deprecated For blocks, calling {@link #putBlocks(RenderType, Block...)} is enough.
 	 * Other items always use a translucent render layer.
 	 */
 	@Deprecated(forRemoval = true)
-	void putItems(RenderLayer renderLayer, Item... items);
+	void putItems(RenderType renderLayer, Item... items);
 
 	/**
 	 * Map (or re-map) a fluid state with a render layer.  Re-mapping is not recommended but if done, last one in wins.
@@ -77,7 +76,7 @@ public interface BlockRenderLayerMap {
 	 * @param fluid Identifies fluid to be mapped.
 	 * @param renderLayer Render layer.  Should be one of the layers used for terrain rendering.
 	 */
-	void putFluid(Fluid fluid, RenderLayer renderLayer);
+	void putFluid(Fluid fluid, RenderType renderLayer);
 
 	/**
 	 * Map (or re-map) multiple fluid states with a render layer.  Re-mapping is not recommended but if done, last one in wins.
@@ -86,5 +85,5 @@ public interface BlockRenderLayerMap {
 	 * @param renderLayer Render layer.  Should be one of the layers used for terrain rendering.
 	 * @param fluids Identifies fluids to be mapped.
 	 */
-	void putFluids(RenderLayer renderLayer, Fluid... fluids);
+	void putFluids(RenderType renderLayer, Fluid... fluids);
 }

@@ -20,20 +20,18 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import net.minecraft.world.chunk.AbstractChunkHolder;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.ChunkGenerating;
-import net.minecraft.world.chunk.ChunkGenerationContext;
-import net.minecraft.world.chunk.WorldChunk;
-
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
+import net.minecraft.server.level.GenerationChunkHolder;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.status.ChunkStatusTasks;
+import net.minecraft.world.level.chunk.status.WorldGenContext;
 
-@Mixin(ChunkGenerating.class)
+@Mixin(ChunkStatusTasks.class)
 abstract class ChunkGeneratingMixin {
-	@Inject(method = "method_60553", at = @At("TAIL"))
-	private static void onChunkLoad(Chunk chunk, ChunkGenerationContext chunkGenerationContext, AbstractChunkHolder chunkHolder, CallbackInfoReturnable<Chunk> callbackInfoReturnable) {
+	@Inject(method = "lambda$full$2", at = @At("TAIL"))
+	private static void onChunkLoad(ChunkAccess chunk, WorldGenContext chunkGenerationContext, GenerationChunkHolder chunkHolder, CallbackInfoReturnable<ChunkAccess> callbackInfoReturnable) {
 		// We fire the event at TAIL since the chunk is guaranteed to be a WorldChunk then.
-		ServerChunkEvents.CHUNK_LOAD.invoker().onChunkLoad(chunkGenerationContext.world(), (WorldChunk) callbackInfoReturnable.getReturnValue());
+		ServerChunkEvents.CHUNK_LOAD.invoker().onChunkLoad(chunkGenerationContext.level(), (LevelChunk) callbackInfoReturnable.getReturnValue());
 	}
 }

@@ -18,9 +18,8 @@ package net.fabricmc.fabric.impl.datagen;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-
-import net.minecraft.registry.tag.TagEntry;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagEntry;
 
 public class ForcedTagEntry extends TagEntry {
 	private final TagEntry delegate;
@@ -31,12 +30,12 @@ public class ForcedTagEntry extends TagEntry {
 	}
 
 	@Override
-	public <T> boolean resolve(TagEntry.ValueGetter<T> arg, Consumer<T> consumer) {
-		return delegate.resolve(arg, consumer);
+	public <T> boolean build(TagEntry.Lookup<T> arg, Consumer<T> consumer) {
+		return delegate.build(arg, consumer);
 	}
 
 	@Override
-	public boolean canAdd(Predicate<Identifier> objectExistsTest, Predicate<Identifier> tagExistsTest) {
+	public boolean verifyIfPresent(Predicate<ResourceLocation> objectExistsTest, Predicate<ResourceLocation> tagExistsTest) {
 		return true;
 	}
 }

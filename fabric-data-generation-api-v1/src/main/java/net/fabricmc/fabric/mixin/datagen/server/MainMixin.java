@@ -29,7 +29,7 @@ import net.fabricmc.fabric.impl.datagen.FabricDataGenHelper;
 
 @Mixin(Main.class)
 public class MainMixin {
-	@Inject(method = "main", at = @At(value = "NEW", target = "net/minecraft/server/dedicated/ServerPropertiesLoader"), cancellable = true)
+	@Inject(method = "main", at = @At(value = "NEW", target = "net/minecraft/server/dedicated/DedicatedServerSettings"), cancellable = true)
 	private static void main(String[] args, CallbackInfo info) throws IOException {
 		if (FabricDataGenHelper.ENABLED) {
 			FabricDataGenHelper.run();

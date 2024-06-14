@@ -26,25 +26,23 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.component.ComponentChanges;
-import net.minecraft.component.ComponentType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredient;
 import net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredientSerializer;
+import net.minecraft.core.component.DataComponentPatch;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 
 public class ComponentsIngredient implements CustomIngredient {
 	public static final CustomIngredientSerializer<ComponentsIngredient> SERIALIZER = new Serializer();
 
 	private final Ingredient base;
-	private final ComponentChanges components;
+	private final DataComponentPatch components;
 
-	public ComponentsIngredient(Ingredient base, ComponentChanges components) {
+	public ComponentsIngredient(Ingredient base, DataComponentPatch components) {
 		if (components.isEmpty()) {
 			throw new IllegalArgumentException("ComponentIngredient must have at least one defined component");
 		}
@@ -58,13 +56,13 @@ public class ComponentsIngredient implements CustomIngredient {
 		if (!base.test(stack)) return false;
 
 		// None strict matching
-		for (Map.Entry<ComponentType<?>, Optional<?>> entry : components.entrySet()) {
-			final ComponentType<?> type = entry.getKey();
+		for (Map.Entry<DataComponentType<?>, Optional<?>> entry : components.entrySet()) {
+			final DataComponentType<?> type = entry.getKey();
 			final Optional<?> value = entry.getValue();
 
 			if (value.isPresent()) {
 				// Expect the stack to contain a matching component
-				if (!stack.contains(type)) {
+				if (!stack.has(type)) {
 					return false;
 				}
 
@@ -73,7 +71,7 @@ public class ComponentsIngredient implements CustomIngredient {
 				}
 			} else {
 				// Expect the target stack to not contain this component
-				if (stack.contains(type)) {
+				if (stack.has(type)) {
 					return false;
 				}
 			}
@@ -84,11 +82,11 @@ public class ComponentsIngredient implements CustomIngredient {
 
 	@Override
 	public List<ItemStack> getMatchingStacks() {
-		List<ItemStack> stacks = new ArrayList<>(List.of(base.getMatchingStacks()));
+		List<ItemStack> stacks = new ArrayList<>(List.of(base.getItems()));
 		stacks.replaceAll(stack -> {
 			ItemStack copy = stack.copy();
 
-			stack.applyChanges(components);
+			stack.applyComponentsAndValidate(components);
 
 			return copy;
 		});
@@ -111,17 +109,17 @@ public class ComponentsIngredient implements CustomIngredient {
 	}
 
 	@Nullable
-	private ComponentChanges getComponents() {
+	private DataComponentPatch getComponents() {
 		return components;
 	}
 
 	private static class Serializer implements CustomIngredientSerializer<ComponentsIngredient> {
-		private static final Identifier ID = Identifier.of("fabric", "components");
-		private static final MapCodec<ComponentsIngredient> ALLOW_EMPTY_CODEC = createCodec(Ingredient.ALLOW_EMPTY_CODEC);
-		private static final MapCodec<ComponentsIngredient> DISALLOW_EMPTY_CODEC = createCodec(Ingredient.DISALLOW_EMPTY_CODEC);
-		private static final PacketCodec<RegistryByteBuf, ComponentsIngredient> PACKET_CODEC = PacketCodec.tuple(
-				Ingredient.PACKET_CODEC, ComponentsIngredient::getBase,
-				ComponentChanges.PACKET_CODEC, ComponentsIngredient::getComponents,
+		private static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath("fabric", "components");
+		private static final MapCodec<ComponentsIngredient> ALLOW_EMPTY_CODEC = createCodec(Ingredient.CODEC);
+		private static final MapCodec<ComponentsIngredient> DISALLOW_EMPTY_CODEC = createCodec(Ingredient.CODEC_NONEMPTY);
+		private static final StreamCodec<RegistryFriendlyByteBuf, ComponentsIngredient> PACKET_CODEC = StreamCodec.composite(
+				Ingredient.CONTENTS_STREAM_CODEC, ComponentsIngredient::getBase,
+				DataComponentPatch.STREAM_CODEC, ComponentsIngredient::getComponents,
 				ComponentsIngredient::new
 		);
 
@@ -129,13 +127,13 @@ public class ComponentsIngredient implements CustomIngredient {
 			return RecordCodecBuilder.mapCodec(instance ->
 					instance.group(
 							ingredientCodec.fieldOf("base").forGetter(ComponentsIngredient::getBase),
-							ComponentChanges.CODEC.fieldOf("components").forGetter(ComponentsIngredient::getComponents)
+							DataComponentPatch.CODEC.fieldOf("components").forGetter(ComponentsIngredient::getComponents)
 					).apply(instance, ComponentsIngredient::new)
 			);
 		}
 
 		@Override
-		public Identifier getIdentifier() {
+		public ResourceLocation getIdentifier() {
 			return ID;
 		}
 
@@ -145,7 +143,7 @@ public class ComponentsIngredient implements CustomIngredient {
 		}
 
 		@Override
-		public PacketCodec<RegistryByteBuf, ComponentsIngredient> getPacketCodec() {
+		public StreamCodec<RegistryFriendlyByteBuf, ComponentsIngredient> getPacketCodec() {
 			return PACKET_CODEC;
 		}
 	}

@@ -35,16 +35,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.spongepowered.asm.mixin.MixinEnvironment;
-
-import net.minecraft.client.gui.screen.AccessibilityOnboardingScreen;
-import net.minecraft.client.gui.screen.ConfirmScreen;
-import net.minecraft.client.gui.screen.TitleScreen;
-import net.minecraft.client.gui.screen.world.CreateWorldScreen;
-import net.minecraft.client.gui.screen.world.SelectWorldScreen;
-import net.minecraft.client.option.Perspective;
-
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.CameraType;
+import net.minecraft.client.gui.screens.AccessibilityOnboardingScreen;
+import net.minecraft.client.gui.screens.ConfirmScreen;
+import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
+import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 
 public class FabricApiAutoTestClient implements ClientModInitializer {
 	@Override
@@ -112,7 +110,7 @@ public class FabricApiAutoTestClient implements ClientModInitializer {
 
 		{
 			// See if the player render events are working.
-			setPerspective(Perspective.THIRD_PERSON_BACK);
+			setPerspective(CameraType.THIRD_PERSON_BACK);
 			takeScreenshot("in_game_overworld_third_person");
 		}
 

@@ -17,24 +17,21 @@
 package net.fabricmc.fabric.impl.client.indigo.renderer.render;
 
 import java.util.Map;
-
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import it.unimi.dsi.fastutil.longs.Long2FloatOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.client.render.VertexFormats;
-import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.client.render.chunk.BlockBufferAllocatorStorage;
-import net.minecraft.client.render.chunk.ChunkRendererRegion;
-import net.minecraft.client.util.BufferAllocator;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.BlockRenderView;
-
 import net.fabricmc.fabric.impl.client.indigo.renderer.aocalc.AoCalculator;
 import net.fabricmc.fabric.impl.client.indigo.renderer.aocalc.AoLuminanceFix;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SectionBufferBuilderPack;
+import net.minecraft.client.renderer.chunk.RenderChunkRegion;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * Holds, manages and provides access to the chunk-related state
@@ -69,10 +66,10 @@ public class ChunkRenderInfo {
 	private final Long2IntOpenHashMap brightnessCache;
 	private final Long2FloatOpenHashMap aoLevelCache;
 
-	private final BlockPos.Mutable chunkOrigin = new BlockPos.Mutable();
-	BlockBufferAllocatorStorage builders;
-	Map<RenderLayer, BufferBuilder> buffers;
-	BlockRenderView blockView;
+	private final BlockPos.MutableBlockPos chunkOrigin = new BlockPos.MutableBlockPos();
+	SectionBufferBuilderPack builders;
+	Map<RenderType, BufferBuilder> buffers;
+	BlockAndTintGetter blockView;
 
 	ChunkRenderInfo() {
 		brightnessCache = new Long2IntOpenHashMap();
@@ -81,7 +78,7 @@ public class ChunkRenderInfo {
 		aoLevelCache.defaultReturnValue(Float.MAX_VALUE);
 	}
 
-	void prepare(ChunkRendererRegion blockView, BlockPos chunkOrigin, BlockBufferAllocatorStorage builders, Map<RenderLayer, BufferBuilder> buffers) {
+	void prepare(RenderChunkRegion blockView, BlockPos chunkOrigin, SectionBufferBuilderPack builders, Map<RenderType, BufferBuilder> buffers) {
 		this.blockView = blockView;
 		this.chunkOrigin.set(chunkOrigin);
 		this.builders = builders;
@@ -94,13 +91,13 @@ public class ChunkRenderInfo {
 	}
 
 	/** Lazily retrieves output buffer for given layer, initializing as needed. */
-	public BufferBuilder getInitializedBuffer(RenderLayer renderLayer) {
+	public BufferBuilder getInitializedBuffer(RenderType renderLayer) {
 		// TODO 24w21b - possibly AW class_9810#method_60903 which does the same thing?
 		BufferBuilder builder = buffers.get(renderLayer);
 
 		if (builder == null) {
-			BufferAllocator byteBuilder = builders.get(renderLayer);
-			builder = new BufferBuilder(byteBuilder, VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL);
+			ByteBufferBuilder byteBuilder = builders.buffer(renderLayer);
+			builder = new BufferBuilder(byteBuilder, VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK);
 
 			buffers.put(renderLayer, builder);
 		}
@@ -109,7 +106,7 @@ public class ChunkRenderInfo {
 	}
 
 	/**
-	 * Cached values for {@link WorldRenderer#getLightmapCoordinates(BlockRenderView, BlockState, BlockPos)}.
+	 * Cached values for {@link LevelRenderer#getLightColor(BlockAndTintGetter, BlockState, BlockPos)}.
 	 * See also the comments for {@link #brightnessCache}.
 	 */
 	int cachedBrightness(BlockPos pos, BlockState state) {

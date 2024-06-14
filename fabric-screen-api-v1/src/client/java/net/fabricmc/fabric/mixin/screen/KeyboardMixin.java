@@ -20,16 +20,14 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.client.Keyboard;
-import net.minecraft.client.gui.screen.Screen;
-
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
+import net.minecraft.client.KeyboardHandler;
+import net.minecraft.client.gui.screens.Screen;
 
-@Mixin(Keyboard.class)
+@Mixin(KeyboardHandler.class)
 abstract class KeyboardMixin {
 	// private synthetic method_1454(ILnet/minecraft/client/gui/screen/Screen;[ZIII)V
-	@Inject(method = "method_1454(ILnet/minecraft/client/gui/screen/Screen;[ZIII)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;keyPressed(III)Z"), cancellable = true)
+	@Inject(method = "lambda$keyPress$5(ILnet/minecraft/client/gui/screens/Screen;[ZIII)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;keyPressed(III)Z"), cancellable = true)
 	private static void beforeKeyPressedEvent(int code, Screen screen, boolean[] resultHack, int key, int scancode, int modifiers, CallbackInfo ci) {
 		if (!ScreenKeyboardEvents.allowKeyPress(screen).invoker().allowKeyPress(screen, key, scancode, modifiers)) {
 			resultHack[0] = true; // Set this press action as handled.
@@ -41,13 +39,13 @@ abstract class KeyboardMixin {
 	}
 
 	// private synthetic method_1454(ILnet/minecraft/client/gui/screen/Screen;[ZIII)V
-	@Inject(method = "method_1454(ILnet/minecraft/client/gui/screen/Screen;[ZIII)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;keyPressed(III)Z", shift = At.Shift.AFTER))
+	@Inject(method = "lambda$keyPress$5(ILnet/minecraft/client/gui/screens/Screen;[ZIII)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;keyPressed(III)Z", shift = At.Shift.AFTER))
 	private static void afterKeyPressedEvent(int code, Screen screen, boolean[] resultHack, int key, int scancode, int modifiers, CallbackInfo ci) {
 		ScreenKeyboardEvents.afterKeyPress(screen).invoker().afterKeyPress(screen, key, scancode, modifiers);
 	}
 
 	// private synthetic method_1454(ILnet/minecraft/client/gui/screen/Screen;[ZIII)V
-	@Inject(method = "method_1454(ILnet/minecraft/client/gui/screen/Screen;[ZIII)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;keyReleased(III)Z"), cancellable = true)
+	@Inject(method = "lambda$keyPress$5(ILnet/minecraft/client/gui/screens/Screen;[ZIII)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;keyReleased(III)Z"), cancellable = true)
 	private static void beforeKeyReleasedEvent(int code, Screen screen, boolean[] resultHack, int key, int scancode, int modifiers, CallbackInfo ci) {
 		if (!ScreenKeyboardEvents.allowKeyRelease(screen).invoker().allowKeyRelease(screen, key, scancode, modifiers)) {
 			resultHack[0] = true; // Set this press action as handled.
@@ -59,7 +57,7 @@ abstract class KeyboardMixin {
 	}
 
 	// private synthetic method_1454(ILnet/minecraft/client/gui/screen/Screen;[ZIII)V
-	@Inject(method = "method_1454(ILnet/minecraft/client/gui/screen/Screen;[ZIII)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;keyReleased(III)Z", shift = At.Shift.AFTER))
+	@Inject(method = "lambda$keyPress$5(ILnet/minecraft/client/gui/screens/Screen;[ZIII)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;keyReleased(III)Z", shift = At.Shift.AFTER))
 	private static void afterKeyReleasedEvent(int code, Screen screen, boolean[] resultHack, int key, int scancode, int modifiers, CallbackInfo ci) {
 		ScreenKeyboardEvents.afterKeyRelease(screen).invoker().afterKeyRelease(screen, key, scancode, modifiers);
 	}

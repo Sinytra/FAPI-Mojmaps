@@ -22,16 +22,14 @@ import java.util.List;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
-
-import net.minecraft.item.ItemStack;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredientSerializer;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 
 public class AllIngredient extends CombinedIngredient {
-	private static final MapCodec<AllIngredient> ALLOW_EMPTY_CODEC = createCodec(Ingredient.ALLOW_EMPTY_CODEC);
-	private static final MapCodec<AllIngredient> DISALLOW_EMPTY_CODEC = createCodec(Ingredient.DISALLOW_EMPTY_CODEC);
+	private static final MapCodec<AllIngredient> ALLOW_EMPTY_CODEC = createCodec(Ingredient.CODEC);
+	private static final MapCodec<AllIngredient> DISALLOW_EMPTY_CODEC = createCodec(Ingredient.CODEC_NONEMPTY);
 
 	private static MapCodec<AllIngredient> createCodec(Codec<Ingredient> ingredientCodec) {
 		return ingredientCodec
@@ -41,7 +39,7 @@ public class AllIngredient extends CombinedIngredient {
 	}
 
 	public static final CustomIngredientSerializer<AllIngredient> SERIALIZER =
-			new Serializer<>(Identifier.of("fabric", "all"), AllIngredient::new, ALLOW_EMPTY_CODEC, DISALLOW_EMPTY_CODEC);
+			new Serializer<>(ResourceLocation.fromNamespaceAndPath("fabric", "all"), AllIngredient::new, ALLOW_EMPTY_CODEC, DISALLOW_EMPTY_CODEC);
 
 	public AllIngredient(List<Ingredient> ingredients) {
 		super(ingredients);
@@ -61,7 +59,7 @@ public class AllIngredient extends CombinedIngredient {
 	@Override
 	public List<ItemStack> getMatchingStacks() {
 		// There's always at least one sub ingredient, so accessing ingredients[0] is safe.
-		List<ItemStack> previewStacks = new ArrayList<>(Arrays.asList(ingredients.get(0).getMatchingStacks()));
+		List<ItemStack> previewStacks = new ArrayList<>(Arrays.asList(ingredients.get(0).getItems()));
 
 		for (int i = 1; i < ingredients.size(); ++i) {
 			Ingredient ing = ingredients.get(i);

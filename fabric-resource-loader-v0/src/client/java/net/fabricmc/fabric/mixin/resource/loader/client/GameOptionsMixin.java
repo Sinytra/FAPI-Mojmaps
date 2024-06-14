@@ -32,22 +32,20 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.client.option.GameOptions;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
+import net.minecraft.client.Options;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtSizeTracker;
-import net.minecraft.nbt.NbtString;
-import net.minecraft.resource.ResourcePack;
-import net.minecraft.resource.ResourcePackProfile;
-
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.server.packs.PackResources;
+import net.minecraft.server.packs.repository.Pack;
 import net.fabricmc.fabric.impl.resource.loader.ModNioResourcePack;
 import net.fabricmc.fabric.impl.resource.loader.ModResourcePackCreator;
 import net.fabricmc.loader.api.FabricLoader;
 
-@Mixin(GameOptions.class)
+@Mixin(Options.class)
 public class GameOptionsMixin {
 	@Shadow
 	public List<String> resourcePacks;
@@ -80,8 +78,8 @@ public class GameOptionsMixin {
 
 		if (Files.exists(trackerFile)) {
 			try {
-				NbtCompound data = NbtIo.readCompressed(trackerFile, NbtSizeTracker.ofUnlimitedBytes());
-				NbtList values = data.getList("values", NbtElement.STRING_TYPE);
+				CompoundTag data = NbtIo.readCompressed(trackerFile, NbtAccounter.unlimitedHeap());
+				ListTag values = data.getList("values", Tag.TAG_STRING);
 
 				for (int i = 0; i < values.size(); i++) {
 					trackedPacks.add(values.getString(i));
@@ -94,37 +92,37 @@ public class GameOptionsMixin {
 		Set<String> removedPacks = new HashSet<>(trackedPacks);
 		Set<String> resourcePacks = new LinkedHashSet<>(this.resourcePacks);
 
-		List<ResourcePackProfile> profiles = new ArrayList<>();
-		ModResourcePackCreator.CLIENT_RESOURCE_PACK_PROVIDER.register(profiles::add);
+		List<Pack> profiles = new ArrayList<>();
+		ModResourcePackCreator.CLIENT_RESOURCE_PACK_PROVIDER.loadPacks(profiles::add);
 
-		for (ResourcePackProfile profile : profiles) {
+		for (Pack profile : profiles) {
 			// Always add "Fabric Mods" pack to enabled resource packs.
 			if (profile.getId().equals(ModResourcePackCreator.FABRIC)) {
 				resourcePacks.add(profile.getId());
 				continue;
 			}
 
-			try (ResourcePack pack = profile.createResourcePack()) {
+			try (PackResources pack = profile.open()) {
 				if (pack instanceof ModNioResourcePack builtinPack && builtinPack.getActivationType().isEnabledByDefault()) {
-					if (trackedPacks.add(builtinPack.getId())) {
+					if (trackedPacks.add(builtinPack.packId())) {
 						resourcePacks.add(profile.getId());
 					} else {
-						removedPacks.remove(builtinPack.getId());
+						removedPacks.remove(builtinPack.packId());
 					}
 				}
 			}
 		}
 
 		try {
-			NbtList values = new NbtList();
+			ListTag values = new ListTag();
 
 			for (String id : trackedPacks) {
 				if (!removedPacks.contains(id)) {
-					values.add(NbtString.of(id));
+					values.add(StringTag.valueOf(id));
 				}
 			}
 
-			NbtCompound nbt = new NbtCompound();
+			CompoundTag nbt = new CompoundTag();
 			nbt.put("values", values);
 			NbtIo.writeCompressed(nbt, trackerFile);
 		} catch (IOException e) {

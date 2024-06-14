@@ -16,28 +16,27 @@
 
 package net.fabricmc.fabric.impl.attachment;
 
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.saveddata.SavedData;
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.world.PersistentState;
 
 /**
  * Backing storage for server-side world attachments.
  * Thanks to custom {@link #isDirty()} logic, the file is only written if something needs to be persisted.
  */
-public class AttachmentPersistentState extends PersistentState {
+public class AttachmentPersistentState extends SavedData {
 	public static final String ID = "fabric_attachments";
 	private final AttachmentTargetImpl worldTarget;
 	private final boolean wasSerialized;
 
-	public AttachmentPersistentState(ServerWorld world) {
+	public AttachmentPersistentState(ServerLevel world) {
 		this.worldTarget = (AttachmentTargetImpl) world;
 		this.wasSerialized = worldTarget.fabric_hasPersistentAttachments();
 	}
 
-	public static AttachmentPersistentState read(ServerWorld world, @Nullable NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup) {
+	public static AttachmentPersistentState read(ServerLevel world, @Nullable CompoundTag nbt, HolderLookup.Provider wrapperLookup) {
 		((AttachmentTargetImpl) world).fabric_readAttachmentsFromNbt(nbt, wrapperLookup);
 		return new AttachmentPersistentState(world);
 	}
@@ -49,7 +48,7 @@ public class AttachmentPersistentState extends PersistentState {
 	}
 
 	@Override
-	public NbtCompound writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup) {
+	public CompoundTag save(CompoundTag nbt, HolderLookup.Provider wrapperLookup) {
 		worldTarget.fabric_writeAttachmentsToNbt(nbt, wrapperLookup);
 		return nbt;
 	}

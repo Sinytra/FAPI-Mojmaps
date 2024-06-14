@@ -17,28 +17,26 @@
 package net.fabricmc.fabric.test.particle;
 
 import com.mojang.brigadier.Command;
-
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.server.command.CommandManager;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.minecraft.commands.Commands;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 
 public final class ParticleTestSetup implements ModInitializer {
 	// The dust particles of this block are always tinted (default).
-	public static final Block ALWAYS_TINTED = new ParticleTintTestBlock(AbstractBlock.Settings.create().breakInstantly(), 0xFF00FF);
+	public static final Block ALWAYS_TINTED = new ParticleTintTestBlock(BlockBehaviour.Properties.of().instabreak(), 0xFF00FF);
 	// The dust particles of this block are only tinted when the block is broken over water.
-	public static final Block TINTED_OVER_WATER = new ParticleTintTestBlock(AbstractBlock.Settings.create().breakInstantly(), 0xFFFF00);
+	public static final Block TINTED_OVER_WATER = new ParticleTintTestBlock(BlockBehaviour.Properties.of().instabreak(), 0xFFFF00);
 	// The dust particles of this block are never tinted.
-	public static final Block NEVER_TINTED = new ParticleTintTestBlock(AbstractBlock.Settings.create().breakInstantly(), 0x00FFFF);
+	public static final Block NEVER_TINTED = new ParticleTintTestBlock(BlockBehaviour.Properties.of().instabreak(), 0x00FFFF);
 
 	@Override
 	public void onInitialize() {
@@ -47,19 +45,19 @@ public final class ParticleTestSetup implements ModInitializer {
 		registerBlock("never_tinted", NEVER_TINTED);
 
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
-			dispatcher.register(CommandManager.literal("addparticletestblocks").executes(context -> {
-				PlayerInventory inventory = context.getSource().getPlayerOrThrow().getInventory();
-				inventory.offerOrDrop(new ItemStack(ALWAYS_TINTED));
-				inventory.offerOrDrop(new ItemStack(TINTED_OVER_WATER));
-				inventory.offerOrDrop(new ItemStack(NEVER_TINTED));
+			dispatcher.register(Commands.literal("addparticletestblocks").executes(context -> {
+				Inventory inventory = context.getSource().getPlayerOrException().getInventory();
+				inventory.placeItemBackInInventory(new ItemStack(ALWAYS_TINTED));
+				inventory.placeItemBackInInventory(new ItemStack(TINTED_OVER_WATER));
+				inventory.placeItemBackInInventory(new ItemStack(NEVER_TINTED));
 				return Command.SINGLE_SUCCESS;
 			}));
 		});
 	}
 
 	private static void registerBlock(String path, Block block) {
-		Identifier id = Identifier.of("fabric-particles-v1-testmod", path);
-		Registry.register(Registries.BLOCK, id, block);
-		Registry.register(Registries.ITEM, id, new BlockItem(block, new Item.Settings()));
+		ResourceLocation id = ResourceLocation.fromNamespaceAndPath("fabric-particles-v1-testmod", path);
+		Registry.register(BuiltInRegistries.BLOCK, id, block);
+		Registry.register(BuiltInRegistries.ITEM, id, new BlockItem(block, new Item.Properties()));
 	}
 }

@@ -22,13 +22,11 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.registry.RegistryWrapper;
-
 import net.fabricmc.fabric.api.resource.conditions.v1.ResourceCondition;
 import net.fabricmc.fabric.api.resource.conditions.v1.ResourceConditionType;
 import net.fabricmc.fabric.impl.resource.conditions.DefaultResourceConditionTypes;
 import net.fabricmc.fabric.impl.resource.conditions.ResourceConditionsImpl;
+import net.minecraft.core.HolderLookup;
 
 public record AllModsLoadedResourceCondition(List<String> modIds) implements ResourceCondition {
 	public static final MapCodec<AllModsLoadedResourceCondition> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
@@ -41,7 +39,7 @@ public record AllModsLoadedResourceCondition(List<String> modIds) implements Res
 	}
 
 	@Override
-	public boolean test(@Nullable RegistryWrapper.WrapperLookup registryLookup) {
+	public boolean test(@Nullable HolderLookup.Provider registryLookup) {
 		return ResourceConditionsImpl.modsLoaded(this.modIds(), true);
 	}
 }

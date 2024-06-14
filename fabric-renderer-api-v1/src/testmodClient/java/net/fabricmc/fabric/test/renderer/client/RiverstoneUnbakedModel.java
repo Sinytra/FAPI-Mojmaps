@@ -19,33 +19,31 @@ package net.fabricmc.fabric.test.renderer.client;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Function;
-
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.Material;
+import net.minecraft.client.resources.model.ModelBaker;
+import net.minecraft.client.resources.model.ModelState;
+import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.Baker;
-import net.minecraft.client.render.model.ModelBakeSettings;
-import net.minecraft.client.render.model.UnbakedModel;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.util.SpriteIdentifier;
-import net.minecraft.util.Identifier;
-
 public class RiverstoneUnbakedModel implements UnbakedModel {
-	private static final Identifier STONE_MODEL_ID = Identifier.ofVanilla("block/stone");
-	private static final Identifier GOLD_BLOCK_MODEL_ID = Identifier.ofVanilla("block/gold_block");
+	private static final ResourceLocation STONE_MODEL_ID = ResourceLocation.withDefaultNamespace("block/stone");
+	private static final ResourceLocation GOLD_BLOCK_MODEL_ID = ResourceLocation.withDefaultNamespace("block/gold_block");
 
 	@Override
-	public Collection<Identifier> getModelDependencies() {
+	public Collection<ResourceLocation> getDependencies() {
 		return Collections.emptySet();
 	}
 
 	@Override
-	public void setParents(Function<Identifier, UnbakedModel> modelLoader) {
+	public void resolveParents(Function<ResourceLocation, UnbakedModel> modelLoader) {
 	}
 
 	@Nullable
 	@Override
-	public BakedModel bake(Baker baker, Function<SpriteIdentifier, Sprite> textureGetter, ModelBakeSettings rotationContainer) {
+	public BakedModel bake(ModelBaker baker, Function<Material, TextureAtlasSprite> textureGetter, ModelState rotationContainer) {
 		BakedModel stoneModel = baker.bake(STONE_MODEL_ID, rotationContainer);
 		BakedModel goldBlockModel = baker.bake(GOLD_BLOCK_MODEL_ID, rotationContainer);
 		return new RiverstoneBakedModel(stoneModel, goldBlockModel);

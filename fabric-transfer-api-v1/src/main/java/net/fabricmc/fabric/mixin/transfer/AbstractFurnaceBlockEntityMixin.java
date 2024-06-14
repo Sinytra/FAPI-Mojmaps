@@ -22,29 +22,27 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.AbstractFurnaceBlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.block.entity.LockableContainerBlockEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-
 import net.fabricmc.fabric.impl.transfer.item.SpecialLogicInventory;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
+import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * Defer cook time updates for furnaces, so that aborted transactions don't reset the cook time.
  */
 @Mixin(AbstractFurnaceBlockEntity.class)
-public abstract class AbstractFurnaceBlockEntityMixin extends LockableContainerBlockEntity implements SpecialLogicInventory {
+public abstract class AbstractFurnaceBlockEntityMixin extends BaseContainerBlockEntity implements SpecialLogicInventory {
 	@Shadow
-	protected DefaultedList<ItemStack> inventory;
+	protected NonNullList<ItemStack> items;
 	@Shadow
-	int cookTime;
+	int cookingProgress;
 	@Shadow
-	int cookTimeTotal;
+	int cookingTotalTime;
 	@Unique
 	private boolean fabric_suppressSpecialLogic = false;
 
@@ -53,10 +51,10 @@ public abstract class AbstractFurnaceBlockEntityMixin extends LockableContainerB
 		throw new AssertionError();
 	}
 
-	@Inject(at = @At("HEAD"), method = "setStack", cancellable = true)
+	@Inject(at = @At("HEAD"), method = "setItem", cancellable = true)
 	public void setStackSuppressUpdate(int slot, ItemStack stack, CallbackInfo ci) {
 		if (fabric_suppressSpecialLogic) {
-			inventory.set(slot, stack);
+			items.set(slot, stack);
 			ci.cancel();
 		}
 	}
@@ -73,17 +71,17 @@ public abstract class AbstractFurnaceBlockEntityMixin extends LockableContainerB
 			ItemStack stack = newStack;
 
 			// Update cook time if needed. Code taken from AbstractFurnaceBlockEntity#setStack.
-			boolean bl = !stack.isEmpty() && ItemStack.areItemsAndComponentsEqual(stack, itemStack);
+			boolean bl = !stack.isEmpty() && ItemStack.isSameItemSameComponents(stack, itemStack);
 
 			if (!bl) {
-				this.cookTimeTotal = getCookTime(this.world, (AbstractFurnaceBlockEntity) (Object) this);
-				this.cookTime = 0;
+				this.cookingTotalTime = getTotalCookTime(this.level, (AbstractFurnaceBlockEntity) (Object) this);
+				this.cookingProgress = 0;
 			}
 		}
 	}
 
 	@Shadow
-	private static int getCookTime(World world, AbstractFurnaceBlockEntity abstractFurnaceBlockEntity) {
+	private static int getTotalCookTime(Level world, AbstractFurnaceBlockEntity abstractFurnaceBlockEntity) {
 		throw new AssertionError();
 	}
 }

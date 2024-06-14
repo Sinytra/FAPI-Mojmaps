@@ -16,20 +16,18 @@
 
 package net.fabricmc.fabric.api.renderer.v1.model;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import java.util.function.Supplier;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.block.BlockModelRenderer;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.BlockRenderView;
-
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.fabricmc.fabric.impl.renderer.VanillaModelEncoder;
+import net.minecraft.client.renderer.block.ModelBlockRenderer;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * Interface for baked models that output meshes with enhanced rendering features.
@@ -42,7 +40,7 @@ import net.fabricmc.fabric.impl.renderer.VanillaModelEncoder;
  */
 public interface FabricBakedModel {
 	/**
-	 * When true, signals renderer this producer is implemented through {@link BakedModel#getQuads(BlockState, net.minecraft.util.math.Direction, Random)}.
+	 * When true, signals renderer this producer is implemented through {@link BakedModel#getQuads(BlockState, net.minecraft.core.Direction, RandomSource)}.
 	 * Also means the model does not rely on any non-vanilla features.
 	 * Allows the renderer to optimize or route vanilla models through the unmodified vanilla pipeline if desired.
 	 *
@@ -66,7 +64,7 @@ public interface FabricBakedModel {
 	 * <p>Also called to render block models outside of chunk rebuild or block entity rendering.
 	 * Typically, this happens when the block is being rendered as an entity, not as a block placed in the world.
 	 * Currently, this happens for falling blocks and blocks being pushed by a piston, but renderers
-	 * should invoke this for all calls to {@link BlockModelRenderer#render(BlockRenderView, BakedModel, BlockState, BlockPos, MatrixStack, VertexConsumer, boolean, Random, long, int)}
+	 * should invoke this for all calls to {@link ModelBlockRenderer#tesselateBlock(BlockAndTintGetter, BakedModel, BlockState, BlockPos, PoseStack, VertexConsumer, boolean, RandomSource, long, int)}
 	 * that occur outside of chunk rebuilds to allow for features added by mods, unless
 	 * {@link #isVanillaAdapter()} returns true.
 	 *
@@ -80,7 +78,7 @@ public interface FabricBakedModel {
 	 * neighboring blocks (if appropriate).  Models only need to consider "sides" to the
 	 * extent the model is driven by connection with neighbor blocks or other world state.
 	 *
-	 * <p>Note: with {@link BakedModel#getQuads(BlockState, net.minecraft.util.math.Direction, Random)}, the random
+	 * <p>Note: with {@link BakedModel#getQuads(BlockState, net.minecraft.core.Direction, RandomSource)}, the random
 	 * parameter is normally initialized with the same seed prior to each face layer.
 	 * Model authors should note this method is called only once per block, and call the provided
 	 * Random supplier multiple times if re-seeding is necessary.
@@ -93,7 +91,7 @@ public interface FabricBakedModel {
 	 * Will not be thread-safe. Do not cache or retain a reference.
 	 * @param context Accepts model output.
 	 */
-	default void emitBlockQuads(BlockRenderView blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context) {
+	default void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context) {
 		VanillaModelEncoder.emitBlockQuads((BakedModel) this, state, randomSupplier, context, context.getEmitter());
 	}
 
@@ -124,7 +122,7 @@ public interface FabricBakedModel {
 	 * logic here, instead of returning every possible shape from {@link BakedModel#getOverrides}
 	 * as vanilla baked models.
 	 */
-	default void emitItemQuads(ItemStack stack, Supplier<Random> randomSupplier, RenderContext context) {
+	default void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context) {
 		VanillaModelEncoder.emitItemQuads((BakedModel) this, null, randomSupplier, context);
 	}
 }

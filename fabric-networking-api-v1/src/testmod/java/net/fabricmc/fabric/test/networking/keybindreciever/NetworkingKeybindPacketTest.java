@@ -16,19 +16,18 @@
 
 package net.fabricmc.fabric.test.networking.keybindreciever;
 
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 
 // Listens for a packet from the client which is sent to the server when a keybinding is pressed.
 // In response the server will send a message containing the keybind text letting the client know it pressed that key.
 public final class NetworkingKeybindPacketTest implements ModInitializer {
 	private static void receive(KeybindPayload payload, ServerPlayNetworking.Context context) {
-		context.player().server.execute(() -> context.player().sendMessage(Text.literal("So you pressed ").append(Text.keybind("fabric-networking-api-v1-testmod-keybind").styled(style -> style.withFormatting(Formatting.BLUE))), false));
+		context.player().server.execute(() -> context.player().displayClientMessage(Component.literal("So you pressed ").append(Component.keybind("fabric-networking-api-v1-testmod-keybind").withStyle(style -> style.applyFormat(ChatFormatting.BLUE))), false));
 	}
 
 	@Override

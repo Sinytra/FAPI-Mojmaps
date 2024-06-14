@@ -18,27 +18,25 @@ package net.fabricmc.fabric.impl.client.rendering;
 
 import java.util.IdentityHashMap;
 import java.util.Map;
-
-import net.minecraft.block.Block;
-import net.minecraft.client.color.block.BlockColorProvider;
+import net.minecraft.client.color.block.BlockColor;
 import net.minecraft.client.color.block.BlockColors;
-import net.minecraft.client.color.item.ItemColorProvider;
+import net.minecraft.client.color.item.ItemColor;
 import net.minecraft.client.color.item.ItemColors;
-import net.minecraft.item.ItemConvertible;
-
+import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.block.Block;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 
 public abstract class ColorProviderRegistryImpl<T, Provider, Underlying> implements ColorProviderRegistry<T, Provider> {
-	public static final ColorProviderRegistryImpl<Block, BlockColorProvider, BlockColors> BLOCK = new ColorProviderRegistryImpl<Block, BlockColorProvider, BlockColors>() {
+	public static final ColorProviderRegistryImpl<Block, BlockColor, BlockColors> BLOCK = new ColorProviderRegistryImpl<Block, BlockColor, BlockColors>() {
 		@Override
-		void registerUnderlying(BlockColors map, BlockColorProvider mapper, Block block) {
-			map.registerColorProvider(mapper, block);
+		void registerUnderlying(BlockColors map, BlockColor mapper, Block block) {
+			map.register(mapper, block);
 		}
 	};
 
-	public static final ColorProviderRegistryImpl<ItemConvertible, ItemColorProvider, ItemColors> ITEM = new ColorProviderRegistryImpl<ItemConvertible, ItemColorProvider, ItemColors>() {
+	public static final ColorProviderRegistryImpl<ItemLike, ItemColor, ItemColors> ITEM = new ColorProviderRegistryImpl<ItemLike, ItemColor, ItemColors>() {
 		@Override
-		void registerUnderlying(ItemColors map, ItemColorProvider mapper, ItemConvertible block) {
+		void registerUnderlying(ItemColors map, ItemColor mapper, ItemLike block) {
 			map.register(mapper, block);
 		}
 	};

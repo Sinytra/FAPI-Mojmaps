@@ -31,7 +31,7 @@ public final class ClientLifecycleTests implements ClientModInitializer {
 			}
 
 			startCalled = true;
-			client.submitAndJoin(() -> { // This should fail if the client thread was not bound yet.
+			client.executeBlocking(() -> { // This should fail if the client thread was not bound yet.
 				System.out.println("Started the client");
 			});
 		});

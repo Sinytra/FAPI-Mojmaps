@@ -16,17 +16,16 @@
 
 package net.fabricmc.fabric.test.entity.event.client;
 
-import net.minecraft.entity.EquipmentSlot;
-
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.LivingEntityFeatureRenderEvents;
 import net.fabricmc.fabric.test.entity.event.EntityEventTests;
+import net.minecraft.world.entity.EquipmentSlot;
 
 public class EntityEventTestsClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		LivingEntityFeatureRenderEvents.ALLOW_CAPE_RENDER.register(player -> {
-			return !player.getEquippedStack(EquipmentSlot.CHEST).isOf(EntityEventTests.DIAMOND_ELYTRA);
+			return !player.getItemBySlot(EquipmentSlot.CHEST).is(EntityEventTests.DIAMOND_ELYTRA);
 		});
 	}
 }

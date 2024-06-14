@@ -21,21 +21,19 @@ import java.util.Map;
 
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
-
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.ChunkStatus;
-
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.fabricmc.fabric.impl.attachment.AttachmentEntrypoint;
 import net.fabricmc.fabric.impl.attachment.AttachmentSerializingImpl;
 import net.fabricmc.fabric.impl.attachment.AttachmentTargetImpl;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 
-@Mixin({BlockEntity.class, Entity.class, World.class, Chunk.class})
+@Mixin({BlockEntity.class, Entity.class, Level.class, ChunkAccess.class})
 abstract class AttachmentTargetsMixin implements AttachmentTargetImpl {
 	@Nullable
 	private IdentityHashMap<AttachmentType<?>, Object> fabric_dataAttachments = null;
@@ -55,11 +53,11 @@ abstract class AttachmentTargetsMixin implements AttachmentTargetImpl {
 		Object thisObject = this;
 
 		if (thisObject instanceof BlockEntity) {
-			((BlockEntity) thisObject).markDirty();
-		} else if (thisObject instanceof Chunk) {
-			((Chunk) thisObject).setNeedsSaving(true);
+			((BlockEntity) thisObject).setChanged();
+		} else if (thisObject instanceof ChunkAccess) {
+			((ChunkAccess) thisObject).setUnsaved(true);
 
-			if (type.isPersistent() && ((Chunk) thisObject).getStatus().equals(ChunkStatus.EMPTY)) {
+			if (type.isPersistent() && ((ChunkAccess) thisObject).getPersistedStatus().equals(ChunkStatus.EMPTY)) {
 				AttachmentEntrypoint.LOGGER.warn("Attaching persistent attachment {} to chunk with chunk status EMPTY. Attachment might be discarded.", type.identifier());
 			}
 		}
@@ -91,12 +89,12 @@ abstract class AttachmentTargetsMixin implements AttachmentTargetImpl {
 	}
 
 	@Override
-	public void fabric_writeAttachmentsToNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup) {
+	public void fabric_writeAttachmentsToNbt(CompoundTag nbt, HolderLookup.Provider wrapperLookup) {
 		AttachmentSerializingImpl.serializeAttachmentData(nbt, wrapperLookup, fabric_dataAttachments);
 	}
 
 	@Override
-	public void fabric_readAttachmentsFromNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup) {
+	public void fabric_readAttachmentsFromNbt(CompoundTag nbt, HolderLookup.Provider wrapperLookup) {
 		fabric_dataAttachments = AttachmentSerializingImpl.deserializeAttachmentData(nbt, wrapperLookup);
 	}
 

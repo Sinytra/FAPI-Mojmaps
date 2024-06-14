@@ -25,13 +25,11 @@ import java.util.stream.Stream;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.item.ItemStack;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredient;
 import net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredientSerializer;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 
 /**
  * To test this API beyond the unit tests, please refer to the recipe provider in the datagen API testmod.
@@ -42,9 +40,9 @@ public class CustomIngredientImpl extends Ingredient {
 
 	public static final String TYPE_KEY = "fabric:type";
 
-	static final Map<Identifier, CustomIngredientSerializer<?>> REGISTERED_SERIALIZERS = new ConcurrentHashMap<>();
+	static final Map<ResourceLocation, CustomIngredientSerializer<?>> REGISTERED_SERIALIZERS = new ConcurrentHashMap<>();
 
-	public static final Codec<CustomIngredientSerializer<?>> CODEC = Identifier.CODEC.flatXmap(identifier ->
+	public static final Codec<CustomIngredientSerializer<?>> CODEC = ResourceLocation.CODEC.flatXmap(identifier ->
 					Optional.ofNullable(REGISTERED_SERIALIZERS.get(identifier))
 							.map(DataResult::success)
 							.orElseGet(() -> DataResult.error(() -> "Unknown custom ingredient serializer: " + identifier)),
@@ -60,7 +58,7 @@ public class CustomIngredientImpl extends Ingredient {
 	}
 
 	@Nullable
-	public static CustomIngredientSerializer<?> getSerializer(Identifier identifier) {
+	public static CustomIngredientSerializer<?> getSerializer(ResourceLocation identifier) {
 		Objects.requireNonNull(identifier, "Identifier may not be null.");
 
 		return REGISTERED_SERIALIZERS.get(identifier);
@@ -87,12 +85,12 @@ public class CustomIngredientImpl extends Ingredient {
 	}
 
 	@Override
-	public ItemStack[] getMatchingStacks() {
-		if (this.matchingStacks == null) {
-			this.matchingStacks = customIngredient.getMatchingStacks().toArray(ItemStack[]::new);
+	public ItemStack[] getItems() {
+		if (this.itemStacks == null) {
+			this.itemStacks = customIngredient.getMatchingStacks().toArray(ItemStack[]::new);
 		}
 
-		return this.matchingStacks;
+		return this.itemStacks;
 	}
 
 	@Override
@@ -105,6 +103,6 @@ public class CustomIngredientImpl extends Ingredient {
 		// We don't want to resolve the matching stacks,
 		// as this might cause the ingredient to use outdated tags when it's done too early.
 		// So we just return false when the matching stacks haven't been resolved yet (i.e. when the field is null).
-		return matchingStacks != null && matchingStacks.length == 0;
+		return itemStacks != null && itemStacks.length == 0;
 	}
 }

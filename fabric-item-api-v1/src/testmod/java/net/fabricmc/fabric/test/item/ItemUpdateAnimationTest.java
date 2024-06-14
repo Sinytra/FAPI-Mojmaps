@@ -16,22 +16,21 @@
 
 package net.fabricmc.fabric.test.item;
 
-import net.minecraft.component.ComponentType;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.dynamic.Codecs;
-
 import net.fabricmc.api.ModInitializer;
+import net.minecraft.core.Registry;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ExtraCodecs;
 
 public class ItemUpdateAnimationTest implements ModInitializer {
-	public static final ComponentType<Integer> TICKS = Registry.register(Registries.DATA_COMPONENT_TYPE, Identifier.of("fabric-item-api-v1-testmod", "ticks"),
-																			ComponentType.<Integer>builder().codec(Codecs.NONNEGATIVE_INT).packetCodec(PacketCodecs.VAR_INT).build());
+	public static final DataComponentType<Integer> TICKS = Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, ResourceLocation.fromNamespaceAndPath("fabric-item-api-v1-testmod", "ticks"),
+																			DataComponentType.<Integer>builder().persistent(ExtraCodecs.NON_NEGATIVE_INT).networkSynchronized(ByteBufCodecs.VAR_INT).build());
 
 	@Override
 	public void onInitialize() {
-		Registry.register(Registries.ITEM, Identifier.of("fabric-item-api-v1-testmod", "updating_allowed"), new UpdatingItem(true));
-		Registry.register(Registries.ITEM, Identifier.of("fabric-item-api-v1-testmod", "updating_disallowed"), new UpdatingItem(false));
+		Registry.register(BuiltInRegistries.ITEM, ResourceLocation.fromNamespaceAndPath("fabric-item-api-v1-testmod", "updating_allowed"), new UpdatingItem(true));
+		Registry.register(BuiltInRegistries.ITEM, ResourceLocation.fromNamespaceAndPath("fabric-item-api-v1-testmod", "updating_disallowed"), new UpdatingItem(false));
 	}
 }

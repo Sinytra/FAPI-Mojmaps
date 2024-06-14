@@ -21,25 +21,23 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.render.model.json.ModelOverrideList;
-import net.minecraft.client.render.model.json.ModelTransformation;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.BlockRenderView;
-
 import net.fabricmc.fabric.api.block.v1.FabricBlockState;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.fabricmc.fabric.test.renderer.Registration;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.ItemOverrides;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * Very crude implementation of a pillar block model that connects with pillars above and below.
@@ -50,9 +48,9 @@ public class PillarBakedModel implements BakedModel {
 	}
 
 	// alone, bottom, middle, top
-	private final Sprite[] sprites;
+	private final TextureAtlasSprite[] sprites;
 
-	public PillarBakedModel(Sprite[] sprites) {
+	public PillarBakedModel(TextureAtlasSprite[] sprites) {
 		this.sprites = sprites;
 	}
 
@@ -62,7 +60,7 @@ public class PillarBakedModel implements BakedModel {
 	}
 
 	@Override
-	public void emitBlockQuads(BlockRenderView blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context) {
+	public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context) {
 		QuadEmitter emitter = context.getEmitter();
 		// Do not use the passed state to ensure that this model connects
 		// to and from blocks with a custom appearance correctly.
@@ -72,8 +70,8 @@ public class PillarBakedModel implements BakedModel {
 			ConnectedTexture texture = ConnectedTexture.ALONE;
 
 			if (side.getAxis().isHorizontal()) {
-				boolean connectAbove = canConnect(blockView, worldState, pos, pos.offset(Direction.UP), side);
-				boolean connectBelow = canConnect(blockView, worldState, pos, pos.offset(Direction.DOWN), side);
+				boolean connectAbove = canConnect(blockView, worldState, pos, pos.relative(Direction.UP), side);
+				boolean connectBelow = canConnect(blockView, worldState, pos, pos.relative(Direction.DOWN), side);
 
 				if (connectAbove && connectBelow) {
 					texture = ConnectedTexture.MIDDLE;
@@ -92,7 +90,7 @@ public class PillarBakedModel implements BakedModel {
 	}
 
 	@Override
-	public void emitItemQuads(ItemStack stack, Supplier<Random> randomSupplier, RenderContext context) {
+	public void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context) {
 		QuadEmitter emitter = context.getEmitter();
 
 		for (Direction side : Direction.values()) {
@@ -103,18 +101,18 @@ public class PillarBakedModel implements BakedModel {
 		}
 	}
 
-	private static boolean canConnect(BlockRenderView blockView, BlockState originState, BlockPos originPos, BlockPos otherPos, Direction side) {
+	private static boolean canConnect(BlockAndTintGetter blockView, BlockState originState, BlockPos originPos, BlockPos otherPos, Direction side) {
 		BlockState otherState = blockView.getBlockState(otherPos);
 		// In this testmod we can't rely on injected interfaces - in normal mods the (FabricBlockState) cast will be unnecessary
 		BlockState originAppearance = ((FabricBlockState) originState).getAppearance(blockView, originPos, side, otherState, otherPos);
 
-		if (!originAppearance.isOf(Registration.PILLAR_BLOCK)) {
+		if (!originAppearance.is(Registration.PILLAR_BLOCK)) {
 			return false;
 		}
 
 		BlockState otherAppearance = ((FabricBlockState) otherState).getAppearance(blockView, otherPos, side, originState, originPos);
 
-		if (!otherAppearance.isOf(Registration.PILLAR_BLOCK)) {
+		if (!otherAppearance.is(Registration.PILLAR_BLOCK)) {
 			return false;
 		}
 
@@ -122,7 +120,7 @@ public class PillarBakedModel implements BakedModel {
 	}
 
 	@Override
-	public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, Random random) {
+	public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, RandomSource random) {
 		return Collections.emptyList();
 	}
 
@@ -132,32 +130,32 @@ public class PillarBakedModel implements BakedModel {
 	}
 
 	@Override
-	public boolean hasDepth() {
+	public boolean isGui3d() {
 		return false;
 	}
 
 	@Override
-	public boolean isSideLit() {
+	public boolean usesBlockLight() {
 		return true;
 	}
 
 	@Override
-	public boolean isBuiltin() {
+	public boolean isCustomRenderer() {
 		return false;
 	}
 
 	@Override
-	public Sprite getParticleSprite() {
+	public TextureAtlasSprite getParticleIcon() {
 		return sprites[0];
 	}
 
 	@Override
-	public ModelTransformation getTransformation() {
+	public ItemTransforms getTransforms() {
 		return ModelHelper.MODEL_TRANSFORM_BLOCK;
 	}
 
 	@Override
-	public ModelOverrideList getOverrides() {
-		return ModelOverrideList.EMPTY;
+	public ItemOverrides getOverrides() {
+		return ItemOverrides.EMPTY;
 	}
 }

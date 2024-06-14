@@ -17,10 +17,10 @@ allowing us to easily update it via git rebasing.
 Please make sure the `kotlin` [command-line compiler](https://kotlinlang.org/docs/command-line.html) is installed on
 your system, as it is necessary to run our setup scripts.
 
-After cloning the repository, **before importing the gradle project**, run `kotlin scripts/setup.main.kts`. This will
-initialize a git submodule for upstream Fabric API, which serves as an input for our remapper.
+After cloning the repository, **before importing the gradle project**, run `kotlinc -script scripts/setup.main.kts setup`.
+This will initialize a git submodule for upstream Fabric API, which serves as an input for our remapper.
 
-To sync the mapped sources with upstream, run `kotlin scripts/sync-upstream.main.kts`, which will automatically run
+To sync the mapped sources with upstream, run `kotlinc -script scripts/setup.main.kts sync`, which will automatically run
 the necessary gradle tasks and perform a few git operations. As updating is done on a per-commit basis, this may take
 several minutes to complete based on how far behind we are.
 If a mapped branch doesn't exist yet, an initial mapping commit will be created (using your configured committer

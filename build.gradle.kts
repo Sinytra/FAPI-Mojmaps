@@ -56,14 +56,6 @@ repositories {
         name = "Sinytra"
         url = uri("https://maven.su5ed.dev/releases")
     }
-    maven {
-        name = "Maven for PR #1076" // https://github.com/neoforged/NeoForge/pull/1076
-        url = uri("https://prmaven.neoforged.net/NeoForge/pr1076")
-        content {
-            includeModule("net.neoforged", "testframework")
-            includeModule("net.neoforged", "neoforge")
-        }
-    }
 }
 
 val ignoredProjects = listOf("fabric-api-bom", "fabric-api-catalog")

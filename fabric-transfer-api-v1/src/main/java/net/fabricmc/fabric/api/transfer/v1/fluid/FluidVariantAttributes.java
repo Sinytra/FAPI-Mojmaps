@@ -89,7 +89,7 @@ public final class FluidVariantAttributes {
 	public static SoundEvent getFillSound(FluidVariant variant) {
 		return getHandlerOrDefault(variant.getFluid()).getFillSound(variant)
 				.or(() -> variant.getFluid().getPickupSound())
-				.orElse(SoundEvents.ITEM_BUCKET_FILL);
+				.orElse(SoundEvents.BUCKET_FILL);
 	}
 
 	/**
@@ -97,7 +97,7 @@ public final class FluidVariantAttributes {
 	 * or the default (water) emptying sound otherwise.
 	 */
 	public static SoundEvent getEmptySound(FluidVariant variant) {
-		return getHandlerOrDefault(variant.getFluid()).getEmptySound(variant).orElse(SoundEvents.ITEM_BUCKET_EMPTY);
+		return getHandlerOrDefault(variant.getFluid()).getEmptySound(variant).orElse(SoundEvents.BUCKET_EMPTY);
 	}
 
 	/**
@@ -172,7 +172,7 @@ public final class FluidVariantAttributes {
 
 			@Override
 			public Optional<SoundEvent> getEmptySound(FluidVariant variant) {
-				return Optional.of(SoundEvents.ITEM_BUCKET_EMPTY);
+				return Optional.of(SoundEvents.BUCKET_EMPTY);
 			}
 		});
 		register(Fluids.LAVA, new FluidVariantAttributeHandler() {
@@ -187,12 +187,12 @@ public final class FluidVariantAttributes {
 
 			@Override
 			public Optional<SoundEvent> getFillSound(FluidVariant variant) {
-				return Optional.of(SoundEvents.ITEM_BUCKET_FILL_LAVA);
+				return Optional.of(SoundEvents.BUCKET_FILL_LAVA);
 			}
 
 			@Override
 			public Optional<SoundEvent> getEmptySound(FluidVariant variant) {
-				return Optional.of(SoundEvents.ITEM_BUCKET_EMPTY_LAVA);
+				return Optional.of(SoundEvents.BUCKET_EMPTY_LAVA);
 			}
 
 			@Override

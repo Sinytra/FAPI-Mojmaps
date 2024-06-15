@@ -63,7 +63,7 @@ public class CustomDamageTest implements ModInitializer {
 		FuelRegistry.INSTANCE.add(WEIRD_PICK, 200);
 		FabricBrewingRecipeRegistryBuilder.BUILD.register(builder -> builder.addMix(Potions.WATER, WEIRD_PICK, Potions.AWKWARD));
 		EnchantmentEvents.ALLOW_ENCHANTING.register(((enchantment, target, enchantingContext) -> {
-			if (target.is(Items.DIAMOND_PICKAXE) && enchantment.is(Enchantments.SHARPNESS) && EnchantmentHelper.hasTag(target, EnchantmentTags.MINING_EXCLUSIVE_SET)) {
+			if (target.is(Items.DIAMOND_PICKAXE) && enchantment.is(Enchantments.SHARPNESS) && EnchantmentHelper.hasTag(target, EnchantmentTags.MINING_EXCLUSIVE)) {
 				return TriState.TRUE;
 			}
 

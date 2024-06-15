@@ -79,7 +79,7 @@ public class FabricEntityTypeTest {
 
 	private static AttributeSupplier.Builder createAttributes() {
 		return Mob.createMobAttributes()
-				.add(Attributes.GENERIC_MAX_HEALTH, 10.0)
-				.add(Attributes.GENERIC_MOVEMENT_SPEED, 0.25);
+				.add(Attributes.MAX_HEALTH, 10.0)
+				.add(Attributes.MOVEMENT_SPEED, 0.25);
 	}
 }

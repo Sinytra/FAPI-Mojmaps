@@ -255,7 +255,7 @@ public class DataGeneratorTestEntrypoint implements DataGeneratorEntrypoint {
 			translationBuilder.add(SIMPLE_BLOCK, "Simple Block");
 			translationBuilder.add(ResourceLocation.fromNamespaceAndPath(MOD_ID, "identifier_test"), "Identifier Test");
 			translationBuilder.add(EntityType.ALLAY, "Allay");
-			translationBuilder.add(Attributes.GENERIC_ARMOR, "Generic Armor");
+			translationBuilder.add(Attributes.ARMOR, "Generic Armor");
 
 			try {
 				Optional<Path> path = dataOutput.getModContainer().findPath("assets/testmod/lang/en_us.base.json");
@@ -406,13 +406,13 @@ public class DataGeneratorTestEntrypoint implements DataGeneratorEntrypoint {
 
 	private static class TestBarterLootTableProvider extends SimpleFabricLootTableProvider {
 		private TestBarterLootTableProvider(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> registryLookup) {
-			super(output, registryLookup, LootContextParamSets.BARTER);
+			super(output, registryLookup, LootContextParamSets.PIGLIN_BARTER);
 		}
 
 		@Override
 		public void generate(BiConsumer<ResourceKey<LootTable>, LootTable.Builder> consumer) {
 			withConditions(consumer, ALWAYS_LOADED).accept(
-					BuiltInLootTables.PIGLIN_BARTERING_GAMEPLAY,
+					BuiltInLootTables.PIGLIN_BARTERING,
 					LootTable.lootTable().withPool(
 							LootPool.lootPool().setRolls(ConstantValue.exactly(1.0F)).add(LootItem.lootTableItem(SIMPLE_BLOCK))
 					)

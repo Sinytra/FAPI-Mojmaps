@@ -36,7 +36,7 @@ class SoundButton extends AbstractButton {
 
 	@Override
 	public void onPress() {
-		final SoundEvent event = BuiltInRegistries.SOUND_EVENT.getRandom(RANDOM).map(Holder::value).orElse(SoundEvents.ENTITY_GENERIC_EXPLODE.value());
+		final SoundEvent event = BuiltInRegistries.SOUND_EVENT.getRandom(RANDOM).map(Holder::value).orElse(SoundEvents.GENERIC_EXPLODE.value());
 		Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(event, 1.0F, 1.0F));
 	}
 

@@ -107,7 +107,7 @@ public class ComposterWrapper extends SnapshotParticipant<Float> {
 			// Mimic ComposterBlock#emptyComposter logic.
 			location.setBlockState(location.getBlockState().setValue(ComposterBlock.LEVEL, 0));
 			// Play the sound
-			location.world.playSound(null, location.pos, SoundEvents.BLOCK_COMPOSTER_EMPTY, SoundSource.BLOCKS, 1.0F, 1.0F);
+			location.world.playSound(null, location.pos, SoundEvents.COMPOSTER_EMPTY, SoundSource.BLOCKS, 1.0F, 1.0F);
 		} else if (increaseProbability > 0) {
 			BlockState state = location.getBlockState();
 			// Always increment on first insert (like vanilla).

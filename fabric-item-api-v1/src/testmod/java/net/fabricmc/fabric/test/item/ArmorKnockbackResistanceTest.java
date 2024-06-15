@@ -49,7 +49,7 @@ public class ArmorKnockbackResistanceTest implements ModInitializer {
 			map.put(ArmorItem.Type.BODY, 3);
 		}),
 			0,
-			SoundEvents.ITEM_ARMOR_EQUIP_LEATHER,
+			SoundEvents.ARMOR_EQUIP_LEATHER,
 				() -> Ingredient.of(Items.LEATHER),
 			List.of(new ArmorMaterial.Layer(ResourceLocation.fromNamespaceAndPath("fabric-item-api-v1-testmod", "wood"))),
 			0,

@@ -99,8 +99,8 @@ public final class FluidStorageUtil {
 					// Temporary workaround to use the correct sound for water bottles.
 					// TODO: Look into providing a proper item-aware fluid sound API.
 					if (resource.isOf(Fluids.WATER)) {
-						if (fill && handItem == Items.GLASS_BOTTLE) sound = SoundEvents.ITEM_BOTTLE_FILL;
-						if (!fill && handItem == Items.POTION) sound = SoundEvents.ITEM_BOTTLE_EMPTY;
+						if (fill && handItem == Items.GLASS_BOTTLE) sound = SoundEvents.BOTTLE_FILL;
+						if (!fill && handItem == Items.POTION) sound = SoundEvents.BOTTLE_EMPTY;
 					}
 
 					player.level().playSound(player, player.getX(), player.getEyeY(), player.getZ(), sound, SoundSource.PLAYERS, 1, 1);

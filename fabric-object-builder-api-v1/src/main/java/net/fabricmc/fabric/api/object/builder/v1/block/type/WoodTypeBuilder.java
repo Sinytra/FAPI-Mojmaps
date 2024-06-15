@@ -36,8 +36,8 @@ import net.minecraft.world.level.block.state.properties.WoodType;
 public final class WoodTypeBuilder {
 	private SoundType soundGroup = SoundType.WOOD;
 	private SoundType hangingSignSoundGroup = SoundType.HANGING_SIGN;
-	private SoundEvent fenceGateCloseSound = SoundEvents.BLOCK_FENCE_GATE_CLOSE;
-	private SoundEvent fenceGateOpenSound = SoundEvents.BLOCK_FENCE_GATE_OPEN;
+	private SoundEvent fenceGateCloseSound = SoundEvents.FENCE_GATE_CLOSE;
+	private SoundEvent fenceGateOpenSound = SoundEvents.FENCE_GATE_OPEN;
 
 	/**
 	 * Sets this wood type's sound group.
@@ -66,7 +66,7 @@ public final class WoodTypeBuilder {
 	/**
 	 * Sets this wood type's fence gate close sound.
 	 *
-	 * <p>Defaults to {@link SoundEvents#BLOCK_FENCE_GATE_CLOSE}.
+	 * <p>Defaults to {@link SoundEvents#FENCE_GATE_CLOSE}.
 	 *
 	 * @return this builder for chaining
 	 */
@@ -78,7 +78,7 @@ public final class WoodTypeBuilder {
 	/**
 	 * Sets this wood type's fence gate open sound.
 	 *
-	 * <p>Defaults to {@link SoundEvents#BLOCK_FENCE_GATE_OPEN}.
+	 * <p>Defaults to {@link SoundEvents#FENCE_GATE_OPEN}.
 	 *
 	 * @return this builder for chaining
 	 */

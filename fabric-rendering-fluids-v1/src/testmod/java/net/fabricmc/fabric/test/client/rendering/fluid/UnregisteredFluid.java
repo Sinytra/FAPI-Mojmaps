@@ -103,7 +103,7 @@ public abstract class UnregisteredFluid extends FlowingFluid {
 
 	@Override
 	public Optional<SoundEvent> getPickupSound() {
-		return Optional.of(SoundEvents.ITEM_BUCKET_FILL);
+		return Optional.of(SoundEvents.BUCKET_FILL);
 	}
 
 	public static class Flowing extends UnregisteredFluid {

@@ -92,7 +92,7 @@ val yarnMappings: Configuration by configurations.creating
 dependencies {
     minecraft(group = "com.mojang", name = "minecraft", version = versionMc)
     mappings("net.fabricmc:yarn:$versionYarn:v2")
-    yarnMappings("net.fabricmc:yarn:$versionYarn")
+    yarnMappings("net.fabricmc:yarn:$versionYarn:mergedv2")
 
     modImplementation("net.fabricmc:fabric-loader:$versionFabricLoader")
 
@@ -156,6 +156,7 @@ val downloadMojmaps by tasks.registering {
 }
 
 val createMappings by tasks.registering(GenerateMergedMappingsTask::class) {
+    group = "sinytra"
     dependsOn(downloadMojmaps)
     inputYarnMappings.set { yarnMappings.singleFile }
     inputMojangMappings.set { downloadMojmaps.get().extra["outputFile"] as File }
@@ -256,5 +257,8 @@ open class GenerateMergedMappingsTask : DefaultTask() {
 
         outputFile.get().asFile.parentFile.resolve("output.tsrg")
             .toPath().writeText(Tsrg2Writer.serialize(filtered), Charsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
+        
+        outputFile.get().asFile.parentFile.resolve("yarn.tsrg")
+            .toPath().writeText(Tsrg2Writer.serialize(officialToNamedTree), Charsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
     }
 }

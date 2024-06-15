@@ -351,7 +351,7 @@ fun showChangedFiles(git: Git, oldHead: ObjectId, head: ObjectId): List<DiffEntr
     }
 }
 
-fun updateToCommit(sGit: Git) {
+fun updateMappings(sGit: Git) {
     logger.info("UPDATING MAPPED SOURCES")
 
     // Checkout yarn branch commit
@@ -480,10 +480,10 @@ fun syncUpstreamTask() {
     }
 }
 
-fun updateToCommitTask() {
+fun updateMappingsTask() {
     Git.open(rootDir).use { git ->
         initSubmodule(git).use { sGit ->
-            updateToCommit(sGit)
+            updateMappings(sGit)
         }
     }
 }
@@ -495,6 +495,6 @@ if (args.isEmpty()) {
     when (args[0]) {
         "setup" -> setupTask()
         "sync" -> syncUpstreamTask()
-        "update" -> updateToCommitTask()
+        "update" -> updateMappingsTask()
     }
 }

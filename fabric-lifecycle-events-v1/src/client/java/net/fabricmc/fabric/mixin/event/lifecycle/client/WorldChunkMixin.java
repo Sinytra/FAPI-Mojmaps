@@ -43,7 +43,7 @@ abstract class WorldChunkMixin {
 	public abstract Level getLevel();
 
 	@Inject(method = "setBlockEntity", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/entity/BlockEntity;setRemoved()V"))
-	private void onLoadBlockEntity(BlockEntity blockEntity, CallbackInfo ci, @Local(ordinal = 1) BlockEntity removedBlockEntity) {
+	private void onLoadBlockEntity(BlockEntity blockEntity, CallbackInfo ci) {
 		if (this.getLevel() instanceof ServerLevel) {
 			ServerBlockEntityEvents.BLOCK_ENTITY_LOAD.invoker().onLoad(blockEntity, (ServerLevel) this.getLevel());
 		} else if (this.getLevel() instanceof ClientLevel) {

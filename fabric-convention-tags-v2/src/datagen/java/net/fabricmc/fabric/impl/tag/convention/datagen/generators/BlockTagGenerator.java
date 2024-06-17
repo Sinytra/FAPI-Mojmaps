@@ -222,6 +222,23 @@ public final class BlockTagGenerator extends FabricTagProvider.BlockTagProvider 
 	}
 
 	private void generateGlazeTerracottaTags() {
+		tag(ConventionalBlockTags.GLAZED_TERRACOTTAS)
+				.add(Blocks.WHITE_GLAZED_TERRACOTTA)
+				.add(Blocks.ORANGE_GLAZED_TERRACOTTA)
+				.add(Blocks.MAGENTA_GLAZED_TERRACOTTA)
+				.add(Blocks.LIGHT_BLUE_GLAZED_TERRACOTTA)
+				.add(Blocks.YELLOW_GLAZED_TERRACOTTA)
+				.add(Blocks.LIME_GLAZED_TERRACOTTA)
+				.add(Blocks.PINK_GLAZED_TERRACOTTA)
+				.add(Blocks.GRAY_GLAZED_TERRACOTTA)
+				.add(Blocks.LIGHT_GRAY_GLAZED_TERRACOTTA)
+				.add(Blocks.CYAN_GLAZED_TERRACOTTA)
+				.add(Blocks.PURPLE_GLAZED_TERRACOTTA)
+				.add(Blocks.BLUE_GLAZED_TERRACOTTA)
+				.add(Blocks.BROWN_GLAZED_TERRACOTTA)
+				.add(Blocks.GREEN_GLAZED_TERRACOTTA)
+				.add(Blocks.BLACK_GLAZED_TERRACOTTA)
+				.add(Blocks.RED_GLAZED_TERRACOTTA);
 		tag(ConventionalBlockTags.GLAZED_TERRACOTTA)
 				.add(Blocks.WHITE_GLAZED_TERRACOTTA)
 				.add(Blocks.ORANGE_GLAZED_TERRACOTTA)
@@ -242,6 +259,23 @@ public final class BlockTagGenerator extends FabricTagProvider.BlockTagProvider 
 	}
 
 	private void generateConcreteTags() {
+		tag(ConventionalBlockTags.CONCRETES)
+				.add(Blocks.WHITE_CONCRETE)
+				.add(Blocks.ORANGE_CONCRETE)
+				.add(Blocks.MAGENTA_CONCRETE)
+				.add(Blocks.LIGHT_BLUE_CONCRETE)
+				.add(Blocks.YELLOW_CONCRETE)
+				.add(Blocks.LIME_CONCRETE)
+				.add(Blocks.PINK_CONCRETE)
+				.add(Blocks.GRAY_CONCRETE)
+				.add(Blocks.LIGHT_GRAY_CONCRETE)
+				.add(Blocks.CYAN_CONCRETE)
+				.add(Blocks.PURPLE_CONCRETE)
+				.add(Blocks.BLUE_CONCRETE)
+				.add(Blocks.BROWN_CONCRETE)
+				.add(Blocks.GREEN_CONCRETE)
+				.add(Blocks.BLACK_CONCRETE)
+				.add(Blocks.RED_CONCRETE);
 		tag(ConventionalBlockTags.CONCRETE)
 				.add(Blocks.WHITE_CONCRETE)
 				.add(Blocks.ORANGE_CONCRETE)
@@ -480,5 +514,7 @@ public final class BlockTagGenerator extends FabricTagProvider.BlockTagProvider 
 		tag(ConventionalBlockTags.UNCOLORED_SANDSTONE_BLOCKS).addOptionalTag(ResourceLocation.fromNamespaceAndPath(TagUtil.C_TAG_NAMESPACE, "uncolored_sandstone_blocks"));
 		tag(ConventionalBlockTags.UNCOLORED_SANDSTONE_SLABS).addOptionalTag(ResourceLocation.fromNamespaceAndPath(TagUtil.C_TAG_NAMESPACE, "uncolored_sandstone_slabs"));
 		tag(ConventionalBlockTags.UNCOLORED_SANDSTONE_STAIRS).addOptionalTag(ResourceLocation.fromNamespaceAndPath(TagUtil.C_TAG_NAMESPACE, "uncolored_sandstone_stairs"));
+		tag(ConventionalBlockTags.GLAZED_TERRACOTTAS).addOptionalTag(ConventionalBlockTags.GLAZED_TERRACOTTA);
+		tag(ConventionalBlockTags.CONCRETES).addOptionalTag(ConventionalBlockTags.CONCRETE);
 	}
 }

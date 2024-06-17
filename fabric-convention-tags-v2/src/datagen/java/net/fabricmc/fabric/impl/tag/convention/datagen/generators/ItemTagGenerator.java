@@ -58,7 +58,6 @@ public final class ItemTagGenerator extends FabricTagProvider.ItemTagProvider {
 		copy(ConventionalBlockTags.WOODEN_CHESTS, ConventionalItemTags.WOODEN_CHESTS);
 		copy(ConventionalBlockTags.GLASS_BLOCKS, ConventionalItemTags.GLASS_BLOCKS);
 		copy(ConventionalBlockTags.GLASS_PANES, ConventionalItemTags.GLASS_PANES);
-		copy(ConventionalBlockTags.GLAZED_TERRACOTTA, ConventionalItemTags.GLAZED_TERRACOTTA);
 		tag(ConventionalItemTags.SHULKER_BOXES)
 				.add(Items.SHULKER_BOX)
 				.add(Items.WHITE_SHULKER_BOX)
@@ -77,7 +76,27 @@ public final class ItemTagGenerator extends FabricTagProvider.ItemTagProvider {
 				.add(Items.GREEN_SHULKER_BOX)
 				.add(Items.RED_SHULKER_BOX)
 				.add(Items.BLACK_SHULKER_BOX);
+		copy(ConventionalBlockTags.GLAZED_TERRACOTTAS, ConventionalItemTags.GLAZED_TERRACOTTAS);
+		copy(ConventionalBlockTags.GLAZED_TERRACOTTA, ConventionalItemTags.GLAZED_TERRACOTTA);
+		copy(ConventionalBlockTags.CONCRETES, ConventionalItemTags.CONCRETES);
 		copy(ConventionalBlockTags.CONCRETE, ConventionalItemTags.CONCRETE);
+		tag(ConventionalItemTags.CONCRETE_POWDERS)
+				.add(Items.WHITE_CONCRETE_POWDER)
+				.add(Items.ORANGE_CONCRETE_POWDER)
+				.add(Items.MAGENTA_CONCRETE_POWDER)
+				.add(Items.LIGHT_BLUE_CONCRETE_POWDER)
+				.add(Items.YELLOW_CONCRETE_POWDER)
+				.add(Items.LIME_CONCRETE_POWDER)
+				.add(Items.PINK_CONCRETE_POWDER)
+				.add(Items.GRAY_CONCRETE_POWDER)
+				.add(Items.LIGHT_GRAY_CONCRETE_POWDER)
+				.add(Items.CYAN_CONCRETE_POWDER)
+				.add(Items.PURPLE_CONCRETE_POWDER)
+				.add(Items.BLUE_CONCRETE_POWDER)
+				.add(Items.BROWN_CONCRETE_POWDER)
+				.add(Items.GREEN_CONCRETE_POWDER)
+				.add(Items.RED_CONCRETE_POWDER)
+				.add(Items.BLACK_CONCRETE_POWDER);
 		tag(ConventionalItemTags.CONCRETE_POWDER)
 				.add(Items.WHITE_CONCRETE_POWDER)
 				.add(Items.ORANGE_CONCRETE_POWDER)
@@ -731,5 +750,6 @@ public final class ItemTagGenerator extends FabricTagProvider.ItemTagProvider {
 		tag(ConventionalItemTags.BOW_TOOLS).addOptionalTag(ResourceLocation.fromNamespaceAndPath(TagUtil.C_TAG_NAMESPACE, "bows"));
 		tag(ConventionalItemTags.SHIELD_TOOLS).addOptionalTag(ResourceLocation.fromNamespaceAndPath(TagUtil.C_TAG_NAMESPACE, "shields"));
 		tag(ConventionalItemTags.STRINGS).addOptionalTag(ResourceLocation.fromNamespaceAndPath(TagUtil.C_TAG_NAMESPACE, "string"));
+		tag(ConventionalItemTags.CONCRETE_POWDERS).addOptionalTag(ConventionalItemTags.CONCRETE_POWDER);
 	}
 }

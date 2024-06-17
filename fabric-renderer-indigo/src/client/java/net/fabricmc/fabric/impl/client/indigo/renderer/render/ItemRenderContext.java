@@ -18,6 +18,7 @@ package net.fabricmc.fabric.impl.client.indigo.renderer.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.MatrixUtil;
 import java.util.function.Supplier;
 
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +46,7 @@ import net.fabricmc.fabric.impl.client.indigo.renderer.helper.ColorHelper;
 import net.fabricmc.fabric.impl.client.indigo.renderer.mesh.EncodingFormat;
 import net.fabricmc.fabric.impl.client.indigo.renderer.mesh.MutableQuadViewImpl;
 import net.fabricmc.fabric.impl.renderer.VanillaModelEncoder;
+import net.fabricmc.fabric.mixin.client.indigo.renderer.ItemRendererAccessor;
 
 /**
  * The render context used for item rendering.
@@ -83,7 +85,9 @@ public class ItemRenderContext extends AbstractRenderContext {
 	private boolean isDefaultTranslucent;
 	private boolean isTranslucentDirect;
 	private boolean isDefaultGlint;
+	private boolean isGlintDynamicDisplay;
 
+	private PoseStack.Pose dynamicDisplayGlintEntry;
 	private VertexConsumer translucentVertexConsumer;
 	private VertexConsumer cutoutVertexConsumer;
 	private VertexConsumer translucentGlintVertexConsumer;
@@ -132,6 +136,7 @@ public class ItemRenderContext extends AbstractRenderContext {
 		this.matrixStack = null;
 		this.vertexConsumerProvider = null;
 
+		dynamicDisplayGlintEntry = null;
 		translucentVertexConsumer = null;
 		cutoutVertexConsumer = null;
 		translucentGlintVertexConsumer = null;
@@ -158,6 +163,7 @@ public class ItemRenderContext extends AbstractRenderContext {
 		}
 
 		isDefaultGlint = itemStack.hasFoil();
+		isGlintDynamicDisplay = ItemRendererAccessor.fabric_callUsesDynamicDisplay(itemStack);
 	}
 
 	private void renderQuad(MutableQuadViewImpl quad) {
@@ -177,7 +183,7 @@ public class ItemRenderContext extends AbstractRenderContext {
 
 	private void colorizeQuad(MutableQuadViewImpl quad, int colorIndex) {
 		if (colorIndex != -1) {
-			final int itemColor = 0xFF000000 | colorMap.getColor(itemStack, colorIndex);
+			final int itemColor = colorMap.getColor(itemStack, colorIndex);
 
 			for (int i = 0; i < 4; i++) {
 				quad.color(i, ColorHelper.multiplyColor(itemColor, quad.color(i)));
@@ -252,6 +258,10 @@ public class ItemRenderContext extends AbstractRenderContext {
 	}
 
 	private VertexConsumer createTranslucentVertexConsumer(boolean glint) {
+		if (glint && isGlintDynamicDisplay) {
+			return createDynamicDisplayGlintVertexConsumer(Minecraft.useShaderTransparency() && !isTranslucentDirect ? Sheets.translucentItemSheet() : Sheets.translucentCullBlockSheet());
+		}
+
 		if (isTranslucentDirect) {
 			return ItemRenderer.getFoilBufferDirect(vertexConsumerProvider, Sheets.translucentCullBlockSheet(), true, glint);
 		} else if (Minecraft.useShaderTransparency()) {
@@ -262,7 +272,25 @@ public class ItemRenderContext extends AbstractRenderContext {
 	}
 
 	private VertexConsumer createCutoutVertexConsumer(boolean glint) {
+		if (glint && isGlintDynamicDisplay) {
+			return createDynamicDisplayGlintVertexConsumer(Sheets.cutoutBlockSheet());
+		}
+
 		return ItemRenderer.getFoilBufferDirect(vertexConsumerProvider, Sheets.cutoutBlockSheet(), true, glint);
+	}
+
+	private VertexConsumer createDynamicDisplayGlintVertexConsumer(RenderType layer) {
+		if (dynamicDisplayGlintEntry == null) {
+			dynamicDisplayGlintEntry = matrixStack.last().copy();
+
+			if (transformMode == ItemDisplayContext.GUI) {
+				MatrixUtil.mulComponentWise(dynamicDisplayGlintEntry.pose(), 0.5F);
+			} else if (transformMode.firstPerson()) {
+				MatrixUtil.mulComponentWise(dynamicDisplayGlintEntry.pose(), 0.75F);
+			}
+		}
+
+		return ItemRenderer.getCompassFoilBuffer(vertexConsumerProvider, layer, dynamicDisplayGlintEntry);
 	}
 
 	private class BakedModelConsumerImpl implements BakedModelConsumer {

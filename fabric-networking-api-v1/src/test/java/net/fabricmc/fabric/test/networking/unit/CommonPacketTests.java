@@ -39,6 +39,16 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientConfigurationPacketListenerImpl;
+import net.minecraft.network.ConnectionProtocol;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.network.ServerConfigurationPacketListenerImpl;
 import net.fabricmc.fabric.api.client.networking.v1.ClientConfigurationNetworking;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
@@ -54,14 +64,6 @@ import net.fabricmc.fabric.impl.networking.client.ClientConfigurationNetworkAddo
 import net.fabricmc.fabric.impl.networking.client.ClientNetworkingImpl;
 import net.fabricmc.fabric.impl.networking.server.ServerConfigurationNetworkAddon;
 import net.fabricmc.fabric.impl.networking.server.ServerNetworkingImpl;
-import net.minecraft.client.multiplayer.ClientConfigurationPacketListenerImpl;
-import net.minecraft.network.ConnectionProtocol;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.network.ServerConfigurationPacketListenerImpl;
 
 public class CommonPacketTests {
 	private static final CustomPacketPayload.TypeAndCodec<FriendlyByteBuf, CommonVersionPayload> VERSION_PAYLOAD_TYPE = new CustomPacketPayload.TypeAndCodec<>(CommonVersionPayload.ID, CommonVersionPayload.CODEC);
@@ -128,8 +130,23 @@ public class CommonPacketTests {
 
 		ClientNetworkingImpl.setClientConfigurationAddon(clientAddon);
 
-		clientContext = () -> packetSender;
+		clientContext = new ClientConfigurationNetworking.Context() {
+			@Override
+			public Minecraft client() {
+				return null;
+			}
+
+			@Override
+			public PacketSender responseSender() {
+				return packetSender;
+			}
+		};
 		serverContext = new ServerConfigurationNetworking.Context() {
+			@Override
+			public MinecraftServer server() {
+				return null;
+			}
+
 			@Override
 			public ServerConfigurationPacketListenerImpl networkHandler() {
 				return serverNetworkHandler;

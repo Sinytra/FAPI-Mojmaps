@@ -21,13 +21,14 @@ import java.util.Set;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
-import net.fabricmc.fabric.impl.networking.server.ServerNetworkingImpl;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.common.ClientCommonPacketListener;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.fabricmc.fabric.impl.networking.server.ServerNetworkingImpl;
 
 /**
  * Offers access to play stage server-side networking functionalities.
@@ -306,13 +307,12 @@ public final class ServerPlayNetworking {
 		 * <p>An example usage of this is to create an explosion where the player is looking:
 		 * <pre>{@code
 		 * // use PayloadTypeRegistry for registering the payload
-		 * ServerPlayNetworking.registerReceiver(BoomPayload.ID, (payload, player, responseSender) -> {
-		 * 	ModPacketHandler.createExplosion(player, payload.fire());
+		 * ServerPlayNetworking.registerReceiver(BoomPayload.ID, (payload, context) -> {
+		 * 	ModPacketHandler.createExplosion(context.player(), payload.fire());
 		 * });
 		 * }</pre>
 		 *
-		 * <p>The server and the network handler can be accessed via {@link ServerPlayer#server}
-		 * and {@link ServerPlayer#connection}, respectively.
+		 * <p>The network handler can be accessed via {@link ServerPlayer#connection}.
 		 *
 		 * @param payload the packet payload
 		 * @param context the play networking context
@@ -323,6 +323,11 @@ public final class ServerPlayNetworking {
 
 	@ApiStatus.NonExtendable
 	public interface Context {
+		/**
+		 * @return The MinecraftServer instance
+		 */
+		MinecraftServer server();
+
 		/**
 		 * @return The player that received the packet
 		 */

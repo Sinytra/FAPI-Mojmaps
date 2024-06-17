@@ -26,7 +26,6 @@ import net.fabricmc.fabric.impl.registry.sync.RegistrySyncManager;
 import net.fabricmc.fabric.impl.registry.sync.RemapException;
 import net.fabricmc.fabric.impl.registry.sync.SyncCompletePayload;
 import net.fabricmc.fabric.impl.registry.sync.packet.RegistryPacketHandler;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
 public class FabricRegistryClientInit implements ClientModInitializer {
@@ -39,13 +38,11 @@ public class FabricRegistryClientInit implements ClientModInitializer {
 
 	private <T extends RegistryPacketHandler.RegistrySyncPayload> void registerSyncPacketReceiver(RegistryPacketHandler<T> packetHandler) {
 		ClientConfigurationNetworking.registerGlobalReceiver(packetHandler.getPacketId(), (payload, context) -> {
-			Minecraft client = Minecraft.getInstance();
-
-			RegistrySyncManager.receivePacket(client, packetHandler, payload, RegistrySyncManager.DEBUG || !client.isLocalServer())
+			RegistrySyncManager.receivePacket(context.client(), packetHandler, payload, RegistrySyncManager.DEBUG || !context.client().isLocalServer())
 					.whenComplete((complete, throwable) -> {
 						if (throwable != null) {
 							LOGGER.error("Registry remapping failed!", throwable);
-							client.execute(() -> context.responseSender().disconnect(getText(throwable)));
+							context.client().execute(() -> context.responseSender().disconnect(getText(throwable)));
 							return;
 						}
 

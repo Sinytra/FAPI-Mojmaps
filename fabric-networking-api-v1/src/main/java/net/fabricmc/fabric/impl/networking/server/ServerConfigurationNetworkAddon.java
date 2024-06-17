@@ -47,7 +47,7 @@ public final class ServerConfigurationNetworkAddon extends AbstractChanneledNetw
 		super(ServerNetworkingImpl.CONFIGURATION, ((ServerCommonNetworkHandlerAccessor) handler).getConnection(), "ServerConfigurationNetworkAddon for " + handler.getOwner().getName());
 		this.handler = handler;
 		this.server = server;
-		this.context = new ContextImpl(handler, this);
+		this.context = new ContextImpl(server, handler, this);
 
 		// Must register pending channels via lateinit
 		this.registerPendingChannels((ChannelInfoHolder) this.connection, ConnectionProtocol.CONFIGURATION);
@@ -178,8 +178,9 @@ public final class ServerConfigurationNetworkAddon extends AbstractChanneledNetw
 		return (ChannelInfoHolder) ((ServerCommonNetworkHandlerAccessor) handler).getConnection();
 	}
 
-	private record ContextImpl(ServerConfigurationPacketListenerImpl networkHandler, PacketSender responseSender) implements ServerConfigurationNetworking.Context {
+	private record ContextImpl(MinecraftServer server, ServerConfigurationPacketListenerImpl networkHandler, PacketSender responseSender) implements ServerConfigurationNetworking.Context {
 		private ContextImpl {
+			Objects.requireNonNull(server, "server");
 			Objects.requireNonNull(networkHandler, "networkHandler");
 			Objects.requireNonNull(responseSender, "responseSender");
 		}

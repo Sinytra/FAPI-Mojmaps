@@ -46,7 +46,7 @@ public final class ServerPlayNetworkAddon extends AbstractChanneledNetworkAddon<
 		super(ServerNetworkingImpl.PLAY, connection, "ServerPlayNetworkAddon for " + handler.player.getDisplayName());
 		this.handler = handler;
 		this.server = server;
-		this.context = new ContextImpl(handler, this);
+		this.context = new ContextImpl(server, handler, this);
 
 		// Must register pending channels via lateinit
 		this.registerPendingChannels((ChannelInfoHolder) this.connection, ConnectionProtocol.PLAY);
@@ -127,8 +127,9 @@ public final class ServerPlayNetworkAddon extends AbstractChanneledNetworkAddon<
 		return NetworkingImpl.isReservedCommonChannel(channelName);
 	}
 
-	private record ContextImpl(ServerGamePacketListenerImpl handler, PacketSender responseSender) implements ServerPlayNetworking.Context {
+	private record ContextImpl(MinecraftServer server, ServerGamePacketListenerImpl handler, PacketSender responseSender) implements ServerPlayNetworking.Context {
 		private ContextImpl {
+			Objects.requireNonNull(server, "server");
 			Objects.requireNonNull(handler, "handler");
 			Objects.requireNonNull(responseSender, "responseSender");
 		}

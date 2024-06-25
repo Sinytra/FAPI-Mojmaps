@@ -86,7 +86,7 @@ public class ComponentsIngredient implements CustomIngredient {
 		stacks.replaceAll(stack -> {
 			ItemStack copy = stack.copy();
 
-			stack.applyComponentsAndValidate(components);
+			copy.applyComponentsAndValidate(components);
 
 			return copy;
 		});

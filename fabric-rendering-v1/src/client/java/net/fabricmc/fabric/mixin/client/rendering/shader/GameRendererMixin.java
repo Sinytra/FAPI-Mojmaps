@@ -20,13 +20,12 @@ import java.io.IOException;
 import java.util.List;
 import java.util.function.Consumer;
 
+import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.datafixers.util.Pair;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import net.fabricmc.fabric.api.client.rendering.v1.CoreShaderRegistrationCallback;
 import net.fabricmc.fabric.impl.client.rendering.FabricShaderProgram;
 import net.minecraft.client.renderer.GameRenderer;
@@ -40,11 +39,9 @@ import net.minecraft.server.packs.resources.ResourceProvider;
 abstract class GameRendererMixin {
 	@Inject(
 			method = "reloadShaders",
-			at = @At(value = "INVOKE", target = "Ljava/util/List;add(Ljava/lang/Object;)Z", remap = false, shift = At.Shift.AFTER),
-			slice = @Slice(from = @At(value = "NEW", target = "net/minecraft/client/renderer/ShaderInstance", ordinal = 0)),
-			locals = LocalCapture.CAPTURE_FAILHARD
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GameRenderer;loadBlurEffect(Lnet/minecraft/server/packs/resources/ResourceProvider;)V")
 	)
-	private void registerShaders(ResourceProvider factory, CallbackInfo info, List<?> shaderStages, List<Pair<ShaderInstance, Consumer<ShaderInstance>>> programs) throws IOException {
+	private void registerShaders(ResourceProvider factory, CallbackInfo info, @Local(ordinal = 0) List<?> shaderStages, @Local(ordinal = 1) List<Pair<ShaderInstance, Consumer<ShaderInstance>>> programs) throws IOException {
 		CoreShaderRegistrationCallback.RegistrationContext context = (id, vertexFormat, loadCallback) -> {
 			ShaderInstance program = new FabricShaderProgram(factory, id, vertexFormat);
 			programs.add(Pair.of(program, loadCallback));

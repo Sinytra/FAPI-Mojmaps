@@ -18,7 +18,9 @@ package net.fabricmc.fabric.api.renderer.v1.mesh;
 
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2f;
+import org.joml.Vector2fc;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -49,6 +51,12 @@ public interface QuadEmitter extends MutableQuadView {
 	}
 
 	@Override
+	default QuadEmitter pos(int vertexIndex, Vector3fc pos) {
+		MutableQuadView.super.pos(vertexIndex, pos);
+		return this;
+	}
+
+	@Override
 	QuadEmitter color(int vertexIndex, int color);
 
 	@Override
@@ -62,6 +70,12 @@ public interface QuadEmitter extends MutableQuadView {
 
 	@Override
 	default QuadEmitter uv(int vertexIndex, Vector2f uv) {
+		MutableQuadView.super.uv(vertexIndex, uv);
+		return this;
+	}
+
+	@Override
+	default QuadEmitter uv(int vertexIndex, Vector2fc uv) {
 		MutableQuadView.super.uv(vertexIndex, uv);
 		return this;
 	}
@@ -91,6 +105,12 @@ public interface QuadEmitter extends MutableQuadView {
 
 	@Override
 	default QuadEmitter normal(int vertexIndex, Vector3f normal) {
+		MutableQuadView.super.normal(vertexIndex, normal);
+		return this;
+	}
+
+	@Override
+	default QuadEmitter normal(int vertexIndex, Vector3fc normal) {
 		MutableQuadView.super.normal(vertexIndex, normal);
 		return this;
 	}

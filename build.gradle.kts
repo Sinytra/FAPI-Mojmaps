@@ -26,7 +26,6 @@ plugins {
 }
 
 val versionMc: String by project
-val versionForge: String by project
 val versionYarn: String by project
 val versionFabricLoader: String by project
 

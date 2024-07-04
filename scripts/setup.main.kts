@@ -1,4 +1,4 @@
-@file:DependsOn("org.eclipse.jgit:org.eclipse.jgit:6.9.0.202403050737-r", "com.google.code.gson:gson:2.10.1")
+@file:DependsOn("org.eclipse.jgit:org.eclipse.jgit:6.9.0.202403050737-r", "com.google.code.gson:gson:2.10.1", "com.google.guava:guava:33.2.0-jre")
 
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.Gson
@@ -19,6 +19,7 @@ import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.transport.RefSpec
 import org.eclipse.jgit.transport.URIish
 import org.eclipse.jgit.treewalk.CanonicalTreeParser
+import com.google.common.base.CaseFormat
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -153,9 +154,11 @@ fun update(sGit: Git): Boolean {
             logger.info("NO UPDATES FOUND")
             return false
         }
-        if (needsRemap(sGit)) {
-            updateToCommit(sGit, nextCommit)
+        val remappableProjects = getRemapNeededProjectsNames(sGit, currentCommit, nextCommit)
+        if (remappableProjects != null) {
+            updateToCommit(sGit, nextCommit, remappableProjects)
         } else {
+            logger.info("Skipping remap for this commit")
             simpleUpdate(sGit, nextCommit)
         }
         return true
@@ -205,7 +208,7 @@ fun setupMappedBranch(sGit: Git) {
     logger.info("=== DONE SETTING UP MAPPED BRANCH ===")
 }
 
-fun updateToCommit(sGit: Git, commit: RevCommit) {
+fun updateToCommit(sGit: Git, commit: RevCommit, remappableProjects: List<String>) {
     logger.info("UPDATING TO ${commit.shortName()}")
 
     // Checkout yarn branch commit
@@ -217,7 +220,14 @@ fun updateToCommit(sGit: Git, commit: RevCommit) {
     // Remap sources
     logger.info("Remapping yarn sources using Gradle")
     if (mappedSourcesDir.exists()) mappedSourcesDir.deleteRecursively()
-    runCommand("gradlew.bat", "remapUpstreamSources")
+    if (remappableProjects.isEmpty()) {
+        logger.info("- Remapping all projects")
+        runCommand("gradlew.bat", "remapUpstreamSources")
+    } else {
+        logger.info("- Remapping ${remappableProjects.size} projects")
+        val tasks = remappableProjects.map { CaseFormat.LOWER_HYPHEN.to(CaseFormat.UPPER_CAMEL, it) }.map { "remap${it}UpstreamSources" }
+        runCommand(*(arrayOf("gradlew.bat") + tasks))
+    }
 
     // Checkout mojmap branch
     logger.info("Checking out branch $tempMappedBranch")
@@ -289,6 +299,7 @@ fun finishUpdate(sGit: Git, commit: RevCommit) {
         .setUpstream(commit)
         .call()
     sGit.push()
+        .setRemote(localRemote)
         .setRefSpecs(RefSpec("$tempLocalBranch:$localBranch"))
         .call()
 
@@ -336,6 +347,18 @@ fun findNextCommit(git: Git, currentCommit: RevCommit, branchHead: ObjectId): Re
 fun needsRemap(git: Git): Boolean {
     return showChangedFiles(git, git.repository.resolve("HEAD^^{tree}"), git.repository.resolve("HEAD^{tree}"))
         .any { f -> fileChangeFilter.any(f.newPath::endsWith) }
+}
+
+/**
+ * @return `null` if remapping is unnecessary, empty list when all projects require remapping, non-empty list when only certain projects need to be remapped
+ */
+fun getRemapNeededProjectsNames(git: Git, oldCommit: RevCommit, newCommit: RevCommit): List<String>? {
+    val changes = showChangedFiles(git, oldCommit.tree, newCommit.tree)
+        .filter { f -> fileChangeFilter.any(f.newPath::endsWith) }
+        .map { f -> f.newPath.split("/")[0] }
+        .toSet()
+        .sorted()
+    return if (changes.isEmpty()) null else if (changes.all { it.startsWith("fabric-") }) changes else emptyList()
 }
 
 fun showChangedFiles(git: Git, oldHead: ObjectId, head: ObjectId): List<DiffEntry> {
@@ -446,6 +469,7 @@ fun syncUpstreamTask() {
         initSubmodule(git).use { sGit ->
             // Ensure we're up to date
             git.fetch().setRemote(upstreamRemote).call()
+            sGit.fetch().setRemote(upstreamRemote).call()
     
             if (!sGit.branchExists(tempMappedBranch)) {
                 if (git.branchExists(originMappedBranch, true)) {
@@ -470,11 +494,11 @@ fun syncUpstreamTask() {
                     setupMappedBranch(sGit)
                 }
             }
-            
+
             sGit.checkout()
                 .setName(tempLocalBranch)
                 .call()
-    
+
             update(sGit)
         }
     }

@@ -41,7 +41,7 @@ public final class FabricModelPredicateProviderRegistry {
 	 * @param provider the provider
 	 */
 	public static void register(ResourceLocation id, ClampedItemPropertyFunction provider) {
-		ModelPredicateProviderRegistryAccessor.callRegister(id, provider);
+		ModelPredicateProviderRegistryAccessor.callRegisterGeneric(id, provider);
 	}
 
 	/**

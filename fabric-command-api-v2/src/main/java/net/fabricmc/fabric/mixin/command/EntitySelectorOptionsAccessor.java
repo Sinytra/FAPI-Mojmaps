@@ -26,6 +26,6 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 @Mixin(EntitySelectorOptions.class)
 public interface EntitySelectorOptionsAccessor {
 	@Invoker
-	static void callPutOption(String id, EntitySelectorOptions.Modifier handler, Predicate<EntitySelectorParser> condition, Component description) {
+	static void callRegister(String id, EntitySelectorOptions.Modifier handler, Predicate<EntitySelectorParser> condition, Component description) {
 	}
 }

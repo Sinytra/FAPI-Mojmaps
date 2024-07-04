@@ -32,7 +32,7 @@ public final class EnumRuleCommand {
 	public static <E extends Enum<E>> void register(LiteralArgumentBuilder<CommandSourceStack> literalArgumentBuilder, GameRules.Key<EnumRule<E>> key, EnumRuleType<E> type) {
 		literalArgumentBuilder.then(literal(key.getId()).executes(context -> {
 			// We can use the vanilla query method
-			return GameRuleCommandAccessor.invokeExecuteQuery(context.getSource(), key);
+			return GameRuleCommandAccessor.invokeQueryRule(context.getSource(), key);
 		}));
 
 		// The LiteralRuleType handles the executeSet

@@ -62,7 +62,7 @@ public final class EntitySelectorOptionRegistry {
 	 * @param canUse the predicate that checks whether the option is syntactically valid
 	 */
 	public static void register(ResourceLocation id, Component description, EntitySelectorOptions.Modifier handler, Predicate<EntitySelectorParser> canUse) {
-		EntitySelectorOptionsAccessor.callPutOption(id.toDebugFileName(), handler, canUse, description);
+		EntitySelectorOptionsAccessor.callRegister(id.toDebugFileName(), handler, canUse, description);
 	}
 
 	/**

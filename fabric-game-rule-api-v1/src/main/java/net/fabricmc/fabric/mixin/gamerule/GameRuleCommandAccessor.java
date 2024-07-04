@@ -26,12 +26,12 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 @Mixin(GameRuleCommand.class)
 public interface GameRuleCommandAccessor {
 	@Invoker
-	static <T extends GameRules.Value<T>> int invokeExecuteSet(CommandContext<CommandSourceStack> commandContext, GameRules.Key<T> ruleKey) {
+	static <T extends GameRules.Value<T>> int invokeSetRule(CommandContext<CommandSourceStack> commandContext, GameRules.Key<T> ruleKey) {
 		throw new AssertionError("This shouldn't happen!");
 	}
 
 	@Invoker
-	static <T extends GameRules.Value<T>> int invokeExecuteQuery(CommandSourceStack serverCommandSource, GameRules.Key<T> ruleKey) {
+	static <T extends GameRules.Value<T>> int invokeQueryRule(CommandSourceStack serverCommandSource, GameRules.Key<T> ruleKey) {
 		throw new AssertionError("This shouldn't happen!");
 	}
 }

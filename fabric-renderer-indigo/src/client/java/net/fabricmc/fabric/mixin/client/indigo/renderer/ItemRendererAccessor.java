@@ -23,7 +23,7 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(ItemRenderer.class)
 public interface ItemRendererAccessor {
-	@Invoker("usesDynamicDisplay")
+	@Invoker("hasAnimatedTexture")
 	static boolean fabric_callUsesDynamicDisplay(ItemStack stack) {
 		throw new AssertionError();
 	}

@@ -25,7 +25,7 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 @Mixin(ItemProperties.class)
 public interface ModelPredicateProviderRegistryAccessor {
 	@Invoker
-	static ClampedItemPropertyFunction callRegister(ResourceLocation id, ClampedItemPropertyFunction provider) {
+	static ClampedItemPropertyFunction callRegisterGeneric(ResourceLocation id, ClampedItemPropertyFunction provider) {
 		throw new AssertionError("mixin dummy");
 	}
 }

@@ -183,6 +183,8 @@ public final class BiomeTagGenerator extends FabricTagProvider<Biome> {
 				.add(Biomes.BAMBOO_JUNGLE)
 				.add(Biomes.SPARSE_JUNGLE)
 				.add(Biomes.DESERT)
+				.add(Biomes.BADLANDS)
+				.add(Biomes.WOODED_BADLANDS)
 				.add(Biomes.ERODED_BADLANDS)
 				.add(Biomes.SAVANNA)
 				.add(Biomes.SAVANNA_PLATEAU)

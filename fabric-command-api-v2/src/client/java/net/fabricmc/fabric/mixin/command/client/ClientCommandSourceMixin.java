@@ -41,7 +41,7 @@ abstract class ClientCommandSourceMixin implements FabricClientCommandSource {
 
 	@Override
 	public void sendError(Component message) {
-		sendFeedback(Component.literal("").append(message).withStyle(ChatFormatting.RED));
+		sendFeedback(Component.empty().append(message).withStyle(ChatFormatting.RED));
 	}
 
 	@Override

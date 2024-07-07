@@ -23,6 +23,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.worldselection.EditGameRulesScreen;
+import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 
@@ -35,9 +36,9 @@ public final class DoubleRuleWidget extends EditGameRulesScreen.GameRuleEntry {
 
 		this.textFieldWidget = new EditBox(Minecraft.getInstance().font, 10, 5, 42, 20,
 				name.copy()
-				.append("\n")
+				.append(CommonComponents.NEW_LINE)
 				.append(ruleName)
-				.append("\n")
+				.append(CommonComponents.NEW_LINE)
 		);
 
 		this.textFieldWidget.setValue(Double.toString(rule.get()));

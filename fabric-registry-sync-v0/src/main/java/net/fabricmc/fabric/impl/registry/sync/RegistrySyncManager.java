@@ -44,6 +44,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.protocol.Packet;
@@ -323,7 +324,7 @@ public final class RegistrySyncManager {
 		}
 
 		// Create a nice user friendly error message.
-		MutableComponent text = Component.literal("");
+		MutableComponent text = Component.empty();
 
 		final int count = missingEntries.values().stream().mapToInt(List::size).sum();
 
@@ -347,7 +348,7 @@ public final class RegistrySyncManager {
 
 		for (int i = 0; i < Math.min(namespaces.size(), toDisplay); i++) {
 			text = text.append(Component.literal(namespaces.get(i)).withStyle(ChatFormatting.YELLOW));
-			text = text.append("\n");
+			text = text.append(CommonComponents.NEW_LINE);
 		}
 
 		if (namespaces.size() > toDisplay) {

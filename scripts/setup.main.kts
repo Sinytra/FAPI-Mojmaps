@@ -464,36 +464,40 @@ fun setupTask() {
     architecturyCommonJson.writeText(serialized)
 }
 
+fun ensureMappedBranchExists(git: Git, sGit: Git) {
+    // Ensure we're up to date
+    git.fetch().setRemote(upstreamRemote).call()
+    sGit.fetch().setRemote(upstreamRemote).call()
+
+    if (!sGit.branchExists(tempMappedBranch)) {
+        if (git.branchExists(originMappedBranch, true)) {
+            if (!git.branchExists(mappedBranch)) {
+                logger.info("Pulling remote mapped branch from $originRemote")
+                git.branchCreate()
+                    .setName(mappedBranch)
+                    .setStartPoint(originMappedBranch)
+                    .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.SET_UPSTREAM)
+                    .call()
+            }
+
+            logger.info("Creating branch $tempMappedBranch")
+            sGit.checkout()
+                .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.SET_UPSTREAM)
+                .setCreateBranch(true)
+                .setForceRefUpdate(true)
+                .setName(tempMappedBranch)
+                .setStartPoint(localMappedBranch)
+                .call()
+        } else {
+            setupMappedBranch(sGit)
+        }
+    }
+}
+
 fun syncUpstreamTask() {
     Git.open(rootDir).use { git ->
         initSubmodule(git).use { sGit ->
-            // Ensure we're up to date
-            git.fetch().setRemote(upstreamRemote).call()
-            sGit.fetch().setRemote(upstreamRemote).call()
-    
-            if (!sGit.branchExists(tempMappedBranch)) {
-                if (git.branchExists(originMappedBranch, true)) {
-                    if (!git.branchExists(mappedBranch)) {
-                        logger.info("Pulling remote mapped branch from $originRemote")
-                        git.branchCreate()
-                            .setName(mappedBranch)
-                            .setStartPoint(originMappedBranch)
-                            .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.SET_UPSTREAM)
-                            .call()
-                    }
-    
-                    logger.info("Creating branch $tempMappedBranch")
-                    sGit.checkout()
-                        .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.SET_UPSTREAM)
-                        .setCreateBranch(true)
-                        .setForceRefUpdate(true)
-                        .setName(tempMappedBranch)
-                        .setStartPoint(localMappedBranch)
-                        .call()
-                } else {
-                    setupMappedBranch(sGit)
-                }
-            }
+            ensureMappedBranchExists(git, sGit)
 
             sGit.checkout()
                 .setName(tempLocalBranch)
@@ -507,6 +511,8 @@ fun syncUpstreamTask() {
 fun updateMappingsTask() {
     Git.open(rootDir).use { git ->
         initSubmodule(git).use { sGit ->
+            ensureMappedBranchExists(git, sGit)
+
             updateMappings(sGit)
         }
     }

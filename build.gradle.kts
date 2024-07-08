@@ -58,18 +58,20 @@ repositories {
 }
 
 val ignoredProjects = listOf("fabric-api-bom", "fabric-api-catalog")
-val projectNames = file("fabric-api-upstream").list()?.filter { it.startsWith("fabric-") }?.let { it - ignoredProjects } ?: emptyList()
+val upstreamProjectNames = file("fabric-api-upstream").listFiles()?.toList() ?: emptyList()
+val deprecatedProjectFiles = file("fabric-api-upstream/deprecated").listFiles()?.toList() ?: emptyList()
+val allProjectRoots = (upstreamProjectNames + deprecatedProjectFiles).filter { it.name.startsWith("fabric-") && !ignoredProjects.contains(it.name) }
 
 // TODO Move to setup script
 val generateMergedAccessWidener by tasks.registering(GenerateMergedAccessWidenerTask::class) {
     group = "sinytra"
 
-    inputFiles.from(projectNames
+    inputFiles.from(allProjectRoots
         .flatMap {
             listOf(
-                file("fabric-api-upstream/$it/src/client/resources"),
-                file("fabric-api-upstream/$it/src/main/resources"),
-                file("fabric-api-upstream/$it/src/testmod/resources")
+                it.resolve("src/client/resources"),
+                it.resolve("src/main/resources"),
+                it.resolve("src/testmod/resources")
             )
         }
         .flatMap { it.listFiles { f -> f.name.endsWith(".accesswidener") }?.toList() ?: emptyList() })
@@ -165,26 +167,26 @@ val remapUpstreamSources by tasks.registering {
     group = "sinytra"
 }
 
-val projectRoots = projectNames.map { file("fabric-api-upstream/$it") }
-
-projectNames.forEach { projectName ->
+allProjectRoots.forEach { projectRootFile ->
+    val isDeprecated = projectRootFile in deprecatedProjectFiles
+    val projectName = if (isDeprecated) "deprecated-${projectRootFile.name}" else projectRootFile.name
     val taskName = CaseFormat.LOWER_HYPHEN.to(CaseFormat.UPPER_CAMEL, projectName)
 
     val remapTask = tasks.register("remap${taskName}UpstreamSources", RemapSourceDirectory::class) {
         group = "sinytra"
 
-        projectRoot.set(file("fabric-api-upstream/$projectName"))
+        projectRoot.set(projectRootFile)
         classpath.from(
             configurations["compileClasspath"],
             configurations["mercuryClasspath"],
             configurations["modCompileClasspathMapped"]
         )
-        sourcepath.from(projectRoots)
+        sourcepath.from(allProjectRoots)
         mappingFile.set(createMappings.flatMap { it.outputFile })
 
         sourceNamespace.set(MappingsNamespace.NAMED.toString())
         targetNamespace.set(MappingsNamespace.MOJANG.toString())
-        outputDir.set(file("fabric-api-mojmap"))
+        outputDir.set(file("fabric-api-mojmap").let { if (isDeprecated) it.resolve("deprecated") else it })
     }
 
     remapUpstreamSources.configure {

@@ -16,21 +16,20 @@
 
 package net.fabricmc.fabric.api.client.rendereregistry.v1;
 
-import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.render.entity.LivingEntityRenderer;
-import net.minecraft.client.render.entity.feature.Deadmau5FeatureRenderer;
-import net.minecraft.client.render.entity.feature.FeatureRenderer;
-import net.minecraft.client.render.entity.model.EntityModel;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.client.renderer.entity.layers.Deadmau5EarsLayer;
+import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 
 /**
- * Called when {@link FeatureRenderer feature renderers} for a {@link LivingEntityRenderer living entity renderer} are registered.
+ * Called when {@link RenderLayer feature renderers} for a {@link LivingEntityRenderer living entity renderer} are registered.
  *
- * <p>Feature renderers are typically used for rendering additional objects on an entity, such as armor, an elytra or {@link Deadmau5FeatureRenderer Deadmau5's ears}.
+ * <p>Feature renderers are typically used for rendering additional objects on an entity, such as armor, an elytra or {@link Deadmau5EarsLayer Deadmau5's ears}.
  * This callback lets developers add additional feature renderers for use in entity rendering.
  * Listeners should filter out the specific entity renderer they want to hook into, usually through {@code instanceof} checks or filtering by entity type.
  * Once listeners find a suitable entity renderer, they should register their feature renderer via the registration helper.
@@ -57,7 +56,7 @@ public interface LivingEntityFeatureRendererRegistrationCallback {
 	 * @param entityType     the entity type of the renderer
 	 * @param entityRenderer the entity renderer
 	 */
-	void registerRenderers(EntityType<? extends LivingEntity> entityType, LivingEntityRenderer<?, ?> entityRenderer, RegistrationHelper registrationHelper, EntityRendererFactory.Context context);
+	void registerRenderers(EntityType<? extends LivingEntity> entityType, LivingEntityRenderer<?, ?> entityRenderer, RegistrationHelper registrationHelper, EntityRendererProvider.Context context);
 
 	private static Event<LivingEntityFeatureRendererRegistrationCallback> createEvent() {
 		Event<LivingEntityFeatureRendererRegistrationCallback> event = EventFactory.createArrayBacked(LivingEntityFeatureRendererRegistrationCallback.class, callbacks -> (entityType, entityRenderer, registrationHelper, context) -> {
@@ -86,6 +85,6 @@ public interface LivingEntityFeatureRendererRegistrationCallback {
 		 * @param featureRenderer the feature renderer
 		 * @param <T> the type of entity
 		 */
-		<T extends LivingEntity> void register(FeatureRenderer<T, ? extends EntityModel<T>> featureRenderer);
+		<T extends LivingEntity> void register(RenderLayer<T, ? extends EntityModel<T>> featureRenderer);
 	}
 }

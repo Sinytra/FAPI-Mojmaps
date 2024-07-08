@@ -16,11 +16,11 @@
 
 package net.fabricmc.fabric.api.client.rendereregistry.v1;
 
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.client.render.block.entity.BlockEntityRenderDispatcher;
-import net.minecraft.client.render.block.entity.BlockEntityRenderer;
-import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 
 /**
  * Helper class for registering BlockEntityRenderers.
@@ -31,7 +31,7 @@ import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
 public interface BlockEntityRendererRegistry {
 	BlockEntityRendererRegistry INSTANCE = new BlockEntityRendererRegistry() {
 		@Override
-		public <E extends BlockEntity> void register(BlockEntityType<E> blockEntityType, BlockEntityRendererFactory<? super E> blockEntityRendererFactory) {
+		public <E extends BlockEntity> void register(BlockEntityType<E> blockEntityType, BlockEntityRendererProvider<? super E> blockEntityRendererFactory) {
 			net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry.register(blockEntityType, blockEntityRendererFactory);
 		}
 	};
@@ -40,10 +40,10 @@ public interface BlockEntityRendererRegistry {
 	 * Register a BlockEntityRenderer for a BlockEntityType. Can be called clientside before the world is rendered.
 	 *
 	 * @param blockEntityType the {@link BlockEntityType} to register a renderer for
-	 * @param blockEntityRendererFactory a {@link BlockEntityRendererFactory} that creates a {@link BlockEntityRenderer}, called
+	 * @param blockEntityRendererFactory a {@link BlockEntityRendererProvider} that creates a {@link BlockEntityRenderer}, called
 	 *                            when {@link BlockEntityRenderDispatcher} is initialized or immediately if the dispatcher
 	 *                            class is already loaded
 	 * @param <E> the {@link BlockEntity}
 	 */
-	<E extends BlockEntity> void register(BlockEntityType<E> blockEntityType, BlockEntityRendererFactory<? super E> blockEntityRendererFactory);
+	<E extends BlockEntity> void register(BlockEntityType<E> blockEntityType, BlockEntityRendererProvider<? super E> blockEntityRendererFactory);
 }

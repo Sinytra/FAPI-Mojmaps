@@ -16,11 +16,11 @@
 
 package net.fabricmc.fabric.api.client.rendereregistry.v1;
 
-import net.minecraft.client.render.entity.EntityRenderDispatcher;
-import net.minecraft.client.render.entity.EntityRenderer;
-import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 
 /**
  * Helper class for registering EntityRenderers.
@@ -31,7 +31,7 @@ import net.minecraft.entity.EntityType;
 public interface EntityRendererRegistry {
 	EntityRendererRegistry INSTANCE = new EntityRendererRegistry() {
 		@Override
-		public <T extends Entity> void register(EntityType<? extends T> entityType, EntityRendererFactory<T> factory) {
+		public <T extends Entity> void register(EntityType<? extends T> entityType, EntityRendererProvider<T> factory) {
 			net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry.register(entityType, factory);
 		}
 	};
@@ -40,10 +40,10 @@ public interface EntityRendererRegistry {
 	 * Register a BlockEntityRenderer for a BlockEntityType. Can be called clientside before the world is rendered.
 	 *
 	 * @param entityType the {@link EntityType} to register a renderer for
-	 * @param entityRendererFactory a {@link EntityRendererFactory} that creates a {@link EntityRenderer}, called
+	 * @param entityRendererFactory a {@link EntityRendererProvider} that creates a {@link EntityRenderer}, called
 	 *                            when {@link EntityRenderDispatcher} is initialized or immediately if the dispatcher
 	 *                            class is already loaded
 	 * @param <E> the {@link Entity}
 	 */
-	<E extends Entity> void register(EntityType<? extends E> entityType, EntityRendererFactory<E> entityRendererFactory);
+	<E extends Entity> void register(EntityType<? extends E> entityType, EntityRendererProvider<E> entityRendererFactory);
 }

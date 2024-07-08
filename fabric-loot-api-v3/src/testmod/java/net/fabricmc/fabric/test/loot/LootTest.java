@@ -17,26 +17,24 @@
 package net.fabricmc.fabric.test.loot;
 
 import java.util.Optional;
-
-import net.minecraft.block.Blocks;
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.enchantment.Enchantments;
-import net.minecraft.entity.EntityType;
-import net.minecraft.item.Items;
-import net.minecraft.loot.LootPool;
-import net.minecraft.loot.LootTable;
-import net.minecraft.loot.condition.SurvivesExplosionLootCondition;
-import net.minecraft.loot.entry.ItemEntry;
-import net.minecraft.loot.function.SetEnchantmentsLootFunction;
-import net.minecraft.loot.function.SetNameLootFunction;
-import net.minecraft.loot.provider.number.ConstantLootNumberProvider;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.text.Text;
-
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.loot.v3.LootTableEvents;
 import net.fabricmc.fabric.api.loot.v3.LootTableSource;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.storage.loot.LootPool;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.entries.LootItem;
+import net.minecraft.world.level.storage.loot.functions.SetEnchantmentsFunction;
+import net.minecraft.world.level.storage.loot.functions.SetNameFunction;
+import net.minecraft.world.level.storage.loot.predicates.ExplosionCondition;
+import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 
 public class LootTest implements ModInitializer {
 	@Override
@@ -45,17 +43,17 @@ public class LootTest implements ModInitializer {
 		// The LootTable.Builder LootPool.Builder methods here should use
 		// prebuilt entries and pools to test the injected methods.
 		LootTableEvents.REPLACE.register((key, original, source, registries) -> {
-			if (Blocks.BLACK_WOOL.getLootTableKey() == key) {
+			if (Blocks.BLACK_WOOL.getLootTable() == key) {
 				if (source != LootTableSource.VANILLA) {
 					throw new AssertionError("black wool loot table should have LootTableSource.VANILLA, got " + source);
 				}
 
 				// Replace black wool drops with an iron ingot
-				LootPool pool = LootPool.builder()
-						.with(ItemEntry.builder(Items.IRON_INGOT).build())
+				LootPool pool = LootPool.lootPool()
+						.with(LootItem.lootTableItem(Items.IRON_INGOT).build())
 						.build();
 
-				return LootTable.builder().pool(pool).build();
+				return LootTable.lootTable().pool(pool).build();
 			}
 
 			return null;
@@ -63,7 +61,7 @@ public class LootTest implements ModInitializer {
 
 		// Test that the event is stopped when the loot table is replaced
 		LootTableEvents.REPLACE.register((key, original, source, registries) -> {
-			if (Blocks.BLACK_WOOL.getLootTableKey() == key) {
+			if (Blocks.BLACK_WOOL.getLootTable() == key) {
 				throw new AssertionError("Event should have been stopped from replaced loot table");
 			}
 
@@ -71,51 +69,51 @@ public class LootTest implements ModInitializer {
 		});
 
 		LootTableEvents.MODIFY.register((key, tableBuilder, source, registries) -> {
-			if (Blocks.BLACK_WOOL.getLootTableKey() == key && source != LootTableSource.REPLACED) {
+			if (Blocks.BLACK_WOOL.getLootTable() == key && source != LootTableSource.REPLACED) {
 				throw new AssertionError("black wool loot table should have LootTableSource.REPLACED, got " + source);
 			}
 
-			if (Blocks.WHITE_WOOL.getLootTableKey() == key) {
+			if (Blocks.WHITE_WOOL.getLootTable() == key) {
 				if (source != LootTableSource.VANILLA) {
 					throw new AssertionError("white wool loot table should have LootTableSource.VANILLA, got " + source);
 				}
 
 				// Add gold ingot with custom name to white wool drops
-				LootPool pool = LootPool.builder()
-						.with(ItemEntry.builder(Items.GOLD_INGOT).build())
-						.conditionally(SurvivesExplosionLootCondition.builder().build())
-						.apply(SetNameLootFunction.builder(Text.literal("Gold from White Wool"), SetNameLootFunction.Target.CUSTOM_NAME).build())
+				LootPool pool = LootPool.lootPool()
+						.with(LootItem.lootTableItem(Items.GOLD_INGOT).build())
+						.conditionally(ExplosionCondition.survivesExplosion().build())
+						.apply(SetNameFunction.setName(Component.literal("Gold from White Wool"), SetNameFunction.Target.CUSTOM_NAME).build())
 						.build();
 
 				tableBuilder.pool(pool);
 			}
 
 			// We modify red wool to drop diamonds in the test mod resources.
-			if (Blocks.RED_WOOL.getLootTableKey() == key && source != LootTableSource.MOD) {
+			if (Blocks.RED_WOOL.getLootTable() == key && source != LootTableSource.MOD) {
 				throw new AssertionError("red wool loot table should have LootTableSource.MOD, got " + source);
 			}
 
 			// Modify yellow wool to drop *either* yellow wool or emeralds by adding
 			// emeralds to the same loot pool.
-			if (Blocks.YELLOW_WOOL.getLootTableKey() == key) {
-				tableBuilder.modifyPools(poolBuilder -> poolBuilder.with(ItemEntry.builder(Items.EMERALD)));
+			if (Blocks.YELLOW_WOOL.getLootTable() == key) {
+				tableBuilder.modifyPools(poolBuilder -> poolBuilder.add(LootItem.lootTableItem(Items.EMERALD)));
 			}
 		});
 
 		LootTableEvents.MODIFY.register((key, tableBuilder, source, registries) -> {
-			if (EntityType.SALMON.getLootTableId() == key) {
-				Optional<RegistryEntry<Enchantment>> lure = registries.getOptionalWrapper(RegistryKeys.ENCHANTMENT).flatMap(registry -> registry.getOptional(Enchantments.LURE));
+			if (EntityType.SALMON.getDefaultLootTable() == key) {
+				Optional<Holder<Enchantment>> lure = registries.lookup(Registries.ENCHANTMENT).flatMap(registry -> registry.get(Enchantments.LURE));
 
-				lure.ifPresent((lureEnchantment) -> tableBuilder.pool(LootPool.builder().with(
-						ItemEntry.builder(Items.FISHING_ROD)
+				lure.ifPresent((lureEnchantment) -> tableBuilder.withPool(LootPool.lootPool().add(
+						LootItem.lootTableItem(Items.FISHING_ROD)
 				).apply(
-						new SetEnchantmentsLootFunction.Builder().enchantment(lureEnchantment, ConstantLootNumberProvider.create(1))
+						new SetEnchantmentsFunction.Builder().withEnchantment(lureEnchantment, ConstantValue.exactly(1))
 				)));
 			}
 		});
 
 		LootTableEvents.ALL_LOADED.register((resourceManager, lootRegistry) -> {
-			LootTable blackWoolTable = lootRegistry.get(Blocks.BLACK_WOOL.getLootTableKey());
+			LootTable blackWoolTable = lootRegistry.get(Blocks.BLACK_WOOL.getLootTable());
 
 			if (blackWoolTable == LootTable.EMPTY) {
 				throw new AssertionError("black wool loot table should not be empty");

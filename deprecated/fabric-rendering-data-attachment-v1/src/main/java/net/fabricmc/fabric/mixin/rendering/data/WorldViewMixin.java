@@ -17,11 +17,9 @@
 package net.fabricmc.fabric.mixin.rendering.data;
 
 import org.spongepowered.asm.mixin.Mixin;
-
-import net.minecraft.world.WorldView;
-
 import net.fabricmc.fabric.api.rendering.data.v1.RenderAttachedBlockView;
+import net.minecraft.world.level.LevelReader;
 
-@Mixin(WorldView.class)
+@Mixin(LevelReader.class)
 public interface WorldViewMixin extends RenderAttachedBlockView {
 }

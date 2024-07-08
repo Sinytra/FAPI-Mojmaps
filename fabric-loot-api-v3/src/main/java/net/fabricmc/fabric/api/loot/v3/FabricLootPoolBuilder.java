@@ -104,7 +104,7 @@ public interface FabricLootPoolBuilder {
 		return LootPool.lootPool()
 				.setRolls(accessor.fabric_getRolls())
 				.setBonusRolls(accessor.fabric_getBonusRolls())
-				.add(accessor.fabric_getEntries())
+				.with(accessor.fabric_getEntries())
 				.conditionally(accessor.fabric_getConditions())
 				.apply(accessor.fabric_getFunctions());
 	}

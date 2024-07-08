@@ -16,8 +16,8 @@
 
 package net.fabricmc.fabric.api.client.rendereregistry.v1;
 
-import net.minecraft.client.model.TexturedModelData;
-import net.minecraft.client.render.entity.model.EntityModelLayer;
+import net.minecraft.client.model.geom.ModelLayerLocation;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
 
 /**
  * A helpers for registering entity model layers and providers for the layer's textured model data.
@@ -27,12 +27,12 @@ import net.minecraft.client.render.entity.model.EntityModelLayer;
 @Deprecated
 public final class EntityModelLayerRegistry {
 	/**
-	 * Registers an entity model layer and registers a provider for a {@linkplain TexturedModelData}.
+	 * Registers an entity model layer and registers a provider for a {@linkplain LayerDefinition}.
 	 *
 	 * @param modelLayer the entity model layer
 	 * @param provider the provider for the textured model data
 	 */
-	public static void registerModelLayer(EntityModelLayer modelLayer, TexturedModelDataProvider provider) {
+	public static void registerModelLayer(ModelLayerLocation modelLayer, TexturedModelDataProvider provider) {
 		net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry.registerModelLayer(modelLayer, provider::createModelData);
 	}
 
@@ -43,10 +43,10 @@ public final class EntityModelLayerRegistry {
 	@Deprecated
 	public interface TexturedModelDataProvider {
 		/**
-		 * Creates the textured model data for use in a {@link EntityModelLayer}.
+		 * Creates the textured model data for use in a {@link ModelLayerLocation}.
 		 *
 		 * @return the textured model data for the entity model layer.
 		 */
-		TexturedModelData createModelData();
+		LayerDefinition createModelData();
 	}
 }

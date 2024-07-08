@@ -17,11 +17,9 @@
 package net.fabricmc.fabric.api.command.v1;
 
 import com.mojang.brigadier.CommandDispatcher;
-
-import net.minecraft.server.command.ServerCommandSource;
-
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
+import net.minecraft.commands.CommandSourceStack;
 
 /**
  * @deprecated Please migrate to v2. Please use {@link net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback} instead.
@@ -34,5 +32,5 @@ public interface CommandRegistrationCallback {
 		}
 	});
 
-	void register(CommandDispatcher<ServerCommandSource> dispatcher, boolean dedicated);
+	void register(CommandDispatcher<CommandSourceStack> dispatcher, boolean dedicated);
 }

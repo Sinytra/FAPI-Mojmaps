@@ -16,15 +16,14 @@
 
 package net.fabricmc.fabric.impl.command.v1;
 
-import net.minecraft.server.command.CommandManager.RegistrationEnvironment;
-
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.minecraft.commands.Commands.CommandSelection;
 
 public final class LegacyHandler implements ModInitializer {
 	@Override
 	@SuppressWarnings("deprecation")
 	public void onInitialize() {
-		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback.EVENT.invoker().register(dispatcher, environment == RegistrationEnvironment.DEDICATED));
+		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback.EVENT.invoker().register(dispatcher, environment == CommandSelection.DEDICATED));
 	}
 }

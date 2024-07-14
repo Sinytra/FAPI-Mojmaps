@@ -18,15 +18,19 @@ package net.fabricmc.fabric.test.resource.loader;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.world.item.enchantment.Enchantments;
 
 public class ResourceReloadListenerTestMod implements ModInitializer {
 	public static final String MODID = "fabric-resource-loader-v0-testmod";
@@ -114,5 +118,22 @@ public class ResourceReloadListenerTestMod implements ModInitializer {
 				serverResources = true;
 			}
 		});
+
+		ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(RegistryReloader.ID, RegistryReloader::new);
+	}
+
+	private record RegistryReloader(HolderLookup.Provider wrapperLookup) implements SimpleSynchronousResourceReloadListener {
+		private static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(MODID, "registry_reloader");
+
+		@Override
+		public ResourceLocation getFabricId() {
+			return ID;
+		}
+
+		@Override
+		public void onResourceManagerReload(ResourceManager manager) {
+			Objects.requireNonNull(wrapperLookup);
+			wrapperLookup.lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.FORTUNE);
+		}
 	}
 }

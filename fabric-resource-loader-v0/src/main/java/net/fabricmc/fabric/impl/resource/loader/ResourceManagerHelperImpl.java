@@ -25,16 +25,20 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import com.google.common.collect.Lists;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.ResourcePackActivationType;
 import net.fabricmc.loader.api.ModContainer;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackLocationInfo;
@@ -44,6 +48,7 @@ import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.util.Tuple;
+import net.minecraft.world.item.crafting.RecipeManager;
 
 public class ResourceManagerHelperImpl implements ResourceManagerHelper {
 	private static final Map<PackType, ResourceManagerHelperImpl> registryMap = new HashMap<>();
@@ -51,10 +56,16 @@ public class ResourceManagerHelperImpl implements ResourceManagerHelper {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ResourceManagerHelperImpl.class);
 
 	private final Set<ResourceLocation> addedListenerIds = new HashSet<>();
+	private final Set<ListenerFactory> listenerFactories = new LinkedHashSet<>();
 	private final Set<IdentifiableResourceReloadListener> addedListeners = new LinkedHashSet<>();
+	private final PackType type;
+
+	private ResourceManagerHelperImpl(PackType type) {
+		this.type = type;
+	}
 
 	public static ResourceManagerHelperImpl get(PackType type) {
-		return registryMap.computeIfAbsent(type, (t) -> new ResourceManagerHelperImpl());
+		return registryMap.computeIfAbsent(type, ResourceManagerHelperImpl::new);
 	}
 
 	/**
@@ -72,7 +83,7 @@ public class ResourceManagerHelperImpl implements ResourceManagerHelper {
 	public static boolean registerBuiltinResourcePack(ResourceLocation id, String subPath, ModContainer container, Component displayName, ResourcePackActivationType activationType) {
 		// Assuming the mod has multiple paths, we simply "hope" that the  file separator is *not* different across them
 		List<Path> paths = container.getRootPaths();
-		String separator = paths.get(0).getFileSystem().getSeparator();
+		String separator = paths.getFirst().getFileSystem().getSeparator();
 		subPath = subPath.replace("/", separator);
 		ModNioResourcePack resourcePack = ModNioResourcePack.create(id.toString(), container, subPath, PackType.CLIENT_RESOURCES, activationType, false);
 		ModNioResourcePack dataPack = ModNioResourcePack.create(id.toString(), container, subPath, PackType.SERVER_DATA, activationType, false);
@@ -166,7 +177,16 @@ public class ResourceManagerHelperImpl implements ResourceManagerHelper {
 		//   trust them 100%. Only code doesn't lie.
 		// - We addReloadListener all custom listeners after vanilla listeners. Same reasons.
 
-		List<IdentifiableResourceReloadListener> listenersToAdd = Lists.newArrayList(addedListeners);
+		final HolderLookup.Provider wrapperLookup = getWrapperLookup(listeners);
+		List<IdentifiableResourceReloadListener> listenersToAdd = Lists.newArrayList();
+
+		for (ListenerFactory addedListener : listenerFactories) {
+			listenersToAdd.add(addedListener.get(wrapperLookup));
+		}
+
+		addedListeners.clear();
+		addedListeners.addAll(listenersToAdd);
+
 		Set<ResourceLocation> resolvedIds = new HashSet<>();
 
 		for (PreparableReloadListener listener : listeners) {
@@ -198,15 +218,80 @@ public class ResourceManagerHelperImpl implements ResourceManagerHelper {
 		}
 	}
 
+	// A bit of a hack to get the registry, but it works.
+	@Nullable
+	private HolderLookup.Provider getWrapperLookup(List<PreparableReloadListener> listeners) {
+		if (type == PackType.CLIENT_RESOURCES) {
+			// We don't need the registry for client resources.
+			return null;
+		}
+
+		for (PreparableReloadListener resourceReloader : listeners) {
+			if (resourceReloader instanceof RecipeManager recipeManager) {
+				return recipeManager.registries;
+			}
+		}
+
+		throw new IllegalStateException("No RecipeManager found in listeners!");
+	}
+
 	@Override
 	public void registerReloadListener(IdentifiableResourceReloadListener listener) {
-		if (!addedListenerIds.add(listener.getFabricId())) {
-			LOGGER.warn("Tried to register resource reload listener " + listener.getFabricId() + " twice!");
+		registerReloadListener(new SimpleResourceReloaderFactory(listener));
+	}
+
+	@Override
+	public void registerReloadListener(ResourceLocation identifier, Function<HolderLookup.Provider, IdentifiableResourceReloadListener> listenerFactory) {
+		if (type == PackType.CLIENT_RESOURCES) {
+			throw new IllegalArgumentException("Cannot register a registry listener for the client resource type!");
+		}
+
+		registerReloadListener(new RegistryResourceReloaderFactory(identifier, listenerFactory));
+	}
+
+	private void registerReloadListener(ListenerFactory factory) {
+		if (!addedListenerIds.add(factory.id())) {
+			LOGGER.warn("Tried to register resource reload listener " + factory.id() + " twice!");
 			return;
 		}
 
-		if (!addedListeners.add(listener)) {
-			throw new RuntimeException("Listener with previously unknown ID " + listener.getFabricId() + " already in listener set!");
+		if (!listenerFactories.add(factory)) {
+			throw new RuntimeException("Listener with previously unknown ID " + factory.id() + " already in listener set!");
+		}
+	}
+
+	private sealed interface ListenerFactory permits SimpleResourceReloaderFactory, RegistryResourceReloaderFactory {
+		ResourceLocation id();
+
+		IdentifiableResourceReloadListener get(HolderLookup.Provider registry);
+	}
+
+	private record SimpleResourceReloaderFactory(IdentifiableResourceReloadListener listener) implements ListenerFactory {
+		@Override
+		public ResourceLocation id() {
+			return listener.getFabricId();
+		}
+
+		@Override
+		public IdentifiableResourceReloadListener get(HolderLookup.Provider registry) {
+			return listener;
+		}
+	}
+
+	private record RegistryResourceReloaderFactory(ResourceLocation id, Function<HolderLookup.Provider, IdentifiableResourceReloadListener> listenerFactory) implements ListenerFactory {
+		private RegistryResourceReloaderFactory {
+			Objects.requireNonNull(listenerFactory);
+		}
+
+		@Override
+		public IdentifiableResourceReloadListener get(HolderLookup.Provider registry) {
+			final IdentifiableResourceReloadListener listener = listenerFactory.apply(registry);
+
+			if (!id.equals(listener.getFabricId())) {
+				throw new IllegalStateException("Listener factory for " + id + " created a listener with ID " + listener.getFabricId());
+			}
+
+			return listener;
 		}
 	}
 }

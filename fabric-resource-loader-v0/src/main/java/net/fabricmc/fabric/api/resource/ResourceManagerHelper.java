@@ -16,9 +16,12 @@
 
 package net.fabricmc.fabric.api.resource;
 
+import java.util.function.Function;
+
 import org.jetbrains.annotations.ApiStatus;
 import net.fabricmc.fabric.impl.resource.loader.ResourceManagerHelperImpl;
 import net.fabricmc.loader.api.ModContainer;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
@@ -46,6 +49,16 @@ public interface ResourceManagerHelper {
 	 * @param listener The resource reload listener.
 	 */
 	void registerReloadListener(IdentifiableResourceReloadListener listener);
+
+	/**
+	 * Register a resource reload listener for a given resource manager type.
+	 *
+	 * <p>Note: This is only supported for server data reload listeners.
+	 *
+	 * @param identifier The identifier of the listener.
+	 * @param listenerFactory   A function that creates a new instance of the listener with a given registry lookup.
+	 */
+	void registerReloadListener(ResourceLocation identifier, Function<HolderLookup.Provider, IdentifiableResourceReloadListener> listenerFactory);
 
 	/**
 	 * Get the ResourceManagerHelper instance for a given resource type.

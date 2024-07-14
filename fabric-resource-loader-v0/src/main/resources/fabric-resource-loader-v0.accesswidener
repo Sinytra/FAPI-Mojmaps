@@ -4,3 +4,4 @@ accessible	method	net/minecraft/server/packs/resources/FallbackResourceManager	g
 accessible	method	net/minecraft/server/packs/resources/FallbackResourceManager	parseMetadata	(Lnet/minecraft/server/packs/resources/IoSupplier;)Lnet/minecraft/server/packs/resources/ResourceMetadata;
 accessible	field	net/minecraft/server/packs/repository/FolderRepositorySource	packSource	Lnet/minecraft/server/packs/repository/PackSource;
 accessible	field	net/minecraft/server/packs/repository/PackRepository	sources	Ljava/util/Set;
+accessible	field	net/minecraft/world/item/crafting/RecipeManager	registries	Lnet/minecraft/core/HolderLookup$Provider;

@@ -46,3 +46,4 @@ accessible	field	net/minecraft/world/level/biome/BiomeGenerationSettings	feature
 mutable	field	net/minecraft/world/level/biome/BiomeGenerationSettings	featureSet	Ljava/util/function/Supplier;
 accessible	field	net/minecraft/world/level/chunk/ChunkGenerator	featuresPerStep	Ljava/util/function/Supplier;
 mutable	field	net/minecraft/world/level/chunk/ChunkGenerator	featuresPerStep	Ljava/util/function/Supplier;
+accessible	field	net/minecraft/core/MappedRegistry	registrationInfos	Ljava/util/Map;

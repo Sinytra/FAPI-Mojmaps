@@ -21,6 +21,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -33,6 +34,8 @@ import org.slf4j.LoggerFactory;
 import net.fabricmc.fabric.api.biome.v1.BiomeModificationContext;
 import net.fabricmc.fabric.api.biome.v1.BiomeSelectionContext;
 import net.fabricmc.fabric.api.biome.v1.ModificationPhase;
+import net.minecraft.core.MappedRegistry;
+import net.minecraft.core.RegistrationInfo;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
@@ -163,6 +166,12 @@ public class BiomeModificationImpl {
 							)
 						);
 					});
+				}
+
+				if (biomes instanceof MappedRegistry<Biome> registry) {
+					RegistrationInfo info = registry.registrationInfos.get(key);
+					RegistrationInfo newInfo = new RegistrationInfo(Optional.empty(), info.lifecycle());
+					registry.registrationInfos.put(key, newInfo);
 				}
 			}
 		}

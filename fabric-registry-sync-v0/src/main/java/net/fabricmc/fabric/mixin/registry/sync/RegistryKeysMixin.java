@@ -16,27 +16,20 @@
 
 package net.fabricmc.fabric.mixin.registry.sync;
 
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.TagManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-// Adds namespaces to tag directories for registries added by mods.
-@Mixin(TagManager.class)
-abstract class TagManagerLoaderMixin {
-	@WrapOperation(
-			method = "createLoader",
-			at = @At(
-					value = "INVOKE",
-					target = "Lnet/minecraft/core/registries/Registries;tagsDirPath(Lnet/minecraft/resources/ResourceKey;)Ljava/lang/String;"
-			)
-	)
-	private String prependDirectoryWithNamespace(ResourceKey<? extends Registry<?>> registryKey, Operation<String> original) {
-		ResourceLocation id = registryKey.location();
+@Mixin(Registries.class)
+public class RegistryKeysMixin {
+	@ModifyReturnValue(method = "tagsDirPath", at = @At("RETURN"))
+	private static String prependDirectoryWithNamespace(String original, @Local(argsOnly = true) ResourceKey<? extends Registry<?>> registryRef) {
+		ResourceLocation id = registryRef.location();
 
 		// Vanilla doesn't mark namespaces in the directories of tags at all,
 		// so we prepend the directories with the namespace if it's a modded registry id.
@@ -45,6 +38,6 @@ abstract class TagManagerLoaderMixin {
 			return "tags/" + id.getNamespace() + "/" + id.getPath();
 		}
 
-		return original.call(registryKey);
+		return original;
 	}
 }

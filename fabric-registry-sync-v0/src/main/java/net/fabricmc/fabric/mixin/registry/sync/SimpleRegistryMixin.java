@@ -25,6 +25,7 @@ import java.util.Set;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.mojang.serialization.Lifecycle;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
@@ -376,5 +377,11 @@ public abstract class SimpleRegistryMixin<T> implements WritableRegistry<T>, Rem
 			fabric_prevIndexedEntries = null;
 			fabric_prevEntries = null;
 		}
+	}
+
+	// Actually throw the exception when a duplicate is found.
+	@ModifyExpressionValue(method = "register(Lnet/minecraft/resources/ResourceKey;Ljava/lang/Object;Lnet/minecraft/core/RegistrationInfo;)Lnet/minecraft/core/Holder$Reference;", at = @At(value = "INVOKE", target = "Lnet/minecraft/Util;pauseInIde(Ljava/lang/Throwable;)Ljava/lang/Throwable;"))
+	private <E extends Throwable> E throwOnDuplicate(E t) throws E {
+		throw t;
 	}
 }

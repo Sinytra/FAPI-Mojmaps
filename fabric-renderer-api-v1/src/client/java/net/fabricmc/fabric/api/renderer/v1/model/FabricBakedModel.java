@@ -92,7 +92,7 @@ public interface FabricBakedModel {
 	 * @param context Accepts model output.
 	 */
 	default void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context) {
-		VanillaModelEncoder.emitBlockQuads((BakedModel) this, state, randomSupplier, context, context.getEmitter());
+		VanillaModelEncoder.emitBlockQuads((BakedModel) this, state, randomSupplier, context);
 	}
 
 	/**

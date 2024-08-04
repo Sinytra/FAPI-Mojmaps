@@ -19,14 +19,13 @@ package net.fabricmc.fabric.impl.client.indigo.renderer.render;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import java.util.Map;
+import java.util.function.Function;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.fabricmc.fabric.impl.client.indigo.renderer.aocalc.AoCalculator;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.SectionBufferBuilderPack;
 import net.minecraft.client.renderer.chunk.RenderChunkRegion;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.BakedModel;
@@ -67,12 +66,12 @@ public class TerrainRenderContext extends AbstractBlockRenderContext {
 
 	@Override
 	protected VertexConsumer getVertexConsumer(RenderType layer) {
-		return chunkInfo.getInitializedBuffer(layer);
+		return chunkInfo.getBuffer(layer);
 	}
 
-	public void prepare(RenderChunkRegion blockView, BlockPos chunkOrigin, SectionBufferBuilderPack builders, Map<RenderType, BufferBuilder> builderMap) {
+	public void prepare(RenderChunkRegion blockView, Function<RenderType, BufferBuilder> bufferFunc) {
+		chunkInfo.prepare(blockView, bufferFunc);
 		blockInfo.prepareForWorld(blockView, true);
-		chunkInfo.prepare(blockView, chunkOrigin, builders, builderMap);
 	}
 
 	public void release() {

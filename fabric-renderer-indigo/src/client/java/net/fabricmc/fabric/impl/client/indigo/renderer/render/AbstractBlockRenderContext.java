@@ -23,6 +23,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
+import net.fabricmc.fabric.api.renderer.v1.material.ShadeMode;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.util.TriState;
 import net.fabricmc.fabric.impl.client.indigo.Indigo;
@@ -53,18 +54,7 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 
 		@Override
 		public void emitDirectly() {
-			renderQuad(this, false);
-		}
-	};
-	private final MutableQuadViewImpl vanillaModelEditorQuad = new MutableQuadViewImpl() {
-		{
-			data = new int[EncodingFormat.TOTAL_STRIDE];
-			clear();
-		}
-
-		@Override
-		public void emitDirectly() {
-			renderQuad(this, true);
+			renderQuad(this);
 		}
 	};
 
@@ -86,11 +76,6 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 		return editorQuad;
 	}
 
-	public QuadEmitter getVanillaModelEmitter() {
-		// Do not clear the editorQuad since it is not accessible to API users.
-		return vanillaModelEditorQuad;
-	}
-
 	@Override
 	public boolean isFaceCulled(@Nullable Direction face) {
 		return !blockInfo.shouldDrawFace(face);
@@ -106,7 +91,7 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 		return vanillaModelConsumer;
 	}
 
-	private void renderQuad(MutableQuadViewImpl quad, boolean isVanilla) {
+	private void renderQuad(MutableQuadViewImpl quad) {
 		if (!transform(quad)) {
 			return;
 		}
@@ -120,10 +105,11 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 		final TriState aoMode = mat.ambientOcclusion();
 		final boolean ao = blockInfo.useAo && (aoMode == TriState.TRUE || (aoMode == TriState.DEFAULT && blockInfo.defaultAo));
 		final boolean emissive = mat.emissive();
+		final boolean vanillaShade = mat.shadeMode() == ShadeMode.VANILLA;
 		final VertexConsumer vertexConsumer = getVertexConsumer(blockInfo.effectiveRenderLayer(mat.blendMode()));
 
 		colorizeQuad(quad, colorIndex);
-		shadeQuad(quad, isVanilla, ao, emissive);
+		shadeQuad(quad, ao, emissive, vanillaShade);
 		bufferQuad(quad, vertexConsumer);
 	}
 
@@ -138,10 +124,10 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 		}
 	}
 
-	private void shadeQuad(MutableQuadViewImpl quad, boolean isVanilla, boolean ao, boolean emissive) {
+	private void shadeQuad(MutableQuadViewImpl quad, boolean ao, boolean emissive, boolean vanillaShade) {
 		// routines below have a bit of copy-paste code reuse to avoid conditional execution inside a hot loop
 		if (ao) {
-			aoCalc.compute(quad, isVanilla);
+			aoCalc.compute(quad, vanillaShade);
 
 			if (emissive) {
 				for (int i = 0; i < 4; i++) {
@@ -155,7 +141,7 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 				}
 			}
 		} else {
-			shadeFlatQuad(quad, isVanilla);
+			shadeFlatQuad(quad, vanillaShade);
 
 			if (emissive) {
 				for (int i = 0; i < 4; i++) {
@@ -175,11 +161,11 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 	 * Starting in 1.16 flat shading uses dimension-specific diffuse factors that can be < 1.0
 	 * even for un-shaded quads. These are also applied with AO shading but that is done in AO calculator.
 	 */
-	private void shadeFlatQuad(MutableQuadViewImpl quad, boolean isVanilla) {
+	private void shadeFlatQuad(MutableQuadViewImpl quad, boolean vanillaShade) {
 		final boolean hasShade = quad.hasShade();
 
 		// Check the AO mode to match how shade is applied during smooth lighting
-		if ((Indigo.AMBIENT_OCCLUSION_MODE == AoConfig.HYBRID && !isVanilla) || Indigo.AMBIENT_OCCLUSION_MODE == AoConfig.ENHANCED) {
+		if ((Indigo.AMBIENT_OCCLUSION_MODE == AoConfig.HYBRID && !vanillaShade) || Indigo.AMBIENT_OCCLUSION_MODE == AoConfig.ENHANCED) {
 			if (quad.hasAllVertexNormals()) {
 				for (int i = 0; i < 4; i++) {
 					float shade = normalShade(quad.normalX(i), quad.normalY(i), quad.normalZ(i), hasShade);
@@ -303,7 +289,7 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 
 		@Override
 		public void accept(BakedModel model, @Nullable BlockState state) {
-			VanillaModelEncoder.emitBlockQuads(model, state, blockInfo.randomSupplier, AbstractBlockRenderContext.this, vanillaModelEditorQuad);
+			VanillaModelEncoder.emitBlockQuads(model, state, blockInfo.randomSupplier, AbstractBlockRenderContext.this);
 		}
 	}
 }

@@ -17,7 +17,6 @@
 package net.fabricmc.fabric.mixin.client.indigo.renderer;
 
 import java.util.Map;
-import java.util.Set;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -25,6 +24,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexSorting;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -44,7 +44,6 @@ import net.minecraft.core.SectionPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.RenderShape;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
@@ -65,17 +64,19 @@ import net.minecraft.world.level.block.state.BlockState;
  */
 @Mixin(SectionCompiler.class)
 public abstract class SectionBuilderMixin {
+	@Shadow
+	abstract BufferBuilder getOrBeginLayer(Map<RenderType, BufferBuilder> builders, SectionBufferBuilderPack allocatorStorage, RenderType layer);
+
 	@Inject(method = "compile",
 			at = @At(value = "INVOKE", target = "Lnet/minecraft/core/BlockPos;betweenClosed(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;)Ljava/lang/Iterable;"),
 			locals = LocalCapture.CAPTURE_FAILHARD)
-	private void hookChunkBuild(SectionPos sectionPos, RenderChunkRegion region, VertexSorting sorter,
-								SectionBufferBuilderPack builder,
-								CallbackInfoReturnable<SectionCompiler.Results> ci,
-								@Local(ordinal = 0) Map<RenderType, BufferBuilder> builderMap) {
-		// hook just before iterating over the render chunk's chunks blocks, captures the buffer builder map
-
+	private void hookBuild(SectionPos sectionPos, RenderChunkRegion region, VertexSorting sorter,
+						SectionBufferBuilderPack allocators,
+						CallbackInfoReturnable<SectionCompiler.Results> cir,
+						@Local(ordinal = 0) Map<RenderType, BufferBuilder> builderMap) {
+		// hook just before iterating over the render chunk's blocks to capture the buffer builder map
 		TerrainRenderContext renderer = TerrainRenderContext.POOL.get();
-		renderer.prepare(region, sectionPos.origin(), builder, builderMap);
+		renderer.prepare(region, layer -> getOrBeginLayer(builderMap, allocators, layer));
 		((AccessChunkRendererRegion) region).fabric_setRenderer(renderer);
 	}
 
@@ -97,7 +98,7 @@ public abstract class SectionBuilderMixin {
 	 */
 	@Redirect(method = "compile", require = 1, at = @At(value = "INVOKE",
 			target = "Lnet/minecraft/client/renderer/block/BlockRenderDispatcher;renderBatched(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;ZLnet/minecraft/util/RandomSource;)V"))
-	private void hookChunkBuildTessellate(BlockRenderDispatcher renderManager, BlockState blockState, BlockPos blockPos, BlockAndTintGetter blockView, PoseStack matrix, VertexConsumer bufferBuilder, boolean checkSides, RandomSource random) {
+	private void hookBuildRenderBlock(BlockRenderDispatcher renderManager, BlockState blockState, BlockPos blockPos, BlockAndTintGetter blockView, PoseStack matrix, VertexConsumer bufferBuilder, boolean checkSides, RandomSource random) {
 		if (blockState.getRenderShape() == RenderShape.MODEL) {
 			final BakedModel model = renderManager.getBlockModel(blockState);
 
@@ -113,11 +114,9 @@ public abstract class SectionBuilderMixin {
 	/**
 	 * Release all references. Probably not necessary but would be $#%! to debug if it is.
 	 */
-	@Inject(method = "compile",
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/block/ModelBlockRenderer;clearCache()V"))
-	private void hookRebuildChunkReturn(CallbackInfoReturnable<Set<BlockEntity>> ci) {
-		// hook after iterating over the render chunk's chunks blocks, must be called if and only if hookChunkBuild happened
-
-		TerrainRenderContext.POOL.get().release();
+	@Inject(method = "compile", at = @At(value = "RETURN"))
+	private void hookBuildReturn(SectionPos sectionPos, RenderChunkRegion renderRegion, VertexSorting vertexSorter, SectionBufferBuilderPack allocatorStorage, CallbackInfoReturnable<SectionCompiler.Results> cir) {
+		((AccessChunkRendererRegion) renderRegion).fabric_getRenderer().release();
+		((AccessChunkRendererRegion) renderRegion).fabric_setRenderer(null);
 	}
 }

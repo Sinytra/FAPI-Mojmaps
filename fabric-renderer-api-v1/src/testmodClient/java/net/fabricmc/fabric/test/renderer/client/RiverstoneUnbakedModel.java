@@ -39,6 +39,8 @@ public class RiverstoneUnbakedModel implements UnbakedModel {
 
 	@Override
 	public void resolveParents(Function<ResourceLocation, UnbakedModel> modelLoader) {
+		modelLoader.apply(STONE_MODEL_ID).resolveParents(modelLoader);
+		modelLoader.apply(GOLD_BLOCK_MODEL_ID).resolveParents(modelLoader);
 	}
 
 	@Nullable

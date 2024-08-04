@@ -43,7 +43,6 @@ import org.slf4j.LoggerFactory;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -57,6 +56,7 @@ import net.minecraft.util.thread.BlockableEventLoop;
 import net.fabricmc.fabric.api.event.registry.RegistryAttribute;
 import net.fabricmc.fabric.api.event.registry.RegistryAttributeHolder;
 import net.fabricmc.fabric.api.networking.v1.ServerConfigurationNetworking;
+import net.fabricmc.fabric.impl.networking.server.ServerNetworkingImpl;
 import net.fabricmc.fabric.impl.registry.sync.packet.DirectRegistryPacketHandler;
 import net.fabricmc.fabric.impl.registry.sync.packet.RegistryPacketHandler;
 
@@ -64,9 +64,14 @@ public final class RegistrySyncManager {
 	public static final boolean DEBUG = Boolean.getBoolean("fabric.registry.debug");
 
 	public static final DirectRegistryPacketHandler DIRECT_PACKET_HANDLER = new DirectRegistryPacketHandler();
-
 	private static final Logger LOGGER = LoggerFactory.getLogger("FabricRegistrySync");
 	private static final boolean DEBUG_WRITE_REGISTRY_DATA = Boolean.getBoolean("fabric.registry.debug.writeContentsAsCsv");
+	private static final Component INCOMPATIBLE_FABRIC_CLIENT_TEXT = Component.literal("This server requires ").append(Component.literal("Fabric API").withStyle(ChatFormatting.GREEN))
+			.append(" installed on your client!").withStyle(ChatFormatting.YELLOW)
+			.append(Component.literal("\nContact server's administrator for more information!").withStyle(ChatFormatting.GOLD));
+	private static final Component INCOMPATIBLE_VANILLA_CLIENT_TEXT = Component.literal("This server requires ").append(Component.literal("Fabric Loader and Fabric API").withStyle(ChatFormatting.GREEN))
+			.append(" installed on your client!").withStyle(ChatFormatting.YELLOW)
+			.append(Component.literal("\nContact server's administrator for more information!").withStyle(ChatFormatting.GOLD));
 
 	//Set to true after vanilla's bootstrap has completed
 	public static boolean postBootstrap = false;
@@ -79,15 +84,21 @@ public final class RegistrySyncManager {
 			return;
 		}
 
-		if (!ServerConfigurationNetworking.canSend(handler, DIRECT_PACKET_HANDLER.getPacketId())) {
-			// Don't send if the client cannot receive
-			return;
-		}
-
 		final Map<ResourceLocation, Object2IntMap<ResourceLocation>> map = RegistrySyncManager.createAndPopulateRegistryMap();
 
 		if (map == null) {
 			// Don't send when there is nothing to map
+			return;
+		}
+
+		if (!ServerConfigurationNetworking.canSend(handler, DIRECT_PACKET_HANDLER.getPacketId())) {
+			// Disconnect incompatible clients
+			Component message = switch (ServerNetworkingImpl.getAddon(handler).getClientBrand()) {
+			case "fabric" -> INCOMPATIBLE_FABRIC_CLIENT_TEXT;
+			case null, default -> INCOMPATIBLE_VANILLA_CLIENT_TEXT;
+			};
+
+			handler.disconnect(message);
 			return;
 		}
 
@@ -146,9 +157,9 @@ public final class RegistrySyncManager {
 	}
 
 	/**
-	 * Creates a {@link CompoundTag} used to sync the registry ids.
+	 * Creates a {@link Map} used to sync the registry ids.
 	 *
-	 * @return a {@link CompoundTag} to sync, null when empty
+	 * @return a {@link Map} to sync, null when empty
 	 */
 	@Nullable
 	public static Map<ResourceLocation, Object2IntMap<ResourceLocation>> createAndPopulateRegistryMap() {

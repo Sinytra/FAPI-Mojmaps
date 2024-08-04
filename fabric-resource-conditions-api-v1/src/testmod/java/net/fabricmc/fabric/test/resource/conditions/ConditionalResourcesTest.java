@@ -120,4 +120,19 @@ public class ConditionalResourcesTest {
 
 		context.succeed();
 	}
+
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void conditionalOverlays(GameTestHelper context) {
+		ReloadableServerRegistries.Holder registries = context.getLevel().getServer().reloadableRegistries();
+
+		if (!registries.get().registryOrThrow(Registries.PREDICATE).containsKey(id("do_overlay"))) {
+			throw new AssertionError("do_overlay predicate should have been overlayed.");
+		}
+
+		if (registries.get().registryOrThrow(Registries.PREDICATE).containsKey(id("dont_overlay"))) {
+			throw new AssertionError("dont_overlay predicate should not have been overlayed.");
+		}
+
+		context.succeed();
+	}
 }

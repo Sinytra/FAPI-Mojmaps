@@ -41,6 +41,7 @@ import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.CompositePackResources;
 import net.minecraft.server.packs.PackLocationInfo;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackSelectionConfig;
@@ -143,8 +144,19 @@ public class ResourceManagerHelperImpl implements ResourceManagerHelper {
 
 					@Override
 					public PackResources openFull(PackLocationInfo var1, Pack.Metadata metadata) {
-						// Don't support overlays in builtin res packs.
-						return entry.getB();
+						ModNioResourcePack pack = entry.getB();
+
+						if (metadata.overlays().isEmpty()) {
+							return pack;
+						}
+
+						List<PackResources> overlays = new ArrayList<>(metadata.overlays().size());
+
+						for (String overlay : metadata.overlays()) {
+							overlays.add(pack.createOverlay(overlay));
+						}
+
+						return new CompositePackResources(pack, overlays);
 					}
 				}, resourceType, info2);
 				consumer.accept(profile);

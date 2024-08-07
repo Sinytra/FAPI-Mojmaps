@@ -49,6 +49,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Marker;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BellBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -214,14 +215,14 @@ public class CommonAttachmentTests {
 
 	@Test
 	void testBlockEntityPersistence() {
-		BlockEntity blockEntity = new BellBlockEntity(BlockPos.ZERO, mock());
+		BlockEntity blockEntity = new BellBlockEntity(BlockPos.ZERO, Blocks.BELL.defaultBlockState());
 		assertFalse(blockEntity.hasAttached(PERSISTENT));
 
 		int expected = 1;
 		blockEntity.setAttached(PERSISTENT, expected);
 		CompoundTag fakeSave = blockEntity.saveWithId(mockDRM());
 
-		blockEntity = BlockEntity.loadStatic(BlockPos.ZERO, mock(), fakeSave, mockDRM());
+		blockEntity = BlockEntity.loadStatic(BlockPos.ZERO, Blocks.BELL.defaultBlockState(), fakeSave, mockDRM());
 		assertNotNull(blockEntity);
 		assertTrue(blockEntity.hasAttached(PERSISTENT));
 		assertEquals(expected, blockEntity.getAttached(PERSISTENT));

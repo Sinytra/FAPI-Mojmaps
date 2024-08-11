@@ -42,6 +42,7 @@ public final class ItemTagGenerator extends FabricTagProvider.ItemTagProvider {
 		generateFoodTags();
 		generateDyeTags();
 		generateDyedTags();
+		generateCropTags();
 		generateVillagerJobSites();
 		generateOtherTags();
 		copyItemTags();
@@ -418,7 +419,8 @@ public final class ItemTagGenerator extends FabricTagProvider.ItemTagProvider {
 				.addOptionalTag(ConventionalItemTags.GOLD_INGOTS)
 				.addOptionalTag(ConventionalItemTags.NETHERITE_INGOTS);
 		tag(ConventionalItemTags.NUGGETS)
-				.add(Items.GOLD_NUGGET, Items.IRON_NUGGET);
+				.addOptionalTag(ConventionalItemTags.IRON_NUGGETS)
+				.addOptionalTag(ConventionalItemTags.GOLD_NUGGETS);
 		copy(ConventionalBlockTags.ORES, ConventionalItemTags.ORES);
 		tag(ConventionalItemTags.ORES)
 				.addOptionalTag(ConventionalItemTags.NETHERITE_SCRAP_ORES)
@@ -490,6 +492,11 @@ public final class ItemTagGenerator extends FabricTagProvider.ItemTagProvider {
 				.add(Items.AMETHYST_SHARD);
 		tag(ConventionalItemTags.PRISMARINE_GEMS)
 				.add(Items.PRISMARINE_CRYSTALS);
+
+		tag(ConventionalItemTags.IRON_NUGGETS)
+				.add(Items.IRON_NUGGET);
+		tag(ConventionalItemTags.GOLD_NUGGETS)
+				.add(Items.GOLD_NUGGET);
 	}
 
 	private void generateToolTags() {
@@ -640,6 +647,41 @@ public final class ItemTagGenerator extends FabricTagProvider.ItemTagProvider {
 				.map(ItemLike::asItem)
 				.distinct() // cauldron blocks have the same item
 				.forEach(tag(ConventionalItemTags.VILLAGER_JOB_SITES)::add);
+	}
+
+	private void generateCropTags() {
+		tag(ConventionalItemTags.CROPS)
+				.addOptionalTag(ConventionalItemTags.BEETROOT_CROPS)
+				.addOptionalTag(ConventionalItemTags.CACTUS_CROPS)
+				.addOptionalTag(ConventionalItemTags.CARROT_CROPS)
+				.addOptionalTag(ConventionalItemTags.COCOA_BEAN_CROPS)
+				.addOptionalTag(ConventionalItemTags.MELON_CROPS)
+				.addOptionalTag(ConventionalItemTags.NETHER_WART_CROPS)
+				.addOptionalTag(ConventionalItemTags.POTATO_CROPS)
+				.addOptionalTag(ConventionalItemTags.PUMPKIN_CROPS)
+				.addOptionalTag(ConventionalItemTags.SUGAR_CANE_CROPS)
+				.addOptionalTag(ConventionalItemTags.WHEAT_CROPS);
+
+		tag(ConventionalItemTags.BEETROOT_CROPS)
+				.add(Items.BEETROOT);
+		tag(ConventionalItemTags.CACTUS_CROPS)
+				.add(Items.CACTUS);
+		tag(ConventionalItemTags.CARROT_CROPS)
+				.add(Items.CARROT);
+		tag(ConventionalItemTags.COCOA_BEAN_CROPS)
+				.add(Items.COCOA_BEANS);
+		tag(ConventionalItemTags.MELON_CROPS)
+				.add(Items.MELON);
+		tag(ConventionalItemTags.NETHER_WART_CROPS)
+				.add(Items.NETHER_WART);
+		tag(ConventionalItemTags.POTATO_CROPS)
+				.add(Items.POTATO);
+		tag(ConventionalItemTags.PUMPKIN_CROPS)
+				.add(Items.PUMPKIN);
+		tag(ConventionalItemTags.SUGAR_CANE_CROPS)
+				.add(Items.SUGAR_CANE);
+		tag(ConventionalItemTags.WHEAT_CROPS)
+				.add(Items.WHEAT);
 	}
 
 	private void generateOtherTags() {

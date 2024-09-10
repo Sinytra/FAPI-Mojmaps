@@ -21,6 +21,7 @@ import java.util.Objects;
 import org.jetbrains.annotations.Nullable;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -66,6 +67,11 @@ public class ItemVariantImpl implements ItemVariant {
 	@Override
 	public DataComponentPatch getComponents() {
 		return components;
+	}
+
+	@Override
+	public DataComponentMap getComponentMap() {
+		return getCachedStack().getComponents();
 	}
 
 	@Override

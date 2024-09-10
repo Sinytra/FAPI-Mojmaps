@@ -21,7 +21,9 @@ import java.util.Objects;
 import org.jetbrains.annotations.Nullable;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponentPatch;
+import net.minecraft.core.component.PatchedDataComponentMap;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.material.FlowingFluid;
@@ -61,11 +63,13 @@ public class FluidVariantImpl implements FluidVariant {
 
 	private final Fluid fluid;
 	private final DataComponentPatch components;
+	private final DataComponentMap componentMap;
 	private final int hashCode;
 
 	public FluidVariantImpl(Fluid fluid, DataComponentPatch components) {
 		this.fluid = fluid;
 		this.components = components;
+		this.componentMap = components == DataComponentPatch.EMPTY ? DataComponentMap.EMPTY : PatchedDataComponentMap.fromPatch(DataComponentMap.EMPTY, components);
 		this.hashCode = Objects.hash(fluid, components);
 	}
 
@@ -82,6 +86,11 @@ public class FluidVariantImpl implements FluidVariant {
 	@Override
 	public @Nullable DataComponentPatch getComponents() {
 		return components;
+	}
+
+	@Override
+	public DataComponentMap getComponentMap() {
+		return componentMap;
 	}
 
 	@Override

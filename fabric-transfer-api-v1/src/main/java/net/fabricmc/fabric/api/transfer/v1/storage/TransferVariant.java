@@ -17,6 +17,7 @@
 package net.fabricmc.fabric.api.transfer.v1.storage;
 
 import java.util.Objects;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponentPatch;
 
 /**
@@ -45,6 +46,11 @@ public interface TransferVariant<O> {
 	 * @return The {@link DataComponentPatch} of this variant.
 	 */
 	DataComponentPatch getComponents();
+
+	/**
+	 * @return The {@link DataComponentMap} of this variant.
+	 */
+	DataComponentMap getComponentMap();
 
 	/**
 	 * Return true if this variant has a component changes.

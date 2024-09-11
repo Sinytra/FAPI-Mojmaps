@@ -30,7 +30,6 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.BlockPos;
-import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -46,7 +45,6 @@ public final class WorldRenderContextImpl implements WorldRenderContext.BlockOut
 	private Matrix4f projectionMatrix;
 	private Matrix4f positionMatrix;
 	private MultiBufferSource consumers;
-	private ProfilerFiller profiler;
 	private boolean advancedTranslucency;
 	private ClientLevel world;
 
@@ -69,7 +67,6 @@ public final class WorldRenderContextImpl implements WorldRenderContext.BlockOut
 			Matrix4f projectionMatrix,
 			Matrix4f positionMatrix,
 			MultiBufferSource consumers,
-			ProfilerFiller profiler,
 			boolean advancedTranslucency,
 			ClientLevel world
 	) {
@@ -83,7 +80,6 @@ public final class WorldRenderContextImpl implements WorldRenderContext.BlockOut
 		this.projectionMatrix = projectionMatrix;
 		this.positionMatrix = positionMatrix;
 		this.consumers = consumers;
-		this.profiler = profiler;
 		this.advancedTranslucency = advancedTranslucency;
 		this.world = world;
 	}
@@ -170,11 +166,6 @@ public final class WorldRenderContextImpl implements WorldRenderContext.BlockOut
 	@Override
 	public LightTexture lightmapTextureManager() {
 		return lightmapTextureManager;
-	}
-
-	@Override
-	public ProfilerFiller profiler() {
-		return profiler;
 	}
 
 	@Override

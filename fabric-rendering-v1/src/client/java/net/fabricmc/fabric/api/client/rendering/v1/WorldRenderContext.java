@@ -27,7 +27,6 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.BlockPos;
-import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
@@ -71,13 +70,6 @@ public interface WorldRenderContext {
 	 * @return world renderer's client world instance
 	 */
 	ClientLevel world();
-
-	/**
-	 * Convenient access to game performance profiler.
-	 *
-	 * @return the active profiler
-	 */
-	ProfilerFiller profiler();
 
 	/**
 	 * Test to know if "fabulous" graphics mode is enabled.

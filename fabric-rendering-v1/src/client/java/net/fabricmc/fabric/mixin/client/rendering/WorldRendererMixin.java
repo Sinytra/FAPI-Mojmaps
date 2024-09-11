@@ -65,7 +65,7 @@ public abstract class WorldRendererMixin {
 
 	@Inject(method = "renderLevel", at = @At("HEAD"))
 	private void beforeRender(GraphicsResourceAllocator objectAllocator, DeltaTracker tickCounter, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightmapTextureManager, Matrix4f positionMatrix, Matrix4f projectionMatrix, CallbackInfo ci) {
-		context.prepare((LevelRenderer) (Object) this, tickCounter, renderBlockOutline, camera, gameRenderer, lightmapTextureManager, projectionMatrix, positionMatrix, renderBuffers.bufferSource(), level.getProfiler(), Minecraft.useShaderTransparency(), level);
+		context.prepare((LevelRenderer) (Object) this, tickCounter, renderBlockOutline, camera, gameRenderer, lightmapTextureManager, projectionMatrix, positionMatrix, renderBuffers.bufferSource(), Minecraft.useShaderTransparency(), level);
 		WorldRenderEvents.START.invoker().onStart(context);
 	}
 

@@ -23,7 +23,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import net.fabricmc.fabric.impl.event.lifecycle.LoadedChunksCache;
-import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
 
@@ -31,9 +30,6 @@ import net.minecraft.world.level.chunk.LevelChunk;
 public abstract class WorldMixin implements LoadedChunksCache {
 	@Shadow
 	public abstract boolean isClientSide();
-
-	@Shadow
-	public abstract ProfilerFiller getProfiler();
 
 	@Unique
 	private final Set<LevelChunk> loadedChunks = new HashSet<>();

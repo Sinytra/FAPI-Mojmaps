@@ -48,7 +48,7 @@ public abstract class ArmorFeatureRendererMixin<S extends HumanoidRenderState, M
 	}
 
 	@Inject(method = "renderArmorPiece", at = @At("HEAD"), cancellable = true)
-	private void renderArmor(PoseStack matrices, MultiBufferSource vertexConsumers, S state, ItemStack stack, EquipmentSlot armorSlot, int light, A armorModel, CallbackInfo ci) {
+	private void renderArmor(PoseStack matrices, MultiBufferSource vertexConsumers, ItemStack stack, EquipmentSlot armorSlot, int light, A bipedEntityModel, CallbackInfo ci) {
 		ArmorRenderer renderer = ArmorRendererRegistryImpl.get(stack.getItem());
 
 		if (renderer != null) {

@@ -39,11 +39,13 @@ import com.mojang.brigadier.tree.CommandNode;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.fabricmc.fabric.mixin.command.HelpCommandAccessor;
+
+import net.minecraft.class_10209;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentUtils;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.fabricmc.fabric.mixin.command.HelpCommandAccessor;
 
 public final class ClientCommandInternals {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ClientCommandInternals.class);
@@ -74,7 +76,7 @@ public final class ClientCommandInternals {
 		// noinspection ConstantConditions
 		FabricClientCommandSource commandSource = (FabricClientCommandSource) client.getConnection().getSuggestionsProvider();
 
-		client.getProfiler().push(command);
+		class_10209.method_64146().push(command);
 
 		try {
 			// TODO: Check for server commands before executing.
@@ -98,7 +100,7 @@ public final class ClientCommandInternals {
 			commandSource.sendError(Component.nullToEmpty(e.getMessage()));
 			return true;
 		} finally {
-			client.getProfiler().pop();
+			class_10209.method_64146().pop();
 		}
 	}
 

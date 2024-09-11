@@ -48,7 +48,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.Tuple;
-import net.minecraft.util.profiling.ProfilerFiller;
 
 @Mixin(ModelManager.class)
 abstract class BakedModelManagerMixin implements FabricBakedModelManager {
@@ -64,7 +63,7 @@ abstract class BakedModelManagerMixin implements FabricBakedModelManager {
 	}
 
 	@Inject(method = "reload", at = @At("HEAD"))
-	private void onHeadReload(PreparableReloadListener.PreparationBarrier synchronizer, ResourceManager manager, ProfilerFiller prepareProfiler, ProfilerFiller applyProfiler, Executor prepareExecutor, Executor applyExecutor, CallbackInfoReturnable<CompletableFuture<Void>> cir) {
+	private void onHeadReload(PreparableReloadListener.PreparationBarrier synchronizer, ResourceManager manager, Executor prepareExecutor, Executor applyExecutor, CallbackInfoReturnable<CompletableFuture<Void>> cir) {
 		eventDispatcherFuture = ModelLoadingPluginManager.preparePlugins(manager, prepareExecutor).thenApplyAsync(ModelLoadingEventDispatcher::new);
 	}
 

@@ -43,7 +43,7 @@ public abstract class CreateWorldScreenMixin extends Screen {
 		super(null);
 	}
 
-	@ModifyVariable(method = "create(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/gui/screens/Screen;)V",
+	@ModifyVariable(method = "method_64244",
 			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/worldselection/CreateWorldScreen;createDefaultLoadConfig(Lnet/minecraft/server/packs/repository/PackRepository;Lnet/minecraft/world/level/WorldDataConfiguration;)Lnet/minecraft/server/WorldLoader$InitConfig;"))
 	private static PackRepository onCreateResManagerInit(PackRepository manager) {
 		// Add mod data packs to the initial res pack manager so they are active even if the user doesn't use custom data packs
@@ -51,7 +51,7 @@ public abstract class CreateWorldScreenMixin extends Screen {
 		return manager;
 	}
 
-	@Redirect(method = "create(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/gui/screens/Screen;)V", at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/WorldDataConfiguration;DEFAULT:Lnet/minecraft/world/level/WorldDataConfiguration;", ordinal = 0))
+	@Redirect(method = "method_64244", at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/WorldDataConfiguration;DEFAULT:Lnet/minecraft/world/level/WorldDataConfiguration;", ordinal = 0))
 	private static WorldDataConfiguration replaceDefaultSettings() {
 		return ModResourcePackUtil.createDefaultDataConfiguration();
 	}

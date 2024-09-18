@@ -36,7 +36,6 @@ import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * Routines for adaptation of vanilla {@link BakedModel}s to FRAPI pipelines.
- * Even though Indigo calls them directly, they are not for use by third party renderers, and might change at any time.
  */
 public class VanillaModelEncoder {
 	private static final Renderer RENDERER = RendererAccess.INSTANCE.getRenderer();

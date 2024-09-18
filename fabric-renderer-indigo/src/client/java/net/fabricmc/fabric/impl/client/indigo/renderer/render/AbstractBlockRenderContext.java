@@ -26,39 +26,21 @@ import net.minecraft.client.render.model.json.ModelTransformationMode;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.material.ShadeMode;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.util.TriState;
 import net.fabricmc.fabric.impl.client.indigo.Indigo;
 import net.fabricmc.fabric.impl.client.indigo.renderer.aocalc.AoCalculator;
 import net.fabricmc.fabric.impl.client.indigo.renderer.aocalc.AoConfig;
 import net.fabricmc.fabric.impl.client.indigo.renderer.helper.ColorHelper;
-import net.fabricmc.fabric.impl.client.indigo.renderer.mesh.EncodingFormat;
 import net.fabricmc.fabric.impl.client.indigo.renderer.mesh.MutableQuadViewImpl;
-import net.fabricmc.fabric.impl.renderer.VanillaModelEncoder;
 
 public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 	protected final BlockRenderInfo blockInfo = new BlockRenderInfo();
 	protected final AoCalculator aoCalc;
-
-	private final MutableQuadViewImpl editorQuad = new MutableQuadViewImpl() {
-		{
-			data = new int[EncodingFormat.TOTAL_STRIDE];
-			clear();
-		}
-
-		@Override
-		public void emitDirectly() {
-			renderQuad(this);
-		}
-	};
-
-	private final BakedModelConsumerImpl vanillaModelConsumer = new BakedModelConsumerImpl();
 
 	private final BlockPos.MutableBlockPos lightPos = new BlockPos.MutableBlockPos();
 
@@ -71,12 +53,6 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 	protected abstract VertexConsumer getVertexConsumer(RenderType layer);
 
 	@Override
-	public QuadEmitter getEmitter() {
-		editorQuad.clear();
-		return editorQuad;
-	}
-
-	@Override
 	public boolean isFaceCulled(@Nullable Direction face) {
 		return !blockInfo.shouldDrawFace(face);
 	}
@@ -87,11 +63,7 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 	}
 
 	@Override
-	public BakedModelConsumer bakedModelConsumer() {
-		return vanillaModelConsumer;
-	}
-
-	private void renderQuad(MutableQuadViewImpl quad) {
+	protected void renderQuad(MutableQuadViewImpl quad) {
 		if (!transform(quad)) {
 			return;
 		}
@@ -270,26 +242,5 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 
 		// Unfortunately cannot use brightness cache here unless we implement one specifically for flat lighting. See #329
 		return LevelRenderer.getLightColor(blockInfo.blockView, blockState, lightPos);
-	}
-
-	/**
-	 * Consumer for vanilla baked models. Generally intended to give visual results matching a vanilla render,
-	 * however there could be subtle (and desirable) lighting variations so is good to be able to render
-	 * everything consistently.
-	 *
-	 * <p>Also, the API allows multi-part models that hold multiple vanilla models to render them without
-	 * combining quad lists, but the vanilla logic only handles one model per block. To route all of
-	 * them through vanilla logic would require additional hooks.
-	 */
-	private class BakedModelConsumerImpl implements BakedModelConsumer {
-		@Override
-		public void accept(BakedModel model) {
-			accept(model, blockInfo.blockState);
-		}
-
-		@Override
-		public void accept(BakedModel model, @Nullable BlockState state) {
-			VanillaModelEncoder.emitBlockQuads(model, state, blockInfo.randomSupplier, AbstractBlockRenderContext.this);
-		}
 	}
 }

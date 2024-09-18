@@ -27,6 +27,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Drowned;
 import net.minecraft.world.entity.monster.Zombie;
@@ -54,7 +55,7 @@ public class AttachmentCopyTests implements FabricGameTest {
 		ServerLevel end = server.getLevel(Level.END);
 		// using overworld and end to avoid portal code related to the nether
 
-		Entity entity = EntityType.PIG.create(overworld, SpawnReason.SPAWN_EGG);
+		Entity entity = EntityType.PIG.create(overworld, EntitySpawnReason.SPAWN_ITEM_USE);
 		Objects.requireNonNull(entity, "entity was null");
 		entity.setAttached(DUMMY, () -> 10);
 		entity.setAttached(COPY_ON_DEATH, () -> 10);

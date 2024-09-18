@@ -46,7 +46,7 @@ public record TagsPopulatedResourceCondition(ResourceLocation registry, List<Res
 
 	@SafeVarargs
 	public <T> TagsPopulatedResourceCondition(TagKey<T>... tags) {
-		this(tags[0].registry().getValue(), Arrays.stream(tags).map(TagKey::location).toList());
+		this(tags[0].registry().location(), Arrays.stream(tags).map(TagKey::location).toList());
 	}
 
 	@Override

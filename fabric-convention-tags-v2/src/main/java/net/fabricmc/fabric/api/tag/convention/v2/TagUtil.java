@@ -64,7 +64,7 @@ public final class TagUtil {
 		if (registryManager != null) {
 			maybeRegistry = registryManager.lookup(tagKey.registry());
 		} else {
-			maybeRegistry = BuiltInRegistries.REGISTRY.getOptional(tagKey.registry().getValue());
+			maybeRegistry = BuiltInRegistries.REGISTRY.getOptional(tagKey.registry().location());
 		}
 
 		if (maybeRegistry.isPresent()) {

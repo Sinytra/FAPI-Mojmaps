@@ -19,18 +19,18 @@ package net.fabricmc.fabric.impl.transfer;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.component.ComponentMapImpl;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.impl.transfer.fluid.FluidVariantImpl;
+import net.fabricmc.fabric.impl.transfer.item.ItemVariantImpl;
 import net.minecraft.core.component.DataComponentPatch;
+import net.minecraft.core.component.PatchedDataComponentMap;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.ItemStack;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-import net.fabricmc.fabric.impl.transfer.fluid.FluidVariantImpl;
-import net.fabricmc.fabric.impl.transfer.item.ItemVariantImpl;
 
 public class VariantCodecs {
 	// AIR is valid (for some reason), don't use ItemStack#ITEM_CODEC
@@ -58,6 +58,6 @@ public class VariantCodecs {
 	);
 
 	private static DataResult<ItemVariant> validateComponents(ItemVariant variant) {
-		return ItemStack.validateComponents(ComponentMapImpl.create(variant.getItem().components(), variant.getComponents())).map(v -> variant);
+		return ItemStack.validateComponents(PatchedDataComponentMap.fromPatch(variant.getItem().components(), variant.getComponents())).map(v -> variant);
 	}
 }

@@ -29,7 +29,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.LivingEntityFeatureRenderEven
 
 @Mixin(CapeLayer.class)
 public class CapeFeatureRendererMixin {
-	@WrapOperation(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/layers/CapeLayer;method_64257(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/item/equipment/EquipmentModel$LayerType;)Z"), method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/client/renderer/entity/state/PlayerRenderState;FF)V")
+	@WrapOperation(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/layers/CapeLayer;hasCustomModelForLayer(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/item/equipment/EquipmentModel$LayerType;)Z"), method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/client/renderer/entity/state/PlayerRenderState;FF)V")
 	public boolean injectCapeRenderCheck(CapeLayer instance, ItemStack itemStack, EquipmentModel.LayerType layerType, Operation<Boolean> original, @Local(argsOnly = true) PlayerRenderState state) {
 		if (!LivingEntityFeatureRenderEvents.ALLOW_CAPE_RENDER.invoker().allowCapeRender(state)) {
 			return false;

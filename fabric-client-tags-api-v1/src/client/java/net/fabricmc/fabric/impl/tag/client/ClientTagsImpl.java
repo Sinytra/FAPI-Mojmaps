@@ -92,7 +92,7 @@ public class ClientTagsImpl {
 			}
 		}
 
-		return (Optional<? extends Registry<T>>) BuiltInRegistries.REGISTRY.getOptional(tagKey.registry().getValue());
+		return (Optional<? extends Registry<T>>) BuiltInRegistries.REGISTRY.getOptional(tagKey.registry().location());
 	}
 
 	@SuppressWarnings("unchecked")

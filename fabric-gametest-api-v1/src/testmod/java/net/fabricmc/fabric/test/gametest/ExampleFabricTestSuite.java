@@ -45,7 +45,7 @@ public class ExampleFabricTestSuite implements FabricGameTest {
 
 	private void afterEach(GameTestHelper context) {
 		context.succeedWhen(() ->
-				context.assertBlock(new BlockPos(0, 2, 0), (block) -> block == Blocks.DIAMOND_BLOCK, "Expect block to be gold")
+				context.assertBlock(new BlockPos(0, 1, 0), (block) -> block == Blocks.DIAMOND_BLOCK, "Expect block to be diamond")
 		);
 	}
 
@@ -56,6 +56,6 @@ public class ExampleFabricTestSuite implements FabricGameTest {
 
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void noStructure(GameTestHelper context) {
-		context.setBlock(0, 2, 0, Blocks.DIAMOND_BLOCK);
+		context.setBlock(0, 1, 0, Blocks.DIAMOND_BLOCK);
 	}
 }

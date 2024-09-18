@@ -47,7 +47,7 @@ public interface FabricTagKey {
 		stringBuilder.append("tag.");
 
 		TagKey<?> tagKey = (TagKey<?>) this;
-		ResourceLocation registryIdentifier = tagKey.registry().getValue();
+		ResourceLocation registryIdentifier = tagKey.registry().location();
 		ResourceLocation tagIdentifier = tagKey.location();
 
 		if (!registryIdentifier.getNamespace().equals(ResourceLocation.DEFAULT_NAMESPACE)) {

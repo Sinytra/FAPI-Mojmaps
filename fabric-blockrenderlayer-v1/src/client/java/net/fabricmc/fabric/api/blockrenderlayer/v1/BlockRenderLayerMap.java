@@ -19,7 +19,6 @@ package net.fabricmc.fabric.api.blockrenderlayer.v1;
 import net.fabricmc.fabric.impl.blockrenderlayer.BlockRenderLayerMapImpl;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.material.Fluid;
 
@@ -54,20 +53,6 @@ public interface BlockRenderLayerMap {
 	 * @param blocks Identifies blocks to be mapped.
 	 */
 	void putBlocks(RenderType renderLayer, Block... blocks);
-
-	/**
-	 * @deprecated For blocks, calling {@link #putBlock(Block, RenderType)} is enough.
-	 * Other items always use a translucent render layer.
-	 */
-	@Deprecated(forRemoval = true)
-	void putItem(Item item, RenderType renderLayer);
-
-	/**
-	 * @deprecated For blocks, calling {@link #putBlocks(RenderType, Block...)} is enough.
-	 * Other items always use a translucent render layer.
-	 */
-	@Deprecated(forRemoval = true)
-	void putItems(RenderType renderLayer, Item... items);
 
 	/**
 	 * Map (or re-map) a fluid state with a render layer.  Re-mapping is not recommended but if done, last one in wins.

@@ -69,8 +69,7 @@ public class FurnaceGameTest implements FabricGameTest {
 		context.succeed();
 	}
 
-	// TODO 1.21.2 - test broken as the weird pick does not have a fuel value, so doesnt burn.
-	// @GameTest(templateName = EMPTY_STRUCTURE)
+	@GameTest(template = EMPTY_STRUCTURE)
 	public void fabricRemainderTest(GameTestHelper context) {
 		context.setBlock(POS, Blocks.FURNACE);
 		FurnaceBlockEntity blockEntity = context.getBlockEntity(POS);

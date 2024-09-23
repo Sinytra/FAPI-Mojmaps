@@ -16,9 +16,11 @@
 
 package net.fabricmc.fabric.test.content.registry;
 
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -31,7 +33,11 @@ import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.ComposterBlock;
+import net.minecraft.world.level.block.HopperBlock;
+import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.level.block.entity.BrewingStandBlockEntity;
+import net.minecraft.world.level.block.entity.HopperBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class ContentRegistryGameTest {
 	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
@@ -59,6 +65,87 @@ public class ContentRegistryGameTest {
 		context.assertBlockPresent(Blocks.YELLOW_WOOL, pos);
 		context.assertValueEqual(shovel.getDamageValue(), 1, "shovel damage");
 		context.succeed();
+	}
+
+	private void smelt(GameTestHelper context, ItemStack fuelStack, BiConsumer<AbstractFurnaceBlockEntity, HopperBlockEntity> callback) {
+		// Create a furnace to simulate smelting in
+		// A blast furnace will smelt twice as fast, so it is used here
+		var furnacePos = new BlockPos(0, 1, 0);
+		BlockState furnaceState = Blocks.BLAST_FURNACE.defaultBlockState();
+
+		context.setBlock(furnacePos, furnaceState);
+
+		if (!(context.getBlockEntity(furnacePos) instanceof AbstractFurnaceBlockEntity furnace)) {
+			throw new AssertionError("Furnace was not placed");
+		}
+
+		// Create a hopper that attempts to insert fuel into the furnace
+		BlockPos hopperPos = furnacePos.east();
+		BlockState hopperState = Blocks.HOPPER.defaultBlockState()
+				.setValue(HopperBlock.FACING, context.getTestRotation().rotate(Direction.WEST));
+
+		context.setBlock(hopperPos, hopperState);
+
+		if (!(context.getBlockEntity(hopperPos) instanceof HopperBlockEntity hopper)) {
+			throw new AssertionError("Hopper was not placed");
+		}
+
+		// Insert the fuel into the hopper, which transfers it into the furnace
+		hopper.setItem(0, fuelStack.copy());
+
+		// Insert the item that should be smelted into the furnace
+		// Smelting a single item takes 200 fuel time
+		furnace.setItem(0, new ItemStack(Items.RAW_IRON, 1));
+
+		context.runAfterDelay(105, () -> callback.accept(furnace, hopper));
+	}
+
+	private void smeltCompleted(GameTestHelper context, ItemStack fuelStack) {
+		smelt(context, fuelStack, (furnace, hopper) -> {
+			context.assertTrue(hopper.isEmpty(), "fuel hopper should have been emptied");
+
+			context.assertTrue(furnace.getItem(0).isEmpty(), "furnace input slot should have been emptied");
+			context.assertTrue(furnace.getItem(0).isEmpty(), "furnace fuel slot should have been emptied");
+			context.assertTrue(ItemStack.matches(furnace.getItem(2), new ItemStack(Items.IRON_INGOT, 1)), "one iron ingot should have been smelted and placed into the furnace output slot");
+
+			context.succeed();
+		});
+	}
+
+	private void smeltFailed(GameTestHelper context, ItemStack fuelStack) {
+		smelt(context, fuelStack, (furnace, hopper) -> {
+			context.assertTrue(ItemStack.matches(hopper.getItem(0), fuelStack), "fuel hopper should not have been emptied");
+
+			context.assertTrue(ItemStack.matches(furnace.getItem(0), new ItemStack(Items.RAW_IRON, 1)), "furnace input slot should not have been emptied");
+			context.assertTrue(furnace.getItem(1).isEmpty(), "furnace fuel slot should not have been filled");
+			context.assertTrue(furnace.getItem(2).isEmpty(), "furnace output slot should not have been filled");
+
+			context.succeed();
+		});
+	}
+
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 110)
+	public void testSmeltingFuelIncludedByItem(GameTestHelper context) {
+		// Item with 50 fuel time x4 = 200 fuel time
+		smeltCompleted(context, new ItemStack(ContentRegistryTest.SMELTING_FUEL_INCLUDED_BY_ITEM, 4));
+	}
+
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 110)
+	public void testSmeltingFuelIncludedByTag(GameTestHelper context) {
+		// Item in tag with 100 fuel time x2 = 200 fuel time
+		smeltCompleted(context, new ItemStack(ContentRegistryTest.SMELTING_FUEL_INCLUDED_BY_TAG, 2));
+	}
+
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 110)
+	public void testSmeltingFuelExcludedByTag(GameTestHelper context) {
+		// Item is in both the smelting fuels tag and the excluded smithing fuels tag
+		smeltFailed(context, new ItemStack(ContentRegistryTest.SMELTING_FUEL_EXCLUDED_BY_TAG));
+	}
+
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE, timeoutTicks = 110)
+	public void testSmeltingFuelExcludedByVanillaTag(GameTestHelper context) {
+		// Item is in both the smelting fuel tag and vanilla's excluded non-flammable wood tag
+		smeltFailed(context, new ItemStack(ContentRegistryTest.SMELTING_FUEL_EXCLUDED_BY_VANILLA_TAG));
 	}
 
 	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)

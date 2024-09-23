@@ -18,7 +18,6 @@ package net.fabricmc.fabric.test.item.gametest;
 
 import java.util.function.Consumer;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
-import net.fabricmc.fabric.test.item.DefaultItemComponentTest;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
@@ -79,8 +78,8 @@ public class DefaultItemComponentGameTest implements FabricGameTest {
 		Item testItem = Items.DIAMOND_PICKAXE;
 		ItemStack stack = testItem.getDefaultInstance();
 
-		Component itemName = stack.getOrDefault(DataComponents.ITEM_NAME, Component.literal(""));
-		Component expectedName = DefaultItemComponentTest.prependModifiedLiteral(testItem.getName());
+		String itemName = stack.getHoverName().getString();
+		String expectedName = "Modified Diamond Pickaxe";
 
 		String errorMessage = "Expected '%s' to be contained in '%s', but it was not!";
 

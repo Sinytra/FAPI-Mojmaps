@@ -21,6 +21,7 @@ import net.fabricmc.fabric.api.item.v1.EnchantmentEvents;
 import net.minecraft.advancements.critereon.DamageSourcePredicate;
 import net.minecraft.advancements.critereon.EntityPredicate;
 import net.minecraft.advancements.critereon.EntityTypePredicate;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -65,7 +66,7 @@ public class CustomEnchantmentEffectsTest implements ModInitializer {
 								LootItemEntityPropertyCondition.hasProperties(
 										LootContext.EntityTarget.THIS,
 										EntityPredicate.Builder.entity()
-												.entityType(EntityTypePredicate.of(EntityType.ZOMBIE))
+												.entityType(EntityTypePredicate.of(BuiltInRegistries.ENTITY_TYPE, EntityType.ZOMBIE))
 								)
 						);
 					}

@@ -84,6 +84,6 @@ public class CustomEnchantmentEffectsGameTest implements FabricGameTest {
 
 	private static Registry<Enchantment> getEnchantmentRegistry(GameTestHelper context) {
 		RegistryAccess registryManager = context.getLevel().registryAccess();
-		return registryManager.get(Registries.ENCHANTMENT);
+		return registryManager.lookupOrThrow(Registries.ENCHANTMENT);
 	}
 }

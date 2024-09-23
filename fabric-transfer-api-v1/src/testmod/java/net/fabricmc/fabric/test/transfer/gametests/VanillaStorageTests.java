@@ -111,10 +111,11 @@ public class VanillaStorageTests {
 		InventoryStorage storage = InventoryStorage.of(inventory, null);
 
 		BlockPos comparatorPos = new BlockPos(1, 2, 0);
+		Direction comparatorFacing = context.getTestRotation().rotate(Direction.WEST);
 		// support block under the comparator
 		context.setBlock(comparatorPos.relative(Direction.DOWN), Blocks.GREEN_WOOL.defaultBlockState());
 		// comparator
-		context.setBlock(comparatorPos, Blocks.COMPARATOR.defaultBlockState().setValue(ComparatorBlock.FACING, Direction.WEST));
+		context.setBlock(comparatorPos, Blocks.COMPARATOR.defaultBlockState().setValue(ComparatorBlock.FACING, comparatorFacing));
 
 		try (Transaction transaction = Transaction.openOuter()) {
 			if (world.getBlockTicks().hasScheduledTick(context.absolutePos(comparatorPos), Blocks.COMPARATOR)) {

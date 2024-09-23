@@ -28,6 +28,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.impl.networking.client.ClientConfigurationNetworkAddon;
 import net.fabricmc.fabric.impl.networking.client.ClientNetworkingImpl;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientConfigurationPacketListenerImpl;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.thread.BlockableEventLoop;
@@ -277,6 +278,11 @@ public final class ClientConfigurationNetworking {
 		 * @return The MinecraftClient instance
 		 */
 		Minecraft client();
+
+		/**
+		 * @return The ClientConfigurationNetworkHandler instance
+		 */
+		ClientConfigurationPacketListenerImpl networkHandler();
 
 		/**
 		 * @return The packet sender

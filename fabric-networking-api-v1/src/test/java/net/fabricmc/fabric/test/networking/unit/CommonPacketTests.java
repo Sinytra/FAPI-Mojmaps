@@ -137,6 +137,11 @@ public class CommonPacketTests {
 			}
 
 			@Override
+			public ClientConfigurationPacketListenerImpl networkHandler() {
+				return clientNetworkHandler;
+			}
+
+			@Override
 			public PacketSender responseSender() {
 				return packetSender;
 			}

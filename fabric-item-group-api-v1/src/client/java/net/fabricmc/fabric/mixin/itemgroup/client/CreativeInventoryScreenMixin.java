@@ -27,21 +27,21 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screen.ingame.AbstractInventoryScreen;
-import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.CreativeModeTabs;
 import net.fabricmc.fabric.api.client.itemgroup.v1.FabricCreativeInventoryScreen;
 import net.fabricmc.fabric.impl.client.itemgroup.FabricCreativeGuiComponents;
 import net.fabricmc.fabric.impl.itemgroup.FabricItemGroupImpl;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen.ItemPickerMenu;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.CreativeModeTabs;
 
 @Mixin(CreativeModeInventoryScreen.class)
-public abstract class CreativeInventoryScreenMixin<T extends AbstractContainerMenu> extends AbstractInventoryScreen<T> implements FabricCreativeInventoryScreen {
-	public CreativeInventoryScreenMixin(T screenHandler, Inventory playerInventory, Component text) {
+public abstract class CreativeInventoryScreenMixin extends AbstractContainerScreen<ItemPickerMenu> implements FabricCreativeInventoryScreen {
+	public CreativeInventoryScreenMixin(ItemPickerMenu screenHandler, Inventory playerInventory, Component text) {
 		super(screenHandler, playerInventory, text);
 	}
 
@@ -70,12 +70,12 @@ public abstract class CreativeInventoryScreenMixin<T extends AbstractContainerMe
 	private void init(CallbackInfo info) {
 		currentPage = getPage(selectedTab);
 
-		int xpos = x + 170;
-		int ypos = y + 4;
+		int xpos = leftPos + 170;
+		int ypos = topPos + 4;
 
 		CreativeModeInventoryScreen self = (CreativeModeInventoryScreen) (Object) this;
-		addDrawableChild(new FabricCreativeGuiComponents.ItemGroupButtonWidget(xpos + 11, ypos, FabricCreativeGuiComponents.Type.NEXT, self));
-		addDrawableChild(new FabricCreativeGuiComponents.ItemGroupButtonWidget(xpos, ypos, FabricCreativeGuiComponents.Type.PREVIOUS, self));
+		addRenderableWidget(new FabricCreativeGuiComponents.ItemGroupButtonWidget(xpos + 11, ypos, FabricCreativeGuiComponents.Type.NEXT, self));
+		addRenderableWidget(new FabricCreativeGuiComponents.ItemGroupButtonWidget(xpos, ypos, FabricCreativeGuiComponents.Type.PREVIOUS, self));
 	}
 
 	@Inject(method = "selectTab", at = @At("HEAD"), cancellable = true)

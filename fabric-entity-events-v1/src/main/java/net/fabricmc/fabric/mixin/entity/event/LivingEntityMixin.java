@@ -71,19 +71,19 @@ abstract class LivingEntityMixin {
 	}
 
 	@Redirect(method = "hurtServer", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;isDeadOrDying()Z", ordinal = 1))
-	boolean beforeEntityKilled(LivingEntity livingEntity, DamageSource source, float amount) {
+	boolean beforeEntityKilled(LivingEntity livingEntity, ServerLevel world, DamageSource source, float amount) {
 		return isDeadOrDying() && ServerLivingEntityEvents.ALLOW_DEATH.invoker().allowDeath(livingEntity, source, amount);
 	}
 
 	@Inject(method = "hurtServer", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;isSleeping()Z"), cancellable = true)
-	private void beforeDamage(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
+	private void beforeDamage(ServerLevel world, DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
 		if (!ServerLivingEntityEvents.ALLOW_DAMAGE.invoker().allowDamage((LivingEntity) (Object) this, source, amount)) {
 			cir.setReturnValue(false);
 		}
 	}
 
 	@Inject(method = "hurtServer", at = @At("TAIL"), locals = LocalCapture.CAPTURE_FAILHARD)
-	private void afterDamage(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir, float dealt, boolean blocked) {
+	private void afterDamage(ServerLevel world, DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir, float dealt, boolean blocked) {
 		if (!isDeadOrDying()) {
 			ServerLivingEntityEvents.AFTER_DAMAGE.invoker().afterDamage((LivingEntity) (Object) this, source, dealt, amount, blocked);
 		}

@@ -21,6 +21,7 @@ import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalEntityTypeTags;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.world.entity.EntityType;
 
 public final class EntityTypeTagGenerator extends FabricTagProvider.EntityTypeTagProvider {
@@ -42,8 +43,16 @@ public final class EntityTypeTagGenerator extends FabricTagProvider.EntityTypeTa
 				.add(EntityType.HOPPER_MINECART)
 				.add(EntityType.SPAWNER_MINECART);
 		getOrCreateTagBuilder(ConventionalEntityTypeTags.BOATS)
-				.add(EntityType.BOAT)
-				.add(EntityType.CHEST_BOAT);
+				.addOptionalTag(EntityTypeTags.BOAT)
+				.add(EntityType.OAK_CHEST_BOAT)
+				.add(EntityType.SPRUCE_CHEST_BOAT)
+				.add(EntityType.BIRCH_CHEST_BOAT)
+				.add(EntityType.JUNGLE_CHEST_BOAT)
+				.add(EntityType.ACACIA_CHEST_BOAT)
+				.add(EntityType.CHERRY_CHEST_BOAT)
+				.add(EntityType.DARK_OAK_CHEST_BOAT)
+				.add(EntityType.MANGROVE_CHEST_BOAT)
+				.add(EntityType.BAMBOO_CHEST_RAFT);
 		getOrCreateTagBuilder(ConventionalEntityTypeTags.CAPTURING_NOT_SUPPORTED);
 		getOrCreateTagBuilder(ConventionalEntityTypeTags.TELEPORTING_NOT_SUPPORTED);
 	}

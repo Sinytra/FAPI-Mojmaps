@@ -20,13 +20,16 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingInput;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
 
 public class ShapelessRecipeMatchTests {
@@ -35,8 +38,8 @@ public class ShapelessRecipeMatchTests {
 	 */
 	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
 	public void testShapelessMatch(GameTestHelper context) {
-		ResourceLocation recipeId = ResourceLocation.fromNamespaceAndPath("fabric-recipe-api-v1-testmod", "test_shapeless_match");
-		ShapelessRecipe recipe = (ShapelessRecipe) context.getLevel().recipeAccess().byKey(recipeId).get().value();
+		ResourceKey<Recipe<?>> recipeKey = ResourceKey.create(Registries.RECIPE, ResourceLocation.fromNamespaceAndPath("fabric-recipe-api-v1-testmod", "test_shapeless_match"));
+		ShapelessRecipe recipe = (ShapelessRecipe) context.getLevel().recipeAccess().byKey(recipeKey).get().value();
 
 		ItemStack undamagedPickaxe = new ItemStack(Items.DIAMOND_PICKAXE);
 		ItemStack damagedPickaxe = new ItemStack(Items.DIAMOND_PICKAXE);

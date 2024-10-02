@@ -30,7 +30,7 @@ import net.minecraft.server.players.PlayerList;
 public class PlayerManagerMixin {
 	@Inject(
 			method = "placeNewPlayer",
-			at = @At(value = "INVOKE", target = "net/minecraft/network/packet/s2c/play/SynchronizeRecipesS2CPacket.<init>(Ljava/util/Collection;)V")
+			at = @At(value = "NEW", target = "net/minecraft/network/protocol/game/ClientboundUpdateRecipesPacket")
 	)
 	private void hookOnPlayerConnect(Connection connection, ServerPlayer player, CommonListenerCookie arg, CallbackInfo ci) {
 		ServerLifecycleEvents.SYNC_DATA_PACK_CONTENTS.invoker().onSyncDataPackContents(player, true);

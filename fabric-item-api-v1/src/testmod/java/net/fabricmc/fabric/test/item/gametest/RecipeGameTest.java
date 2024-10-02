@@ -19,7 +19,6 @@ package net.fabricmc.fabric.test.item.gametest;
 import java.util.List;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.fabricmc.fabric.test.item.CustomDamageTest;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
@@ -27,22 +26,16 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingInput;
-import net.minecraft.world.item.crafting.PlacementInfo;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.item.crafting.CraftingRecipe;
 
 public class RecipeGameTest implements FabricGameTest {
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void vanillaRemainderTest(GameTestHelper context) {
-		Recipe<CraftingInput> testRecipe = createTestingRecipeInstance();
-
 		CraftingInput inventory = CraftingInput.of(1, 2, List.of(
 				new ItemStack(Items.WATER_BUCKET),
 				new ItemStack(Items.DIAMOND)));
 
-		NonNullList<ItemStack> remainderList = testRecipe.getRemainder(inventory);
+		NonNullList<ItemStack> remainderList = CraftingRecipe.method_64671(inventory);
 
 		assertStackList(remainderList, "Testing vanilla recipe remainder.",
 				new ItemStack(Items.BUCKET),
@@ -53,15 +46,13 @@ public class RecipeGameTest implements FabricGameTest {
 
 	@GameTest(template = EMPTY_STRUCTURE)
 	public void fabricRemainderTest(GameTestHelper context) {
-		Recipe<CraftingInput> testRecipe = createTestingRecipeInstance();
-
 		CraftingInput inventory = CraftingInput.of(1, 4, List.of(
 				new ItemStack(CustomDamageTest.WEIRD_PICK),
 				withDamage(new ItemStack(CustomDamageTest.WEIRD_PICK), 10),
 				withDamage(new ItemStack(CustomDamageTest.WEIRD_PICK), 31),
 				new ItemStack(Items.DIAMOND)));
 
-		NonNullList<ItemStack> remainderList = testRecipe.getRemainder(inventory);
+		NonNullList<ItemStack> remainderList = CraftingRecipe.method_64671(inventory);
 
 		assertStackList(remainderList, "Testing fabric recipe remainder.",
 				withDamage(new ItemStack(CustomDamageTest.WEIRD_PICK), 1),
@@ -70,45 +61,6 @@ public class RecipeGameTest implements FabricGameTest {
 				ItemStack.EMPTY);
 
 		context.succeed();
-	}
-
-	private Recipe<CraftingInput> createTestingRecipeInstance() {
-		return new Recipe<>() {
-			@Override
-			public boolean matches(CraftingInput recipeInput, Level world) {
-				return true;
-			}
-
-			@Override
-			public ItemStack assemble(CraftingInput recipeInput, HolderLookup.Provider wrapperLookup) {
-				return null;
-			}
-
-			@Override
-			public boolean fits(int width, int height) {
-				return true;
-			}
-
-			@Override
-			public ItemStack getResult(HolderLookup.Provider wrapperLookup) {
-				return null;
-			}
-
-			@Override
-			public RecipeSerializer<?> getSerializer() {
-				return null;
-			}
-
-			@Override
-			public RecipeType<?> getType() {
-				return null;
-			}
-
-			@Override
-			public PlacementInfo placementInfo() {
-				return PlacementInfo.NOT_PLACEABLE;
-			}
-		};
 	}
 
 	private void assertStackList(NonNullList<ItemStack> stackList, String extraErrorInfo, ItemStack... stacks) {

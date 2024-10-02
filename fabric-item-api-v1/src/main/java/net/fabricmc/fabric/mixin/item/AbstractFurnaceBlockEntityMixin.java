@@ -17,9 +17,10 @@
 package net.fabricmc.fabric.mixin.item;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
@@ -36,7 +37,7 @@ public abstract class AbstractFurnaceBlockEntityMixin {
 	private static final ThreadLocal<ItemStack> REMAINDER_STACK = new ThreadLocal<>();
 
 	@Inject(method = "serverTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;getItem()Lnet/minecraft/world/item/Item;"), locals = LocalCapture.CAPTURE_FAILHARD, allow = 1)
-	private static void getStackRemainder(Level world, BlockPos pos, BlockState state, AbstractFurnaceBlockEntity blockEntity, CallbackInfo ci, boolean bl, boolean bl2, ItemStack itemStack, ItemStack itemStack2, boolean bl3, boolean bl4, RecipeHolder recipeEntry, int i) {
+	private static void getStackRemainder(ServerLevel world, BlockPos pos, BlockState state, AbstractFurnaceBlockEntity blockEntity, CallbackInfo ci, boolean bl, boolean bl2, ItemStack itemStack, ItemStack itemStack2, boolean bl3, boolean bl4, RecipeHolder recipeEntry, SingleRecipeInput input, int i) {
 		REMAINDER_STACK.set(itemStack.getRecipeRemainder());
 	}
 

@@ -40,6 +40,7 @@ import net.minecraft.data.server.recipe.RecipeGenerator;
 import net.minecraft.data.server.recipe.ShapedRecipeJsonBuilder;
 import net.minecraft.data.server.recipe.ShapelessRecipeJsonBuilder;
 import net.minecraft.resources.RegistryOps;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.Recipe;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
@@ -75,9 +76,9 @@ public abstract class FabricRecipeProvider extends RecipeGenerator.RecipeProvide
 		Preconditions.checkArgument(conditions.length > 0, "Must add at least one condition.");
 		return new RecipeExporter() {
 			@Override
-			public void accept(ResourceLocation identifier, Recipe<?> recipe, @Nullable AdvancementHolder advancementEntry) {
+			public void accept(ResourceKey<Recipe<?>> key, Recipe<?> recipe, @Nullable AdvancementHolder advancementEntry) {
 				FabricDataGenHelper.addConditions(recipe, conditions);
-				exporter.accept(identifier, recipe, advancementEntry);
+				exporter.accept(key, recipe, advancementEntry);
 			}
 
 			@Override
@@ -98,8 +99,8 @@ public abstract class FabricRecipeProvider extends RecipeGenerator.RecipeProvide
 			List<CompletableFuture<?>> list = new ArrayList<>();
 			RecipeGenerator recipeGenerator = getRecipeGenerator(wrapperLookup, new RecipeExporter() {
 				@Override
-				public void accept(ResourceLocation recipeId, Recipe<?> recipe, @Nullable AdvancementHolder advancement) {
-					ResourceLocation identifier = getRecipeIdentifier(recipeId);
+				public void accept(ResourceKey<Recipe<?>> recipeKey, Recipe<?> recipe, @Nullable AdvancementHolder advancement) {
+					ResourceLocation identifier = getRecipeIdentifier(recipeKey.location());
 
 					if (!generatedRecipes.add(identifier)) {
 						throw new IllegalStateException("Duplicate recipe " + identifier);

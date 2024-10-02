@@ -91,7 +91,7 @@ public interface FabricItem {
 	 * @return the leftover item stack
 	 */
 	default ItemStack getRecipeRemainder(ItemStack stack) {
-		return ((Item) this).hasRecipeRemainder() ? ((Item) this).getCraftingRemainder().getDefaultStack() : ItemStack.EMPTY;
+		return ((Item) this).getCraftingRemainder();
 	}
 
 	/**

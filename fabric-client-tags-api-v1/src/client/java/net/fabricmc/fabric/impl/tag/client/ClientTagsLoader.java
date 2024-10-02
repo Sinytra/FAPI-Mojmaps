@@ -78,7 +78,7 @@ public class ClientTagsLoader {
 			tagEntry.build(new TagEntry.Lookup<>() {
 				@Nullable
 				@Override
-				public ResourceLocation direct(ResourceLocation id) {
+				public ResourceLocation element(ResourceLocation id, boolean required) {
 					immediateChildIds.add(id);
 					return id;
 				}

@@ -25,8 +25,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.fabricmc.fabric.impl.transfer.item.SpecialLogicInventory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -73,15 +73,15 @@ public abstract class AbstractFurnaceBlockEntityMixin extends BaseContainerBlock
 			// Update cook time if needed. Code taken from AbstractFurnaceBlockEntity#setStack.
 			boolean bl = !stack.isEmpty() && ItemStack.isSameItemSameComponents(stack, itemStack);
 
-			if (!bl) {
-				this.cookTimeTotal = getCookTime(this.level, (AbstractFurnaceBlockEntity) (Object) this);
+			if (!bl && this.level instanceof ServerLevel world) {
+				this.cookTimeTotal = getTotalCookTime(world, (AbstractFurnaceBlockEntity) (Object) this);
 				this.cookTime = 0;
 			}
 		}
 	}
 
 	@Shadow
-	private static int getCookTime(Level world, AbstractFurnaceBlockEntity abstractFurnaceBlockEntity) {
+	private static int getTotalCookTime(ServerLevel world, AbstractFurnaceBlockEntity abstractFurnaceBlockEntity) {
 		throw new AssertionError();
 	}
 }

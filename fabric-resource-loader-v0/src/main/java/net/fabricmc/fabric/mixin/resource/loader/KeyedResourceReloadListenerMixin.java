@@ -26,11 +26,11 @@ import net.fabricmc.fabric.api.resource.ResourceReloadListenerKeys;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.ServerAdvancementManager;
 import net.minecraft.server.ServerFunctionLibrary;
-import net.minecraft.world.item.crafting.RecipeAccess;
+import net.minecraft.world.item.crafting.RecipeManager;
 
 @Mixin({
 		/* public */
-		RecipeAccess.class, ServerAdvancementManager.class, ServerFunctionLibrary.class
+		RecipeManager.class, ServerAdvancementManager.class, ServerFunctionLibrary.class
 		/* private */
 })
 public abstract class KeyedResourceReloadListenerMixin implements IdentifiableResourceReloadListener {
@@ -43,7 +43,7 @@ public abstract class KeyedResourceReloadListenerMixin implements IdentifiableRe
 		if (this.fabric$id == null) {
 			Object self = this;
 
-			if (self instanceof RecipeAccess) {
+			if (self instanceof RecipeManager) {
 				this.fabric$id = ResourceReloadListenerKeys.RECIPES;
 			} else if (self instanceof ServerAdvancementManager) {
 				this.fabric$id = ResourceReloadListenerKeys.ADVANCEMENTS;

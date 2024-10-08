@@ -25,10 +25,10 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.fabricmc.fabric.impl.resource.loader.FabricRecipeManager;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.world.item.crafting.RecipeAccess;
+import net.minecraft.world.item.crafting.RecipeManager;
 
-@Mixin(RecipeAccess.class)
-public class RecipeManagerMixin implements FabricRecipeManager {
+@Mixin(RecipeManager.class)
+public class ServerRecipeManagerMixin implements FabricRecipeManager {
 	@Unique
 	private HolderLookup.Provider registries;
 

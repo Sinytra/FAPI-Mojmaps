@@ -19,14 +19,13 @@ package net.fabricmc.fabric.api.renderer.v1.render;
 import java.util.function.Consumer;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.client.render.model.json.ModelTransformationMode;
-import net.minecraft.core.Direction;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.ItemDisplayContext;
 
 /**
  * This defines the instance made available to models for buffering vertex data at render time.
@@ -99,7 +98,7 @@ public interface RenderContext {
 	 * <p>This function can only be used on an item render context (i.e. in {@link FabricBakedModel#emitItemQuads}).
 	 * Calling it on another context (e.g. in {@link FabricBakedModel#emitBlockQuads}) will throw an exception.
 	 */
-	ModelTransformationMode itemTransformationMode();
+	ItemDisplayContext itemTransformationMode();
 
 	@FunctionalInterface
 	interface QuadTransform {

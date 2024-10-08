@@ -25,7 +25,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.ReloadableServerRegistries;
-import net.minecraft.world.item.crafting.RecipeAccess;
+import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.block.entity.BannerPattern;
 import net.minecraft.world.level.storage.loot.LootTable;
 
@@ -38,37 +38,37 @@ public class ConditionalResourcesTest {
 
 	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
 	public void conditionalRecipes(GameTestHelper context) {
-		RecipeAccess manager = context.getLevel().recipeAccess();
+		RecipeManager manager = context.getLevel().recipeAccess();
 
-		if (manager.get(ResourceKey.create(Registries.RECIPE, id("not_loaded"))).isPresent()) {
+		if (manager.byKey(ResourceKey.create(Registries.RECIPE, id("not_loaded"))).isPresent()) {
 			throw new AssertionError("not_loaded recipe should not have been loaded.");
 		}
 
-		if (manager.get(ResourceKey.create(Registries.RECIPE, id("loaded"))).isEmpty()) {
+		if (manager.byKey(ResourceKey.create(Registries.RECIPE, id("loaded"))).isEmpty()) {
 			throw new AssertionError("loaded recipe should have been loaded.");
 		}
 
-		if (manager.get(ResourceKey.create(Registries.RECIPE, id("item_tags_populated"))).isEmpty()) {
+		if (manager.byKey(ResourceKey.create(Registries.RECIPE, id("item_tags_populated"))).isEmpty()) {
 			throw new AssertionError("item_tags_populated recipe should have been loaded.");
 		}
 
-		if (manager.get(ResourceKey.create(Registries.RECIPE, id("tags_populated"))).isEmpty()) {
+		if (manager.byKey(ResourceKey.create(Registries.RECIPE, id("tags_populated"))).isEmpty()) {
 			throw new AssertionError("tags_populated recipe should have been loaded.");
 		}
 
-		if (manager.get(ResourceKey.create(Registries.RECIPE, id("tags_populated_default"))).isEmpty()) {
+		if (manager.byKey(ResourceKey.create(Registries.RECIPE, id("tags_populated_default"))).isEmpty()) {
 			throw new AssertionError("tags_populated_default recipe should have been loaded.");
 		}
 
-		if (manager.get(ResourceKey.create(Registries.RECIPE, id("tags_not_populated"))).isPresent()) {
+		if (manager.byKey(ResourceKey.create(Registries.RECIPE, id("tags_not_populated"))).isPresent()) {
 			throw new AssertionError("tags_not_populated recipe should not have been loaded.");
 		}
 
-		if (manager.get(ResourceKey.create(Registries.RECIPE, id("features_enabled"))).isEmpty()) {
+		if (manager.byKey(ResourceKey.create(Registries.RECIPE, id("features_enabled"))).isEmpty()) {
 			throw new AssertionError("features_enabled recipe should have been loaded.");
 		}
 
-		long loadedRecipes = manager.values().stream().filter(r -> r.id().getValue().getNamespace().equals(MOD_ID)).count();
+		long loadedRecipes = manager.getRecipes().stream().filter(r -> r.id().location().getNamespace().equals(MOD_ID)).count();
 		if (loadedRecipes != 5) throw new AssertionError("Unexpected loaded recipe count: " + loadedRecipes);
 
 		context.succeed();

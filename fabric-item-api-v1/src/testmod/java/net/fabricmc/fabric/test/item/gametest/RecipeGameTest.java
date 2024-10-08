@@ -35,7 +35,7 @@ public class RecipeGameTest implements FabricGameTest {
 				new ItemStack(Items.WATER_BUCKET),
 				new ItemStack(Items.DIAMOND)));
 
-		NonNullList<ItemStack> remainderList = CraftingRecipe.method_64671(inventory);
+		NonNullList<ItemStack> remainderList = CraftingRecipe.defaultCraftingReminder(inventory);
 
 		assertStackList(remainderList, "Testing vanilla recipe remainder.",
 				new ItemStack(Items.BUCKET),
@@ -52,7 +52,7 @@ public class RecipeGameTest implements FabricGameTest {
 				withDamage(new ItemStack(CustomDamageTest.WEIRD_PICK), 31),
 				new ItemStack(Items.DIAMOND)));
 
-		NonNullList<ItemStack> remainderList = CraftingRecipe.method_64671(inventory);
+		NonNullList<ItemStack> remainderList = CraftingRecipe.defaultCraftingReminder(inventory);
 
 		assertStackList(remainderList, "Testing fabric recipe remainder.",
 				withDamage(new ItemStack(CustomDamageTest.WEIRD_PICK), 1),

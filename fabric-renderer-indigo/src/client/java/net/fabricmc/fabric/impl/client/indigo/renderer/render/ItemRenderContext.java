@@ -24,7 +24,6 @@ import java.util.function.Supplier;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.client.color.item.ItemColors;
-import net.minecraft.client.render.model.json.ModelTransformationMode;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -34,6 +33,7 @@ import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
@@ -57,7 +57,7 @@ public class ItemRenderContext extends AbstractRenderContext {
 	};
 
 	private ItemStack itemStack;
-	private ModelTransformationMode transformMode;
+	private ItemDisplayContext transformMode;
 	private PoseStack matrixStack;
 	private MultiBufferSource vertexConsumerProvider;
 	private int lightmap;
@@ -82,11 +82,11 @@ public class ItemRenderContext extends AbstractRenderContext {
 	}
 
 	@Override
-	public ModelTransformationMode itemTransformationMode() {
+	public ItemDisplayContext itemTransformationMode() {
 		return transformMode;
 	}
 
-	public void renderModel(ItemStack itemStack, ModelTransformationMode transformMode, PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, int lightmap, int overlay, BakedModel model) {
+	public void renderModel(ItemStack itemStack, ItemDisplayContext transformMode, PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, int lightmap, int overlay, BakedModel model) {
 		this.itemStack = itemStack;
 		this.transformMode = transformMode;
 		this.matrixStack = matrixStack;
@@ -214,9 +214,9 @@ public class ItemRenderContext extends AbstractRenderContext {
 			if (dynamicDisplayGlintEntry == null) {
 				dynamicDisplayGlintEntry = matrixStack.last().copy();
 
-				if (transformMode == ModelTransformationMode.GUI) {
+				if (transformMode == ItemDisplayContext.GUI) {
 					MatrixUtil.mulComponentWise(dynamicDisplayGlintEntry.pose(), 0.5F);
-				} else if (transformMode.isFirstPerson()) {
+				} else if (transformMode.firstPerson()) {
 					MatrixUtil.mulComponentWise(dynamicDisplayGlintEntry.pose(), 0.75F);
 				}
 			}

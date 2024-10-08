@@ -96,6 +96,7 @@ transitive-accessible	method	net/minecraft/world/level/block/CoralPlantBlock	<in
 transitive-accessible	method	net/minecraft/world/level/block/CoralFanBlock	<init>	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
 transitive-accessible	method	net/minecraft/world/level/block/CoralWallFanBlock	<init>	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
 transitive-accessible	method	net/minecraft/world/level/block/CraftingTableBlock	<init>	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+transitive-accessible	method	net/minecraft/world/level/block/CreakingHeartBlock	<init>	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
 transitive-accessible	method	net/minecraft/world/level/block/CropBlock	<init>	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
 transitive-accessible	method	net/minecraft/world/level/block/DeadBushBlock	<init>	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
 transitive-accessible	method	net/minecraft/world/level/block/BaseCoralPlantBlock	<init>	(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V

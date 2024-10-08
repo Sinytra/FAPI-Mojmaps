@@ -17,13 +17,13 @@
 package net.fabricmc.fabric.api.client.rendering.v1;
 
 import org.jetbrains.annotations.Nullable;
-import net.minecraft.client.render.model.json.ModelTransformationMode;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.ItemLike;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.fabricmc.fabric.impl.client.rendering.BuiltinItemRendererRegistryImpl;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ItemLike;
 
 /**
  * This registry holds {@linkplain DynamicItemRenderer builtin item renderers} for items.
@@ -100,6 +100,6 @@ public interface BuiltinItemRendererRegistry {
 		 * @param light           packed lightmap coordinates
 		 * @param overlay         the overlay UV passed to {@link com.mojang.blaze3d.vertex.VertexConsumer#setOverlay(int)}
 		 */
-		void render(ItemStack stack, ModelTransformationMode mode, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay);
+		void render(ItemStack stack, ItemDisplayContext mode, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay);
 	}
 }

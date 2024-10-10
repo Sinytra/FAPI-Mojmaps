@@ -31,9 +31,9 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
-import net.minecraft.loot.context.LootContextType;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.context.ContextKeySet;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricBlockLootTableProvider;
@@ -49,7 +49,7 @@ public final class FabricLootTableProviderImpl {
 	public static CompletableFuture<?> run(
 			CachedOutput writer,
 			FabricLootTableProvider provider,
-			LootContextType lootContextType,
+			ContextKeySet contextType,
 			FabricDataOutput fabricDataOutput,
 			CompletableFuture<HolderLookup.Provider> registryLookup) {
 		HashMap<ResourceLocation, LootTable> builders = Maps.newHashMap();
@@ -60,7 +60,7 @@ public final class FabricLootTableProviderImpl {
 				ResourceCondition[] conditions = FabricDataGenHelper.consumeConditions(builder);
 				conditionMap.put(registryKey.getValue(), conditions);
 
-				if (builders.put(registryKey.getValue(), builder.type(lootContextType).build()) != null) {
+				if (builders.put(registryKey.getValue(), builder.type(contextType).build()) != null) {
 					throw new IllegalStateException("Duplicate loot table " + registryKey.getValue());
 				}
 			});

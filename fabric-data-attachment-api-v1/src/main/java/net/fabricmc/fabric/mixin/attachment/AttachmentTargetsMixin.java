@@ -55,7 +55,7 @@ abstract class AttachmentTargetsMixin implements AttachmentTargetImpl {
 		if (thisObject instanceof BlockEntity) {
 			((BlockEntity) thisObject).setChanged();
 		} else if (thisObject instanceof ChunkAccess) {
-			((ChunkAccess) thisObject).setNeedsSaving(true);
+			((ChunkAccess) thisObject).method_65063();
 
 			if (type.isPersistent() && ((ChunkAccess) thisObject).getPersistedStatus().equals(ChunkStatus.EMPTY)) {
 				AttachmentEntrypoint.LOGGER.warn("Attaching persistent attachment {} to chunk with chunk status EMPTY. Attachment might be discarded.", type.identifier());

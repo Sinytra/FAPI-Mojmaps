@@ -47,10 +47,10 @@ public class DifferenceIngredient implements CustomIngredient {
 	}
 
 	@Override
-	public List<Holder<Item>> getMatchingStacks() {
-		final List<Holder<Item>> subtractedMatchingStacks = subtracted.getMatchingStacks();
-		return base.getMatchingStacks().stream()
-				.filter(registryEntry -> !subtractedMatchingStacks.contains(registryEntry))
+	public List<Holder<Item>> getMatchingItems() {
+		final List<Holder<Item>> subtractedMatchingItems = subtracted.items();
+		return base.items().stream()
+				.filter(registryEntry -> !subtractedMatchingItems.contains(registryEntry))
 				.toList();
 	}
 

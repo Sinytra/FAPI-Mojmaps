@@ -52,11 +52,11 @@ public class AnyIngredient extends CombinedIngredient {
 	}
 
 	@Override
-	public List<Holder<Item>> getMatchingStacks() {
+	public List<Holder<Item>> getMatchingItems() {
 		List<Holder<Item>> previewStacks = new ArrayList<>();
 
 		for (Ingredient ingredient : ingredients) {
-			previewStacks.addAll(ingredient.getMatchingStacks());
+			previewStacks.addAll(ingredient.items());
 		}
 
 		return previewStacks;

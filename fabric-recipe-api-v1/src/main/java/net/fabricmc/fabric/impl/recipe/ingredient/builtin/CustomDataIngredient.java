@@ -57,8 +57,8 @@ public class CustomDataIngredient implements CustomIngredient {
 	}
 
 	@Override
-	public List<Holder<Item>> getMatchingStacks() {
-		return base.getMatchingStacks().stream()
+	public List<Holder<Item>> getMatchingItems() {
+		return base.items().stream()
 				.filter(registryEntry -> {
 					ItemStack itemStack = registryEntry.value().getDefaultStack();
 					itemStack.apply(DataComponentTypes.CUSTOM_DATA, NbtComponent.DEFAULT, existingNbt -> NbtComponent.of(existingNbt.copyNbt().copyFrom(nbt)));

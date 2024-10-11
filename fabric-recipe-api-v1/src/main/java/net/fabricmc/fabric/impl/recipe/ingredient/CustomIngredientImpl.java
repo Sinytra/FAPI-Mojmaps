@@ -90,12 +90,12 @@ public class CustomIngredientImpl extends Ingredient {
 	}
 
 	@Override
-	public List<Holder<Item>> getMatchingStacks() {
-		if (this.matchingStacks == null) {
-			this.matchingStacks = customIngredient.getMatchingStacks();
+	public List<Holder<Item>> items() {
+		if (this.matchingItems == null) {
+			this.matchingItems = customIngredient.getMatchingItems();
 		}
 
-		return this.matchingStacks;
+		return this.matchingItems;
 	}
 
 	@Override

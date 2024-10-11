@@ -139,10 +139,6 @@ public class FabricRegistryInit implements ModInitializer {
 		// Does not seem to be serialised, only queried by id. Not synced
 		RegistryAttributeHolder.get(BuiltInRegistries.RECIPE_TYPE);
 
-		// Synced by id
-		RegistryAttributeHolder.get(BuiltInRegistries.RECIPE_SERIALIZER)
-				.addAttribute(RegistryAttribute.SYNCED);
-
 		// Synced by rawID in 24w03a+
 		RegistryAttributeHolder.get(BuiltInRegistries.ATTRIBUTE)
 				.addAttribute(RegistryAttribute.SYNCED);

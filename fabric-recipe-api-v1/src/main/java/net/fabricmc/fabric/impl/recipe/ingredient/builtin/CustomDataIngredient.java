@@ -34,6 +34,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.display.SlotDisplay;
 
 public class CustomDataIngredient implements CustomIngredient {
 	public static final CustomIngredientSerializer<CustomDataIngredient> SERIALIZER = new Serializer();
@@ -58,13 +59,20 @@ public class CustomDataIngredient implements CustomIngredient {
 
 	@Override
 	public List<Holder<Item>> getMatchingItems() {
-		return base.items().stream()
-				.filter(registryEntry -> {
-					ItemStack itemStack = registryEntry.value().getDefaultStack();
-					itemStack.apply(DataComponentTypes.CUSTOM_DATA, NbtComponent.DEFAULT, existingNbt -> NbtComponent.of(existingNbt.copyNbt().copyFrom(nbt)));
-					return base.test(itemStack);
-				})
-				.toList();
+		return base.items();
+	}
+
+	@Override
+	public SlotDisplay toDisplay() {
+		return new SlotDisplay.Composite(
+				base.items().stream().map(this::createEntryDisplay).toList()
+		);
+	}
+
+	private SlotDisplay createEntryDisplay(Holder<Item> entry) {
+		ItemStack stack = entry.value().getDefaultInstance();
+		stack.update(DataComponents.CUSTOM_DATA, CustomData.EMPTY, existingNbt -> CustomData.of(existingNbt.copyTag().merge(nbt)));
+		return new SlotDisplay.ItemStackSlotDisplay(stack);
 	}
 
 	@Override

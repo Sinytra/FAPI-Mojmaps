@@ -35,6 +35,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.display.SlotDisplay;
 
 public class ComponentsIngredient implements CustomIngredient {
 	public static final CustomIngredientSerializer<ComponentsIngredient> SERIALIZER = new Serializer();
@@ -82,13 +83,20 @@ public class ComponentsIngredient implements CustomIngredient {
 
 	@Override
 	public List<Holder<Item>> getMatchingItems() {
-		return base.items().stream()
-				.filter(registryEntry -> {
-					ItemStack itemStack = registryEntry.value().getDefaultStack();
-					itemStack.applyChanges(components);
-					return base.test(itemStack);
-				})
-				.toList();
+		return base.items();
+	}
+
+	@Override
+	public SlotDisplay toDisplay() {
+		return new SlotDisplay.Composite(
+			base.items().stream().map(this::createEntryDisplay).toList()
+		);
+	}
+
+	private SlotDisplay createEntryDisplay(Holder<Item> entry) {
+		ItemStack stack = entry.value().getDefaultInstance();
+		stack.applyComponentsAndValidate(components);
+		return new SlotDisplay.ItemStackSlotDisplay(stack);
 	}
 
 	@Override

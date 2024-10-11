@@ -27,6 +27,7 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.display.SlotDisplay;
 
 /**
  * Base class for ALL and ANY ingredients.
@@ -55,6 +56,13 @@ abstract class CombinedIngredient implements CustomIngredient {
 
 	List<Ingredient> getIngredients() {
 		return ingredients;
+	}
+
+	@Override
+	public SlotDisplay toDisplay() {
+		return new SlotDisplay.Composite(
+				ingredients.stream().map(Ingredient::display).toList()
+		);
 	}
 
 	static class Serializer<I extends CombinedIngredient> implements CustomIngredientSerializer<I> {

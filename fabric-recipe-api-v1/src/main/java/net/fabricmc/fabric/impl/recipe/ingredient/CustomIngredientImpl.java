@@ -34,6 +34,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.display.SlotDisplay;
 
 /**
  * To test this API beyond the unit tests, please refer to the recipe provider in the datagen API testmod.
@@ -101,5 +102,10 @@ public class CustomIngredientImpl extends Ingredient {
 	@Override
 	public boolean test(@Nullable ItemStack stack) {
 		return stack != null && customIngredient.test(stack);
+	}
+
+	@Override
+	public SlotDisplay display() {
+		return customIngredient.toDisplay();
 	}
 }

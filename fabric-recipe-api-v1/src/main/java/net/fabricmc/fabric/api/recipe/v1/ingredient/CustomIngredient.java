@@ -21,9 +21,11 @@ import java.util.List;
 import org.jetbrains.annotations.ApiStatus;
 import net.fabricmc.fabric.impl.recipe.ingredient.CustomIngredientImpl;
 import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.display.SlotDisplay;
 
 /**
  * Interface that modders can implement to create new behaviors for {@link Ingredient}s.
@@ -85,6 +87,20 @@ public interface CustomIngredient {
 	 * <p>The serializer must have been registered using {@link CustomIngredientSerializer#register}.
 	 */
 	CustomIngredientSerializer<?> getSerializer();
+
+	/**
+	 * Returns a {@link SlotDisplay} representing this ingredient, this is synced to the client to display in the recipe book.
+	 *
+	 * @return a {@link SlotDisplay} instance.
+	 */
+	default SlotDisplay toDisplay() {
+		// Matches the vanilla logic in Ingredient.toDisplay()
+		return HolderSet.direct(getMatchingItems()).unwrap().map(
+				SlotDisplay.TagSlotDisplay::new,
+				(itemEntries) -> new SlotDisplay.Composite(
+						itemEntries.stream().map(Ingredient::createDisplayWithRemainder).toList()
+				));
+	}
 
 	/**
 	 * {@return a new {@link Ingredient} behaving as defined by this custom ingredient}.

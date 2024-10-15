@@ -20,6 +20,7 @@ import java.util.Objects;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.types.Type;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityType;
 import net.fabricmc.fabric.impl.object.builder.FabricEntityTypeImpl;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -85,8 +87,9 @@ public abstract class EntityTypeBuilderMixin<T extends Entity> implements Fabric
 	}
 
 	@WrapOperation(method = "build", at = @At(value = "INVOKE", target = "Lnet/minecraft/Util;fetchChoiceType(Lcom/mojang/datafixers/DSL$TypeReference;Ljava/lang/String;)Lcom/mojang/datafixers/types/Type;"))
-	private @Nullable Type<?> allowNullId(DSL.TypeReference typeReference, String id, Operation<Type<?>> original) {
-		if (id == null) {
+	private @Nullable Type<?> allowNoModdedDatafixers(DSL.TypeReference typeReference, String id, Operation<Type<?>> original, @Local(argsOnly = true) ResourceKey<EntityType<?>> registryKey) {
+		if (!registryKey.location().getNamespace().equals(ResourceLocation.DEFAULT_NAMESPACE)) {
+			// Don't try to resolve the choice type for modded entities.
 			return null;
 		}
 

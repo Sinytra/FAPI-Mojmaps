@@ -17,7 +17,9 @@
 package net.fabricmc.fabric.mixin.client.rendering;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
+import com.mojang.blaze3d.framegraph.FramePass;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -43,6 +45,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.FogParameters;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.LevelTargetBundle;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderBuffers;
 import net.minecraft.client.renderer.RenderType;
@@ -61,6 +64,9 @@ public abstract class WorldRendererMixin {
 	@Final
 	@Shadow
 	private Minecraft minecraft;
+	@Shadow
+	@Final
+	private LevelTargetBundle targets;
 	@Unique private final WorldRenderContextImpl context = new WorldRenderContextImpl();
 
 	@Inject(method = "renderLevel", at = @At("HEAD"))
@@ -149,8 +155,11 @@ public abstract class WorldRendererMixin {
 	}
 
 	@Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Options;getCloudsType()Lnet/minecraft/client/CloudStatus;"))
-	private void beforeClouds(CallbackInfo ci) {
-		WorldRenderEvents.AFTER_TRANSLUCENT.invoker().afterTranslucent(context);
+	private void beforeClouds(CallbackInfo ci, @Local FrameGraphBuilder frameGraphBuilder) {
+		FramePass afterTranslucentPass = frameGraphBuilder.addPass("afterTranslucent");
+		targets.main = afterTranslucentPass.readsAndWrites(targets.main);
+
+		afterTranslucentPass.executes(() -> WorldRenderEvents.AFTER_TRANSLUCENT.invoker().afterTranslucent(context));
 	}
 
 	@Inject(method = "lambda$addMainPass$1", at = @At("RETURN"))

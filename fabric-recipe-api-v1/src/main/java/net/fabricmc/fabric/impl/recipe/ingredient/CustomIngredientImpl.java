@@ -103,6 +103,6 @@ public class CustomIngredientImpl extends Ingredient {
 		// We don't want to resolve the matching stacks,
 		// as this might cause the ingredient to use outdated tags when it's done too early.
 		// So we just return false when the matching stacks haven't been resolved yet (i.e. when the field is null).
-		return itemStacks != null && itemStacks.length == 0;
+		return itemStacks != null && matchingStacks.length == 0;
 	}
 }

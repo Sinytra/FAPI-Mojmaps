@@ -28,7 +28,7 @@ import net.minecraft.world.entity.animal.MushroomCow;
 class MooshroomEntityMixin {
 	@ModifyArg(
 			method = "shear",
-			at = @At(ordinal = 0, value = "INVOKE", target = "Lnet/minecraft/world/level/Level;addFreshEntity(Lnet/minecraft/world/entity/Entity;)Z")
+			at = @At(ordinal = 0, value = "INVOKE", target = "Lnet/minecraft/world/level/Level;spawnEntity(Lnet/minecraft/world/entity/Entity;)Z")
 	)
 	private Entity afterMooshroomConversion(Entity converted) {
 		ServerLivingEntityEvents.MOB_CONVERSION.invoker().onConversion((MushroomCow) (Object) this, (Mob) converted, false);

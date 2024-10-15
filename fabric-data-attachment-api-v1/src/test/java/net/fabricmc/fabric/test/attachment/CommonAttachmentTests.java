@@ -87,7 +87,7 @@ public class CommonAttachmentTests {
 		BlockEntity blockEntity = mock(BlockEntity.class, CALLS_REAL_METHODS);
 
 		LevelChunk worldChunk = mock(LevelChunk.class, CALLS_REAL_METHODS);
-		worldChunk.method_65066(pos -> { });
+		worldChunk.setUnsavedListener(pos -> { });
 
 		ProtoChunk protoChunk = mock(ProtoChunk.class, CALLS_REAL_METHODS);
 

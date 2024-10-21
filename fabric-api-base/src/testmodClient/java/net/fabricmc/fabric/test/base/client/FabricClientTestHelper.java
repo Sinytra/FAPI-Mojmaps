@@ -24,6 +24,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import net.fabricmc.fabric.test.base.client.mixin.CyclingButtonWidgetAccessor;
 import net.fabricmc.fabric.test.base.client.mixin.ScreenAccessor;
+import net.fabricmc.fabric.test.base.client.mixin.TitleScreenAccessor;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
@@ -38,6 +39,7 @@ import net.minecraft.client.gui.screens.ConnectScreen;
 import net.minecraft.client.gui.screens.LevelLoadingScreen;
 import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.multiplayer.ServerData;
@@ -78,8 +80,12 @@ public final class FabricClientTestHelper {
 	}
 
 	public static void takeScreenshot(String name) {
+		takeScreenshot(name, Duration.ofSeconds(1));
+	}
+
+	public static void takeScreenshot(String name, Duration delay) {
 		// Allow time for any screens to open
-		waitFor(Duration.ofSeconds(1));
+		waitFor(delay);
 
 		submitAndWait(client -> {
 			Screenshot.grab(FabricLoader.getInstance().getGameDir().toFile(), name + ".png", client.getMainRenderTarget(), (message) -> {
@@ -161,6 +167,16 @@ public final class FabricClientTestHelper {
 			final var serverInfo = new ServerData("localhost", server.getConnectionAddress(), ServerData.Type.OTHER);
 			ConnectScreen.startConnecting(client.screen, client, ServerAddress.parseString(server.getConnectionAddress()), serverInfo, false, null);
 			return null;
+		});
+	}
+
+	public static void waitForTitleScreenFade() {
+		waitFor("Title screen fade", client -> {
+			if (!(client.screen instanceof TitleScreen titleScreen)) {
+				return false;
+			}
+
+			return !((TitleScreenAccessor) titleScreen).getFading();
 		});
 	}
 

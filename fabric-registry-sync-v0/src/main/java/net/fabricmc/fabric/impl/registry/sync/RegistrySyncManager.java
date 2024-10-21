@@ -56,6 +56,7 @@ import net.minecraft.util.thread.BlockableEventLoop;
 import net.fabricmc.fabric.api.event.registry.RegistryAttribute;
 import net.fabricmc.fabric.api.event.registry.RegistryAttributeHolder;
 import net.fabricmc.fabric.api.networking.v1.ServerConfigurationNetworking;
+import net.fabricmc.fabric.impl.networking.server.ServerNetworkingImpl;
 import net.fabricmc.fabric.impl.registry.sync.packet.DirectRegistryPacketHandler;
 import net.fabricmc.fabric.impl.registry.sync.packet.RegistryPacketHandler;
 
@@ -63,7 +64,6 @@ public final class RegistrySyncManager {
 	public static final boolean DEBUG = Boolean.getBoolean("fabric.registry.debug");
 
 	public static final DirectRegistryPacketHandler DIRECT_PACKET_HANDLER = new DirectRegistryPacketHandler();
-
 	private static final Logger LOGGER = LoggerFactory.getLogger("FabricRegistrySync");
 	private static final boolean DEBUG_WRITE_REGISTRY_DATA = Boolean.getBoolean("fabric.registry.debug.writeContentsAsCsv");
 
@@ -78,11 +78,6 @@ public final class RegistrySyncManager {
 			return;
 		}
 
-		if (!ServerConfigurationNetworking.canSend(handler, DIRECT_PACKET_HANDLER.getPacketId())) {
-			// Don't send if the client cannot receive
-			return;
-		}
-
 		final Map<ResourceLocation, Object2IntMap<ResourceLocation>> map = RegistrySyncManager.createAndPopulateRegistryMap();
 
 		if (map == null) {
@@ -90,7 +85,47 @@ public final class RegistrySyncManager {
 			return;
 		}
 
+		if (!ServerConfigurationNetworking.canSend(handler, DIRECT_PACKET_HANDLER.getPacketId())) {
+			// Disconnect incompatible clients
+			Component message = getIncompatibleClientText(ServerNetworkingImpl.getAddon(handler).getClientBrand(), map);
+			handler.disconnect(message);
+			return;
+		}
+
 		handler.addTask(new SyncConfigurationTask(handler, map));
+	}
+
+	private static Component getIncompatibleClientText(@Nullable String brand, Map<ResourceLocation, Object2IntMap<ResourceLocation>> map) {
+		String brandText = switch (brand) {
+		case "fabric" -> "Fabric API";
+		case null, default -> "Fabric Loader and Fabric API";
+		};
+
+		final int toDisplay = 4;
+
+		List<String> namespaces = map.values().stream()
+				.map(Object2IntMap::keySet)
+				.flatMap(Set::stream)
+				.map(ResourceLocation::getNamespace)
+				.filter(s -> !s.equals(ResourceLocation.DEFAULT_NAMESPACE))
+				.distinct()
+				.sorted()
+				.toList();
+
+		MutableComponent text = Component.literal("The following registry entry namespaces may be related:\n\n");
+
+		for (int i = 0; i < Math.min(namespaces.size(), toDisplay); i++) {
+			text = text.append(Component.literal(namespaces.get(i)).withStyle(ChatFormatting.YELLOW));
+			text = text.append(CommonComponents.NEW_LINE);
+		}
+
+		if (namespaces.size() > toDisplay) {
+			text = text.append(Component.literal("And %d more...".formatted(namespaces.size() - toDisplay)));
+		}
+
+		return Component.literal("This server requires ").append(Component.literal(brandText).withStyle(ChatFormatting.GREEN)).append(" installed on your client!")
+				.append(CommonComponents.NEW_LINE).append(text)
+				.append(CommonComponents.NEW_LINE).append(CommonComponents.NEW_LINE).append(Component.literal("Contact the server's administrator for more information!").withStyle(ChatFormatting.GOLD));
 	}
 
 	public record SyncConfigurationTask(

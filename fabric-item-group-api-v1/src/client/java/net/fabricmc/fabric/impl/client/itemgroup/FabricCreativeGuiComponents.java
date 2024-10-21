@@ -35,12 +35,12 @@ import net.minecraft.world.item.CreativeModeTabs;
 public class FabricCreativeGuiComponents {
 	private static final ResourceLocation BUTTON_TEX = ResourceLocation.fromNamespaceAndPath("fabric", "textures/gui/creative_buttons.png");
 	private static final double TABS_PER_PAGE = FabricItemGroupImpl.TABS_PER_PAGE;
-	public static final Set<CreativeModeTab> COMMON_GROUPS = Set.of(CreativeModeTabs.SEARCH, CreativeModeTabs.INVENTORY, CreativeModeTabs.HOTBAR).stream()
+	public static final Set<CreativeModeTab> COMMON_GROUPS = Set.of(CreativeModeTabs.SEARCH, CreativeModeTabs.INVENTORY, CreativeModeTabs.HOTBAR, CreativeModeTabs.OP_BLOCKS).stream()
 			.map(BuiltInRegistries.CREATIVE_MODE_TAB::getValueOrThrow)
 			.collect(Collectors.toSet());
 
 	public static int getPageCount() {
-		return (int) Math.ceil((CreativeModeTabs.tabs().size() - COMMON_GROUPS.size()) / TABS_PER_PAGE);
+		return (int) Math.ceil((CreativeModeTabs.tabs().size() - COMMON_GROUPS.stream().filter(CreativeModeTab::shouldDisplay).count()) / TABS_PER_PAGE);
 	}
 
 	public static class ItemGroupButtonWidget extends Button {

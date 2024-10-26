@@ -19,13 +19,10 @@ package net.fabricmc.fabric.impl.networking.server;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-
-import org.jetbrains.annotations.Nullable;
 import net.minecraft.network.ConnectionProtocol;
 import net.minecraft.network.PacketSendListener;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.common.ClientboundPingPacket;
-import net.minecraft.network.protocol.common.custom.BrandPayload;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -45,8 +42,6 @@ public final class ServerConfigurationNetworkAddon extends AbstractChanneledNetw
 	private final MinecraftServer server;
 	private final ServerConfigurationNetworking.Context context;
 	private RegisterState registerState = RegisterState.NOT_SENT;
-	@Nullable
-	private String clientBrand = null;
 
 	public ServerConfigurationNetworkAddon(ServerConfigurationPacketListenerImpl handler, MinecraftServer server) {
 		super(ServerNetworkingImpl.CONFIGURATION, ((ServerCommonNetworkHandlerAccessor) handler).getConnection(), "ServerConfigurationNetworkAddon for " + handler.getOwner().getName());
@@ -56,16 +51,6 @@ public final class ServerConfigurationNetworkAddon extends AbstractChanneledNetw
 
 		// Must register pending channels via lateinit
 		this.registerPendingChannels((ChannelInfoHolder) this.connection, ConnectionProtocol.CONFIGURATION);
-	}
-
-	@Override
-	public boolean handle(CustomPacketPayload payload) {
-		if (payload instanceof BrandPayload brandCustomPayload) {
-			clientBrand = brandCustomPayload.brand();
-			return false;
-		}
-
-		return super.handle(payload);
 	}
 
 	@Override
@@ -180,10 +165,6 @@ public final class ServerConfigurationNetworkAddon extends AbstractChanneledNetw
 	@Override
 	public void sendPacket(Packet<?> packet, PacketSendListener callback) {
 		handler.send(packet, callback);
-	}
-
-	public @Nullable String getClientBrand() {
-		return clientBrand;
 	}
 
 	private enum RegisterState {

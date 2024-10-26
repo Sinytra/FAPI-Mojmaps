@@ -23,6 +23,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ImposterProtoChunk;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatusTasks;
 import net.minecraft.world.level.chunk.status.WorldGenContext;
@@ -33,5 +34,9 @@ abstract class ChunkGeneratingMixin {
 	private static void onChunkLoad(ChunkAccess chunk, WorldGenContext chunkGenerationContext, GenerationChunkHolder chunkHolder, CallbackInfoReturnable<ChunkAccess> callbackInfoReturnable) {
 		// We fire the event at TAIL since the chunk is guaranteed to be a WorldChunk then.
 		ServerChunkEvents.CHUNK_LOAD.invoker().onChunkLoad(chunkGenerationContext.level(), (LevelChunk) callbackInfoReturnable.getReturnValue());
+
+		if (!(chunk instanceof ImposterProtoChunk)) {
+			ServerChunkEvents.CHUNK_GENERATE.invoker().onChunkGenerate(chunkGenerationContext.level(), (LevelChunk) callbackInfoReturnable.getReturnValue());
+		}
 	}
 }

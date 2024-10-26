@@ -37,7 +37,7 @@ public final class AttachmentRegistryImpl {
 		AttachmentType<?> existing = attachmentRegistry.put(id, attachmentType);
 
 		if (existing != null) {
-			LOGGER.warn("Encountered duplicate type registration for id " + id);
+			LOGGER.warn("Encountered duplicate type registration for id {}", id);
 		}
 	}
 
@@ -81,6 +81,8 @@ public final class AttachmentRegistryImpl {
 
 		@Override
 		public AttachmentType<A> buildAndRegister(ResourceLocation id) {
+			Objects.requireNonNull(id, "identifier cannot be null");
+
 			var attachment = new AttachmentTypeImpl<>(id, defaultInitializer, persistenceCodec, copyOnDeath);
 			register(id, attachment);
 			return attachment;

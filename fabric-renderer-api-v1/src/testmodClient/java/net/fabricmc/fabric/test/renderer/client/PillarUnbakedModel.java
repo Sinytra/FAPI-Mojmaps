@@ -22,6 +22,7 @@ import java.util.stream.Stream;
 
 import org.jetbrains.annotations.Nullable;
 import net.fabricmc.fabric.test.renderer.RendererTest;
+import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.Material;
@@ -31,7 +32,7 @@ import net.minecraft.client.resources.model.UnbakedModel;
 
 public class PillarUnbakedModel implements UnbakedModel {
 	private static final List<Material> SPRITES = Stream.of("alone", "bottom", "middle", "top")
-			.map(suffix -> new Material(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, RendererTest.id("block/pillar_" + suffix)))
+			.map(suffix -> new Material(TextureAtlas.LOCATION_BLOCKS, RendererTest.id("block/pillar_" + suffix)))
 			.toList();
 
 	@Override

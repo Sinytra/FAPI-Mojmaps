@@ -41,6 +41,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.Music;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.util.random.SimpleWeightedRandomList;
 import net.minecraft.util.random.WeightedRandomList;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -186,8 +187,13 @@ public class BiomeModificationContextImpl implements BiomeModificationContext {
 		}
 
 		@Override
-		public void setMusic(Optional<Music> sound) {
+		public void setMusic(Optional<SimpleWeightedRandomList<Music>> sound) {
 			effects.backgroundMusic = Objects.requireNonNull(sound);
+		}
+
+		@Override
+		public void setMusicVolume(float volume) {
+			effects.field_55050 = volume;
 		}
 	}
 

@@ -23,7 +23,6 @@ import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.BlockPos;
@@ -57,8 +56,6 @@ public interface WorldRenderContext {
 	Camera camera();
 
 	GameRenderer gameRenderer();
-
-	LightTexture lightmapTextureManager();
 
 	Matrix4f projectionMatrix();
 

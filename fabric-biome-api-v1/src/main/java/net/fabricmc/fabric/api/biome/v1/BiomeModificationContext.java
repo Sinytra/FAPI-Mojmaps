@@ -23,6 +23,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.Music;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.util.random.SimpleWeightedRandomList;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.biome.AmbientAdditionsSettings;
@@ -268,14 +269,22 @@ public interface BiomeModificationContext {
 		 * @see BiomeSpecialEffects#getBackgroundMusic()
 		 * @see BiomeSpecialEffects.Builder#backgroundMusic(Music)
 		 */
-		void setMusic(Optional<Music> sound);
+		void setMusic(Optional<SimpleWeightedRandomList<Music>> sound);
+
+		/**
+		 * @see BiomeSpecialEffects#getBackgroundMusic()
+		 * @see BiomeSpecialEffects.Builder#backgroundMusic(Music)
+		 */
+		default void setMusic(@NotNull SimpleWeightedRandomList<Music> sound) {
+			setMusic(Optional.of(sound));
+		}
 
 		/**
 		 * @see BiomeSpecialEffects#getBackgroundMusic()
 		 * @see BiomeSpecialEffects.Builder#backgroundMusic(Music)
 		 */
 		default void setMusic(@NotNull Music sound) {
-			setMusic(Optional.of(sound));
+			setMusic(SimpleWeightedRandomList.single(sound));
 		}
 
 		/**
@@ -285,6 +294,12 @@ public interface BiomeModificationContext {
 		default void clearMusic() {
 			setMusic(Optional.empty());
 		}
+
+		/**
+		 * @see BiomeSpecialEffects#method_65135()
+		 * @see BiomeSpecialEffects.Builder#method_65137(int)
+		 */
+		void setMusicVolume(float volume);
 	}
 
 	interface GenerationSettingsContext {

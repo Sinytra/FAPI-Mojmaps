@@ -46,7 +46,6 @@ import net.minecraft.client.renderer.FogParameters;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LevelTargetBundle;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderBuffers;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.culling.Frustum;
@@ -70,8 +69,8 @@ public abstract class WorldRendererMixin {
 	@Unique private final WorldRenderContextImpl context = new WorldRenderContextImpl();
 
 	@Inject(method = "renderLevel", at = @At("HEAD"))
-	private void beforeRender(GraphicsResourceAllocator objectAllocator, DeltaTracker tickCounter, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightmapTextureManager, Matrix4f positionMatrix, Matrix4f projectionMatrix, CallbackInfo ci) {
-		context.prepare((LevelRenderer) (Object) this, tickCounter, renderBlockOutline, camera, gameRenderer, lightmapTextureManager, projectionMatrix, positionMatrix, renderBuffers.bufferSource(), Minecraft.useShaderTransparency(), level);
+	private void beforeRender(GraphicsResourceAllocator objectAllocator, DeltaTracker tickCounter, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, Matrix4f positionMatrix, Matrix4f projectionMatrix, CallbackInfo ci) {
+		context.prepare((LevelRenderer) (Object) this, tickCounter, renderBlockOutline, camera, gameRenderer, projectionMatrix, positionMatrix, renderBuffers.bufferSource(), Minecraft.useShaderTransparency(), level);
 		WorldRenderEvents.START.invoker().onStart(context);
 	}
 
@@ -178,7 +177,7 @@ public abstract class WorldRendererMixin {
 	}
 
 	@Inject(at = @At("HEAD"), method = "addWeatherPass", cancellable = true)
-	private void renderWeather(FrameGraphBuilder frameGraphBuilder, LightTexture lightmapTextureManager, Vec3 vec3d, float f, FogParameters fog, CallbackInfo info) {
+	private void renderWeather(FrameGraphBuilder frameGraphBuilder, Vec3 vec3d, float f, FogParameters fog, CallbackInfo info) {
 		if (this.minecraft.level != null) {
 			DimensionRenderingRegistry.WeatherRenderer renderer = DimensionRenderingRegistry.getWeatherRenderer(level.dimension());
 

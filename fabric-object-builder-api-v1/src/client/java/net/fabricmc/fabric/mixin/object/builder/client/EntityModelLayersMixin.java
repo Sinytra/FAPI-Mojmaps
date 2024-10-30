@@ -25,7 +25,13 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(ModelLayers.class)
+import net.minecraft.block.WoodType;
+import net.minecraft.client.render.block.entity.HangingSignBlockEntityRenderer;
+import net.minecraft.client.render.entity.model.EntityModelLayer;
+import net.minecraft.client.render.entity.model.EntityModelLayers;
+import net.minecraft.util.Identifier;
+
+@Mixin(EntityModelLayers.class)
 public class EntityModelLayersMixin {
 	@Inject(method = "createStandingSignModelName", at = @At("HEAD"), cancellable = true)
 	private static void createStandingSign(WoodType type, CallbackInfoReturnable<ModelLayerLocation> cir) {
@@ -43,11 +49,13 @@ public class EntityModelLayersMixin {
 		}
 	}
 
-	@Inject(method = "createHangingSignModelName", at = @At("HEAD"), cancellable = true)
-	private static void createHangingSign(WoodType type, CallbackInfoReturnable<ModelLayerLocation> cir) {
-		if (type.name().indexOf(ResourceLocation.NAMESPACE_SEPARATOR) != -1) {
-			ResourceLocation identifier = ResourceLocation.parse(type.name());
-			cir.setReturnValue(new ModelLayerLocation(identifier.withPrefix("hanging_sign/"), "main"));
+	@Inject(method = "createHangingSign", at = @At("HEAD"), cancellable = true)
+	private static void createHangingSign(WoodType type, HangingSignBlockEntityRenderer.class_10381 attachmentType, CallbackInfoReturnable<EntityModelLayer> cir) {
+		if (type.name().indexOf(Identifier.NAMESPACE_SEPARATOR) != -1) {
+			Identifier identifier = Identifier.of(type.name());
+			cir.setReturnValue(new EntityModelLayer(identifier.withPath(path -> {
+				return "hanging_sign/" + path + "/" + attachmentType.asString();
+			}), "main"));
 		}
 	}
 }

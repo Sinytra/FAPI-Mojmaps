@@ -25,7 +25,6 @@ import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.culling.Frustum;
@@ -41,7 +40,6 @@ public final class WorldRenderContextImpl implements WorldRenderContext.BlockOut
 	private Camera camera;
 	private Frustum frustum;
 	private GameRenderer gameRenderer;
-	private LightTexture lightmapTextureManager;
 	private Matrix4f projectionMatrix;
 	private Matrix4f positionMatrix;
 	private MultiBufferSource consumers;
@@ -63,7 +61,6 @@ public final class WorldRenderContextImpl implements WorldRenderContext.BlockOut
 			boolean blockOutlines,
 			Camera camera,
 			GameRenderer gameRenderer,
-			LightTexture lightmapTextureManager,
 			Matrix4f projectionMatrix,
 			Matrix4f positionMatrix,
 			MultiBufferSource consumers,
@@ -76,7 +73,6 @@ public final class WorldRenderContextImpl implements WorldRenderContext.BlockOut
 		this.blockOutlines = blockOutlines;
 		this.camera = camera;
 		this.gameRenderer = gameRenderer;
-		this.lightmapTextureManager = lightmapTextureManager;
 		this.projectionMatrix = projectionMatrix;
 		this.positionMatrix = positionMatrix;
 		this.consumers = consumers;
@@ -161,11 +157,6 @@ public final class WorldRenderContextImpl implements WorldRenderContext.BlockOut
 	@Override
 	public GameRenderer gameRenderer() {
 		return gameRenderer;
-	}
-
-	@Override
-	public LightTexture lightmapTextureManager() {
-		return lightmapTextureManager;
 	}
 
 	@Override

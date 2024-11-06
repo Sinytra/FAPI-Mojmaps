@@ -20,9 +20,6 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import net.minecraft.client.color.block.BlockColor;
 import net.minecraft.client.color.block.BlockColors;
-import net.minecraft.client.color.item.ItemColorProvider;
-import net.minecraft.client.color.item.ItemColors;
-import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 
@@ -30,13 +27,6 @@ public abstract class ColorProviderRegistryImpl<T, Provider, Underlying> impleme
 	public static final ColorProviderRegistryImpl<Block, BlockColor, BlockColors> BLOCK = new ColorProviderRegistryImpl<Block, BlockColor, BlockColors>() {
 		@Override
 		void registerUnderlying(BlockColors map, BlockColor mapper, Block block) {
-			map.register(mapper, block);
-		}
-	};
-
-	public static final ColorProviderRegistryImpl<ItemLike, ItemColorProvider, ItemColors> ITEM = new ColorProviderRegistryImpl<ItemLike, ItemColorProvider, ItemColors>() {
-		@Override
-		void registerUnderlying(ItemColors map, ItemColorProvider mapper, ItemLike block) {
 			map.register(mapper, block);
 		}
 	};

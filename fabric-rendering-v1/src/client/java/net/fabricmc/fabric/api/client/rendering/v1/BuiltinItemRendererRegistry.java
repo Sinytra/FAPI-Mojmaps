@@ -28,6 +28,7 @@ import net.minecraft.world.level.ItemLike;
 /**
  * This registry holds {@linkplain DynamicItemRenderer builtin item renderers} for items.
  */
+// TODO 1.21.4, class_10444/class_10515
 public interface BuiltinItemRendererRegistry {
 	/**
 	 * The singleton instance of the renderer registry.

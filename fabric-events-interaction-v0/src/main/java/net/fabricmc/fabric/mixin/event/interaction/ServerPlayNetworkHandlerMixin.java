@@ -23,16 +23,16 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import net.minecraft.class_10370;
-import net.minecraft.class_10371;
+import net.fabricmc.fabric.api.event.player.PlayerPickItemEvents;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.protocol.game.ServerboundPickItemFromBlockPacket;
+import net.minecraft.network.protocol.game.ServerboundPickItemFromEntityPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.state.BlockState;
-import net.fabricmc.fabric.api.event.player.PlayerPickItemEvents;
 
 @Mixin(ServerGamePacketListenerImpl.class)
 public abstract class ServerPlayNetworkHandlerMixin {
@@ -41,32 +41,32 @@ public abstract class ServerPlayNetworkHandlerMixin {
 	private ServerPlayer player;
 
 	@Shadow
-	private void method_65098(ItemStack stack) {
+	private void tryPickItem(ItemStack stack) {
 		throw new AssertionError();
 	}
 
-	@WrapOperation(method = "method_65085", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;method_65171(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/item/ItemStack;"))
-	public ItemStack onPickItemFromBlock(BlockState state, LevelReader world, BlockPos pos, Operation<ItemStack> operation, @Local class_10370 packet) {
+	@WrapOperation(method = "handlePickItemFromBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;getPickStack(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;Z)Lnet/minecraft/world/item/ItemStack;"))
+	public ItemStack onPickItemFromBlock(BlockState state, LevelReader world, BlockPos pos, boolean bl, Operation<ItemStack> operation, @Local ServerboundPickItemFromBlockPacket packet) {
 		ItemStack stack = PlayerPickItemEvents.BLOCK.invoker().onPickItemFromBlock(player, pos, state, packet.includeData());
 
 		if (stack == null) {
-			return operation.call(state, world, pos);
+			return operation.call(state, world, pos, bl);
 		} else if (!stack.isEmpty()) {
-			this.method_65098(stack);
+			this.tryPickItem(stack);
 		}
 
 		// Prevent vanilla data-inclusion behavior
 		return ItemStack.EMPTY;
 	}
 
-	@WrapOperation(method = "onPickFromInventory", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getPickResult()Lnet/minecraft/world/item/ItemStack;"))
-	public ItemStack onPickItemFromEntity(Entity entity, Operation<ItemStack> operation, @Local class_10371 packet) {
+	@WrapOperation(method = "handlePickItemFromEntity", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getPickResult()Lnet/minecraft/world/item/ItemStack;"))
+	public ItemStack onPickItemFromEntity(Entity entity, Operation<ItemStack> operation, @Local ServerboundPickItemFromEntityPacket packet) {
 		ItemStack stack = PlayerPickItemEvents.ENTITY.invoker().onPickItemFromEntity(player, entity, packet.includeData());
 
 		if (stack == null) {
 			return operation.call(entity);
 		} else if (!stack.isEmpty()) {
-			this.method_65098(stack);
+			this.tryPickItem(stack);
 		}
 
 		// Prevent vanilla data-inclusion behavior

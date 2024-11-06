@@ -35,6 +35,8 @@ import net.fabricmc.fabric.impl.registry.sync.DynamicRegistryViewImpl;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.RegistryDataLoader;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -87,17 +89,17 @@ public class RegistryLoaderMixin {
 			},
 			at = @At(
 					value = "INVOKE",
-					target = "Lnet/minecraft/core/registries/Registries;elementsDirPath(Lnet/minecraft/resources/ResourceKey;)Ljava/lang/String;"
+					target = "Lnet/minecraft/resources/FileToIdConverter;method_65309(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/resources/FileToIdConverter;"
 			)
 	)
-	private static String prependDirectoryWithNamespace(ResourceKey<? extends Registry<?>> registryKey, Operation<String> original) {
-		String originalDirectory = original.call(registryKey);
+	private static FileToIdConverter prependDirectoryWithNamespace(ResourceKey<? extends Registry<?>> registryKey, Operation<FileToIdConverter> original) {
+		String originalDirectory = Registries.elementsDirPath(registryKey);
 		ResourceLocation id = registryKey.location();
 		if (!id.getNamespace().equals(ResourceLocation.DEFAULT_NAMESPACE)
 				&& DynamicRegistriesImpl.FABRIC_DYNAMIC_REGISTRY_KEYS.contains(registryKey)) {
-			return id.getNamespace() + "/" + originalDirectory;
+			return FileToIdConverter.json(id.getNamespace() + "/" + originalDirectory);
 		}
 
-		return originalDirectory;
+		return original.call(registryKey);
 	}
 }

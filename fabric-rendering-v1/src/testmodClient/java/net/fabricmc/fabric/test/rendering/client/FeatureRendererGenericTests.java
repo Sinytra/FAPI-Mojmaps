@@ -61,7 +61,7 @@ public class FeatureRendererGenericTests implements ClientModInitializer {
 
 			if (entityRenderer instanceof HumanoidMobRenderer) {
 				// It works, method ref is encouraged
-				registrationHelper.register(new ItemInHandLayer<>((HumanoidMobRenderer<?, ?, ?>) entityRenderer, context.getItemRenderer()));
+				registrationHelper.register(new ItemInHandLayer<>((HumanoidMobRenderer<?, ?, ?>) entityRenderer));
 			}
 		});
 
@@ -86,7 +86,7 @@ public class FeatureRendererGenericTests implements ClientModInitializer {
 
 		if (entityRenderer instanceof HumanoidMobRenderer<?, ?, ?> bipedEntityRenderer) {
 			// It works, method ref is encouraged
-			registrationHelper.register(new ItemInHandLayer<>(bipedEntityRenderer, context.getItemRenderer()));
+			registrationHelper.register(new ItemInHandLayer<>(bipedEntityRenderer));
 		}
 	}
 

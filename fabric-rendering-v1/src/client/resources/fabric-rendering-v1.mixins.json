@@ -7,7 +7,6 @@
     "AtlasSourceManagerAccessor",
     "BlockColorsMixin",
     "BlockEntityRendererFactoriesMixin",
-    "BuiltinModelItemRendererMixin",
     "CapeFeatureRendererMixin",
     "ClientWorldMixin",
     "DimensionEffectsAccessor",
@@ -15,7 +14,6 @@
     "EntityModelsMixin",
     "EntityRenderersMixin",
     "InGameHudMixin",
-    "ItemColorsMixin",
     "LivingEntityRendererAccessor",
     "TooltipComponentMixin",
     "WorldRendererMixin"

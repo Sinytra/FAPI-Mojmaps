@@ -29,8 +29,8 @@ accessible	field	net/minecraft/world/level/biome/BiomeSpecialEffects	ambientAddi
 mutable	field	net/minecraft/world/level/biome/BiomeSpecialEffects	ambientAdditionsSettings	Ljava/util/Optional;
 accessible	field	net/minecraft/world/level/biome/BiomeSpecialEffects	backgroundMusic	Ljava/util/Optional;
 mutable	field	net/minecraft/world/level/biome/BiomeSpecialEffects	backgroundMusic	Ljava/util/Optional;
-accessible	field	net/minecraft/world/level/biome/BiomeSpecialEffects	field_55050	F
-mutable	field	net/minecraft/world/level/biome/BiomeSpecialEffects	field_55050	F
+accessible	field	net/minecraft/world/level/biome/BiomeSpecialEffects	backgroundMusicVolume	F
+mutable	field	net/minecraft/world/level/biome/BiomeSpecialEffects	backgroundMusicVolume	F
 accessible	field	net/minecraft/world/level/biome/MobSpawnSettings	creatureGenerationProbability	F
 mutable	field	net/minecraft/world/level/biome/MobSpawnSettings	creatureGenerationProbability	F
 accessible	field	net/minecraft/world/level/biome/MobSpawnSettings	spawners	Ljava/util/Map;

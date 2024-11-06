@@ -21,17 +21,21 @@ import static net.fabricmc.fabric.test.datagen.DataGeneratorTestContent.MOD_ID;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
-import net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint;
-import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
-import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
-import net.fabricmc.fabric.api.datagen.v1.JsonKeySortOrderCallback;
-import net.fabricmc.fabric.api.datagen.v1.provider.FabricCodecDataProvider;
 import net.minecraft.client.renderer.texture.atlas.SpriteSource;
 import net.minecraft.client.renderer.texture.atlas.SpriteSources;
 import net.minecraft.client.renderer.texture.atlas.sources.DirectoryLister;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
+import net.minecraft.data.client.BlockStateModelGenerator;
+import net.minecraft.data.client.ItemModelGenerator;
 import net.minecraft.resources.ResourceLocation;
+import net.fabricmc.fabric.api.client.datagen.v1.provider.FabricModelProvider;
+import net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint;
+import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
+import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
+import net.fabricmc.fabric.api.datagen.v1.JsonKeySortOrderCallback;
+import net.fabricmc.fabric.api.datagen.v1.provider.FabricCodecDataProvider;
+import net.fabricmc.fabric.test.datagen.DataGeneratorTestContent;
 
 @SuppressWarnings("unused")
 public class DataGeneratorClientTestEntrypoint implements DataGeneratorEntrypoint {
@@ -44,6 +48,7 @@ public class DataGeneratorClientTestEntrypoint implements DataGeneratorEntrypoin
 	public void onInitializeDataGenerator(FabricDataGenerator dataGenerator) {
 		final FabricDataGenerator.Pack pack = dataGenerator.createBuiltinResourcePack(ResourceLocation.fromNamespaceAndPath(MOD_ID, "example_builtin"));
 		pack.addProvider(TestAtlasSourceProvider::new);
+		pack.addProvider(TestModelProvider::new);
 	}
 
 	private static class TestAtlasSourceProvider extends FabricCodecDataProvider<List<SpriteSource>> {
@@ -59,6 +64,26 @@ public class DataGeneratorClientTestEntrypoint implements DataGeneratorEntrypoin
 		@Override
 		public String getName() {
 			return "Atlas Sources";
+		}
+	}
+
+	private static class TestModelProvider extends FabricModelProvider {
+		private TestModelProvider(FabricDataOutput output) {
+			super(output);
+		}
+
+		@Override
+		public void generateBlockStateModels(BlockStateModelGenerator blockStateModelGenerator) {
+			blockStateModelGenerator.registerSimpleCubeAll(DataGeneratorTestContent.SIMPLE_BLOCK);
+			blockStateModelGenerator.registerSimpleCubeAll(DataGeneratorTestContent.BLOCK_WITHOUT_ITEM);
+			blockStateModelGenerator.registerSimpleCubeAll(DataGeneratorTestContent.BLOCK_WITHOUT_LOOT_TABLE);
+			blockStateModelGenerator.registerSimpleCubeAll(DataGeneratorTestContent.BLOCK_WITH_VANILLA_LOOT_TABLE);
+			blockStateModelGenerator.registerSimpleCubeAll(DataGeneratorTestContent.BLOCK_THAT_DROPS_NOTHING);
+		}
+
+		@Override
+		public void generateItemModels(ItemModelGenerator itemModelGenerator) {
+			//itemModelGenerator.register(item, Models.SLAB);
 		}
 	}
 }

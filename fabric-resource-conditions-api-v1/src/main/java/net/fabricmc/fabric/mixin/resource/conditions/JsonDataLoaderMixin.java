@@ -33,6 +33,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.fabricmc.fabric.impl.resource.conditions.ResourceConditionsImpl;
+import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
@@ -45,7 +46,7 @@ public class JsonDataLoaderMixin {
 
 	@WrapOperation(method = "scanDirectory", at = @At(value = "INVOKE", target = "Lcom/mojang/serialization/Codec;parse(Lcom/mojang/serialization/DynamicOps;Ljava/lang/Object;)Lcom/mojang/serialization/DataResult;", remap = false))
 	private static DataResult<?> applyResourceConditions(Codec<?> instance, DynamicOps<JsonElement> dynamicOps, Object object, Operation<DataResult<?>> original,
-														@Local(argsOnly = true) String dataType,
+														@Local(argsOnly = true) FileToIdConverter resourceFinder,
 														@Local Map.Entry<ResourceLocation, Resource> entry) {
 		final JsonElement resourceData = (JsonElement) object;
 		@Nullable RegistryOps.RegistryInfoLookup registryInfo = null;
@@ -56,6 +57,8 @@ public class JsonDataLoaderMixin {
 
 		if (resourceData.isJsonObject()) {
 			JsonObject obj = resourceData.getAsJsonObject();
+
+			final String dataType = ((ResourceFinderAccessor) resourceFinder).getPrefix();
 
 			if (!ResourceConditionsImpl.applyResourceConditions(obj, dataType, entry.getKey(), registryInfo)) {
 				return DataResult.success(SKIP_DATA_MARKER);

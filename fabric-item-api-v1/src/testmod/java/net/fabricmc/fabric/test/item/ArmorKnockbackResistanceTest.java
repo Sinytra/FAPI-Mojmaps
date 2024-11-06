@@ -17,10 +17,10 @@
 package net.fabricmc.fabric.test.item;
 
 import java.util.Map;
-import net.fabricmc.api.ModInitializer;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.item.equipment.EquipmentModels;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
@@ -29,6 +29,7 @@ import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.equipment.ArmorMaterial;
 import net.minecraft.world.item.equipment.ArmorType;
+import net.fabricmc.api.ModInitializer;
 
 public class ArmorKnockbackResistanceTest implements ModInitializer {
 	private static final ArmorMaterial WOOD_ARMOR = createTestArmorMaterial();
@@ -54,7 +55,7 @@ public class ArmorKnockbackResistanceTest implements ModInitializer {
 			0,
 			0.5F,
 			ItemTags.REPAIRS_LEATHER_ARMOR,
-			ResourceLocation.fromNamespaceAndPath("fabric-item-api-v1-testmod", "wood")
+			EquipmentModels.IRON
 		);
 	}
 }

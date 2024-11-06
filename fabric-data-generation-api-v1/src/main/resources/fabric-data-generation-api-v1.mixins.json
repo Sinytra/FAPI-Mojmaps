@@ -4,7 +4,6 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "DataProviderMixin",
-    "ModelProviderMixin",
     "TagBuilderMixin",
     "TagProviderMixin",
     "loot.BlockLootTableGeneratorAccessor",

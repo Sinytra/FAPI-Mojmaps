@@ -1,7 +1,4 @@
 accessWidener	v2	named
-transitive-accessible	method	net/minecraft/client/item/ModelPredicateProviderRegistry	register	(Lnet/minecraft/world/item/Item;Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/item/ClampedModelPredicateProvider;)V
-transitive-accessible	method	net/minecraft/client/item/ModelPredicateProviderRegistry	register	(Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/item/ClampedModelPredicateProvider;)Lnet/minecraft/client/item/ClampedModelPredicateProvider;
-transitive-accessible	method	net/minecraft/client/item/ModelPredicateProviderRegistry	registerCustomModelData	(Lnet/minecraft/client/item/ModelPredicateProvider;)V
 transitive-accessible	method	net/minecraft/advancements/CriteriaTriggers	register	(Ljava/lang/String;Lnet/minecraft/advancements/CriterionTrigger;)Lnet/minecraft/advancements/CriterionTrigger;
 transitive-accessible	class	net/minecraft/world/inventory/MenuType$MenuSupplier
 transitive-accessible	method	net/minecraft/world/inventory/MenuType	<init>	(Lnet/minecraft/world/inventory/MenuType$MenuSupplier;Lnet/minecraft/world/flag/FeatureFlagSet;)V
@@ -180,7 +177,7 @@ transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	ADDIT
 transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	LIGHTNING_TRANSPARENCY	Lnet/minecraft/client/renderer/RenderStateShard$TransparencyStateShard;
 transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	GLINT_TRANSPARENCY	Lnet/minecraft/client/renderer/RenderStateShard$TransparencyStateShard;
 transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	CRUMBLING_TRANSPARENCY	Lnet/minecraft/client/renderer/RenderStateShard$TransparencyStateShard;
-transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	field_55137	Lnet/minecraft/client/renderer/RenderStateShard$TransparencyStateShard;
+transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	OVERLAY_TRANSPARENCY	Lnet/minecraft/client/renderer/RenderStateShard$TransparencyStateShard;
 transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	TRANSLUCENT_TRANSPARENCY	Lnet/minecraft/client/renderer/RenderStateShard$TransparencyStateShard;
 transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	VIGNETTE_TRANSPARENCY	Lnet/minecraft/client/renderer/RenderStateShard$TransparencyStateShard;
 transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	CROSSHAIR_TRANSPARENCY	Lnet/minecraft/client/renderer/RenderStateShard$TransparencyStateShard;
@@ -193,7 +190,7 @@ transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	POSIT
 transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	POSITION_COLOR_TEX_LIGHTMAP_SHADER	Lnet/minecraft/client/renderer/RenderStateShard$ShaderStateShard;
 transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	POSITION_COLOR_SHADER	Lnet/minecraft/client/renderer/RenderStateShard$ShaderStateShard;
 transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	POSITION_TEXTURE_COLOR_SHADER	Lnet/minecraft/client/renderer/RenderStateShard$ShaderStateShard;
-transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	field_55138	Lnet/minecraft/client/renderer/RenderStateShard$ShaderStateShard;
+transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	PARTICLE_SHADER	Lnet/minecraft/client/renderer/RenderStateShard$ShaderStateShard;
 transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	RENDERTYPE_SOLID_SHADER	Lnet/minecraft/client/renderer/RenderStateShard$ShaderStateShard;
 transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	RENDERTYPE_CUTOUT_MIPPED_SHADER	Lnet/minecraft/client/renderer/RenderStateShard$ShaderStateShard;
 transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	RENDERTYPE_CUTOUT_SHADER	Lnet/minecraft/client/renderer/RenderStateShard$ShaderStateShard;
@@ -264,7 +261,7 @@ transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	NO_LA
 transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	POLYGON_OFFSET_LAYERING	Lnet/minecraft/client/renderer/RenderStateShard$LayeringStateShard;
 transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	VIEW_OFFSET_Z_LAYERING	Lnet/minecraft/client/renderer/RenderStateShard$LayeringStateShard;
 transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	VIEW_OFFSET_Z_LAYERING_FORWARD	Lnet/minecraft/client/renderer/RenderStateShard$LayeringStateShard;
-transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	field_55136	Lnet/minecraft/client/renderer/RenderStateShard$LayeringStateShard;
+transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	WORLD_BORDER_LAYERING	Lnet/minecraft/client/renderer/RenderStateShard$LayeringStateShard;
 transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	MAIN_TARGET	Lnet/minecraft/client/renderer/RenderStateShard$OutputStateShard;
 transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	OUTLINE_TARGET	Lnet/minecraft/client/renderer/RenderStateShard$OutputStateShard;
 transitive-accessible	field	net/minecraft/client/renderer/RenderStateShard	TRANSLUCENT_TARGET	Lnet/minecraft/client/renderer/RenderStateShard$OutputStateShard;

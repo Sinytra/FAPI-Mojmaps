@@ -27,6 +27,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.fabricmc.fabric.impl.loot.LootUtil;
+import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -36,8 +37,9 @@ import net.minecraft.world.level.storage.loot.LootDataType;
 @Mixin(SimpleJsonResourceReloadListener.class)
 public class JsonDataLoaderMixin {
 	@Inject(method = "scanDirectory", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/resources/FileToIdConverter;fileToId(Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/resources/ResourceLocation;", shift = At.Shift.AFTER))
-	private static <T> void fillSourceMap(ResourceManager manager, String dataType, DynamicOps<JsonElement> dynamicOps, Codec<T> codec, Map<ResourceLocation, T> results, CallbackInfo ci, @Local Map.Entry<ResourceLocation, Resource> entry, @Local(ordinal = 1) ResourceLocation id) {
-		if (!LootDataType.TABLE.registryKey().location().getPath().equals(dataType)) return;
+	private static <T> void fillSourceMap(ResourceManager manager, FileToIdConverter resourceFinder, DynamicOps<JsonElement> ops, Codec<T> codec, Map<ResourceLocation, T> result, CallbackInfo ci, @Local Map.Entry<ResourceLocation, Resource> entry, @Local(ordinal = 1) ResourceLocation id) {
+		final String dirName = ((ResourceFinderAccessor) resourceFinder).getPrefix();
+		if (!LootDataType.TABLE.registryKey().location().getPath().equals(dirName)) return;
 
 		LootUtil.SOURCES.get().put(id, LootUtil.determineSource(entry.getValue()));
 	}

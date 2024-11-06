@@ -35,8 +35,6 @@ transitive-accessible method net/minecraft/data/family/BlockFamilies register (L
 transitive-accessible field net/minecraft/data/client/BlockStateModelGenerator blockStateCollector Ljava/util/function/Consumer;
 transitive-accessible field net/minecraft/data/client/BlockStateModelGenerator modelCollector Ljava/util/function/BiConsumer;
 
-transitive-accessible field net/minecraft/data/client/ItemModelGenerator writer Ljava/util/function/BiConsumer;
-
 transitive-accessible method net/minecraft/data/client/TextureKey of (Ljava/lang/String;)Lnet/minecraft/data/client/TextureKey;
 transitive-accessible method net/minecraft/data/client/TextureKey of (Ljava/lang/String;Lnet/minecraft/data/client/TextureKey;)Lnet/minecraft/data/client/TextureKey;
 
@@ -44,9 +42,10 @@ transitive-extendable method net/minecraft/data/server/tag/TagProvider$ProvidedT
 
 transitive-accessible method net/minecraft/data/client/TexturedModel makeFactory (Ljava/util/function/Function;Lnet/minecraft/data/client/Model;)Lnet/minecraft/data/client/TexturedModel$Factory;
 
-transitive-accessible class net/minecraft/data/client/BlockStateModelGenerator$TintType
 transitive-accessible class net/minecraft/data/client/BlockStateModelGenerator$BlockTexturePool
 transitive-accessible class net/minecraft/data/client/BlockStateModelGenerator$LogTexturePool
-transitive-accessible class net/minecraft/data/client/BlockStateModelGenerator$BuiltinModelPool
+
+accessible class net/minecraft/data/client/ModelProvider$class_10406
+accessible class net/minecraft/data/client/ModelProvider$class_10407
 
 ### Generated access wideners below

@@ -51,9 +51,10 @@ loom {
 	}
 }
 
-test.dependsOn runDatagen
+test.dependsOn runDatagenClient
 
-task datapackZip(type: Zip, dependsOn: runDatagen) {
+tasks.register('datapackZip', Zip) {
+	dependsOn runDatagen
 	archiveFileName = "${base.archivesName.get()}-${project.version}-test-datapack.zip"
 	destinationDirectory = layout.buildDirectory.dir('libs')
 
@@ -71,17 +72,22 @@ import java.lang.reflect.Modifier
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 
-task generateAccessWidener() {
+tasks.register('generateAccessWidener') {
+	inputs.files(loom.getNamedMinecraftJars())
+
 	doLast {
-		File inputJar = loom.namedMinecraftProvider.parentMinecraftProvider.commonJar.path.toFile()
+		// Use parent provider to get the jar before the AWs are applied
+		def minecraftProvider = loom.namedMinecraftProvider.parentMinecraftProvider
+		def commonJar = minecraftProvider.commonJar.path.toFile()
+		def clientJar = minecraftProvider.clientOnlyJar.path.toFile()
+		def classes = getClasses([commonJar, clientJar])
+
 		String accessWidener = "accessWidener\tv2\tnamed\n"
 		accessWidener += "\n"
 		accessWidener += "# DO NOT EDIT BY HAND! This file is generated automatically.\n"
 		accessWidener += "# Edit \"template.accesswidener\" instead then run \"gradlew generateAccessWidener\".\n"
 		accessWidener += "\n"
 		accessWidener += file("template.accesswidener").text + "\n"
-
-		def classes = getClasses(inputJar)
 
 		visitMethods(classes["net/minecraft/data/server/recipe/RecipeGenerator"]) { name, desc, owner ->
 			if (it.name == "generate")
@@ -126,7 +132,7 @@ task generateAccessWidener() {
 	}
 }
 
-def visitMethods(ClassNode classNode, closure) {
+static def visitMethods(ClassNode classNode, closure) {
 	classNode.methods.forEach {
 		if ((it.access & Opcodes.ACC_SYNTHETIC) != 0 || (it.access & Opcodes.ACC_PUBLIC) != 0)
 			return
@@ -138,7 +144,7 @@ def visitMethods(ClassNode classNode, closure) {
 	}
 }
 
-def visitFinalMethods(ClassNode classNode, closure) {
+static def visitFinalMethods(ClassNode classNode, closure) {
 	classNode.methods.forEach {
 		if (!Modifier.isFinal(it.access))
 			return
@@ -151,21 +157,23 @@ def visitFinalMethods(ClassNode classNode, closure) {
 }
 
 // Return a map of all class names to classNodes
-def getClasses(File input) {
+static def getClasses(List<File> inputs) {
 	Map<String, ClassNode> classes = new TreeMap<>()
 
-	new ZipFile(input).withCloseable { ZipFile zip  ->
-		zip.entries().toList().forEach { ZipEntry entry ->
-			if (!entry.name.endsWith(".class")) {
-				return
-			}
+	for (File input : inputs) {
+		new ZipFile(input).withCloseable { ZipFile zip  ->
+			zip.entries().toList().forEach { ZipEntry entry ->
+				if (!entry.name.endsWith(".class")) {
+					return
+				}
 
-			zip.getInputStream(entry).withCloseable { is ->
-				ClassReader reader = new ClassReader(is)
-				ClassNode classNode = new ClassNode()
-				reader.accept(classNode, ClassReader.SKIP_CODE)
+				zip.getInputStream(entry).withCloseable { is ->
+					ClassReader reader = new ClassReader(is)
+					ClassNode classNode = new ClassNode()
+					reader.accept(classNode, ClassReader.SKIP_CODE)
 
-				classes.put(classNode.name, classNode)
+					classes.put(classNode.name, classNode)
+				}
 			}
 		}
 	}
@@ -197,4 +205,4 @@ def hasAncestor(ClassNode classNode, Map<String, ClassNode> classes, String ance
 }
 
 generateResources.dependsOn generateAccessWidener
-generateResources.dependsOn runDatagen
+generateResources.dependsOn runDatagenClient

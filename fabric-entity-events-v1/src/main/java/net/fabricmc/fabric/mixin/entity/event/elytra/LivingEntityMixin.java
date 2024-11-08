@@ -25,7 +25,6 @@ import net.fabricmc.fabric.api.entity.event.v1.EntityElytraEvents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
 @SuppressWarnings("unused")
@@ -62,7 +61,7 @@ abstract class LivingEntityMixin extends Entity {
 	@SuppressWarnings("ConstantConditions")
 	@Inject(at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/EquipmentSlot;VALUES:Ljava/util/List;"), method = "canGlide", allow = 1, cancellable = true)
 	void injectElytraCheck(CallbackInfoReturnable<Boolean> cir) {
-		Player self = (Player) (Object) this;
+		LivingEntity self = (LivingEntity) (Object) this;
 
 		if (!EntityElytraEvents.ALLOW.invoker().allowElytraFlight(self)) {
 			cir.setReturnValue(false);

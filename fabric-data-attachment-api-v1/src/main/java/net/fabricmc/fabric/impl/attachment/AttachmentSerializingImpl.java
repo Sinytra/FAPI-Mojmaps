@@ -51,7 +51,7 @@ public class AttachmentSerializingImpl {
 				RegistryOps<Tag> registryOps = wrapperLookup.createSerializationContext(NbtOps.INSTANCE);
 				codec.encodeStart(registryOps, entry.getValue())
 						.ifError(partial -> {
-							LOGGER.warn("Couldn't serialize attachment " + type.identifier() + ", skipping. Error:");
+							LOGGER.warn("Couldn't serialize attachment {}, skipping. Error:", type.identifier());
 							LOGGER.warn(partial.message());
 						})
 						.ifSuccess(serialized -> compound.put(type.identifier().toString(), serialized));
@@ -71,7 +71,7 @@ public class AttachmentSerializingImpl {
 				AttachmentType<?> type = AttachmentRegistryImpl.get(ResourceLocation.parse(key));
 
 				if (type == null) {
-					LOGGER.warn("Unknown attachment type " + key + " found when deserializing, skipping");
+					LOGGER.warn("Unknown attachment type {} found when deserializing, skipping", key);
 					continue;
 				}
 
@@ -81,7 +81,7 @@ public class AttachmentSerializingImpl {
 					RegistryOps<Tag> registryOps = wrapperLookup.createSerializationContext(NbtOps.INSTANCE);
 					codec.parse(registryOps, compound.get(key))
 							.ifError(partial -> {
-								LOGGER.warn("Couldn't deserialize attachment " + type.identifier() + ", skipping. Error:");
+								LOGGER.warn("Couldn't deserialize attachment {}, skipping. Error:", type.identifier());
 								LOGGER.warn(partial.message());
 							})
 							.ifSuccess(

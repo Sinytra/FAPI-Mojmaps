@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -80,6 +81,12 @@ public class CommonAttachmentTests {
 		Bootstrap.bootStrap();
 	}
 
+	private static <T> T mockAndDisableSync(Class<T> cl) {
+		T target = mock(cl, CALLS_REAL_METHODS);
+		doReturn(false).when((AttachmentTargetImpl) target).fabric_shouldTryToSync();
+		return target;
+	}
+
 	@Test
 	void testTargets() {
 		AttachmentType<String> basic = AttachmentRegistry.create(ResourceLocation.fromNamespaceAndPath(MOD_ID, "basic_attachment"));
@@ -88,11 +95,11 @@ public class CommonAttachmentTests {
 		 * CALLS_REAL_METHODS makes sense here because AttachmentTarget does not refer to anything in the underlying
 		 * class, and it saves us a lot of pain trying to get the regular constructors for ServerWorld and WorldChunk to work.
 		 */
-		ServerLevel serverWorld = mock(ServerLevel.class, CALLS_REAL_METHODS);
-		Entity entity = mock(Entity.class, CALLS_REAL_METHODS);
-		BlockEntity blockEntity = mock(BlockEntity.class, CALLS_REAL_METHODS);
-		LevelChunk worldChunk = mock(LevelChunk.class, CALLS_REAL_METHODS);
-		ProtoChunk protoChunk = mock(ProtoChunk.class, CALLS_REAL_METHODS);
+		ServerLevel serverWorld = mockAndDisableSync(ServerLevel.class);
+		Entity entity = mockAndDisableSync(Entity.class);
+		BlockEntity blockEntity = mockAndDisableSync(BlockEntity.class);
+		LevelChunk worldChunk = mockAndDisableSync(LevelChunk.class);
+		ProtoChunk protoChunk = mockAndDisableSync(ProtoChunk.class);
 
 		for (AttachmentTarget target : new AttachmentTarget[]{serverWorld, entity, blockEntity, worldChunk, protoChunk}) {
 			testForTarget(target, basic);
@@ -125,7 +132,7 @@ public class CommonAttachmentTests {
 				ResourceLocation.fromNamespaceAndPath(MOD_ID, "defaulted_attachment"),
 				() -> 0
 		);
-		Entity target = mock(Entity.class, CALLS_REAL_METHODS);
+		Entity target = mockAndDisableSync(Entity.class);
 
 		assertFalse(target.hasAttached(defaulted));
 		assertEquals(0, target.getAttachedOrCreate(defaulted));
@@ -183,12 +190,12 @@ public class CommonAttachmentTests {
 		AttachmentType<Boolean> copiedOnRespawn = AttachmentRegistry.create(ResourceLocation.fromNamespaceAndPath(MOD_ID, "copied_on_respawn"),
 				AttachmentRegistry.Builder::copyOnDeath);
 
-		Entity original = mock(Entity.class, CALLS_REAL_METHODS);
+		Entity original = mockAndDisableSync(Entity.class);
 		original.setAttached(notCopiedOnRespawn, true);
 		original.setAttached(copiedOnRespawn, true);
 
-		Entity respawnTarget = mock(Entity.class, CALLS_REAL_METHODS);
-		Entity nonRespawnTarget = mock(Entity.class, CALLS_REAL_METHODS);
+		Entity respawnTarget = mockAndDisableSync(Entity.class);
+		Entity nonRespawnTarget = mockAndDisableSync(Entity.class);
 
 		AttachmentTargetImpl.transfer(original, respawnTarget, true);
 		AttachmentTargetImpl.transfer(original, nonRespawnTarget, false);
@@ -236,7 +243,7 @@ public class CommonAttachmentTests {
 	@Test
 	void testWorldPersistentState() {
 		// Trying to simulate actual saving and loading for the world is too hard
-		ServerLevel world = mock(ServerLevel.class, CALLS_REAL_METHODS);
+		ServerLevel world = mockAndDisableSync(ServerLevel.class);
 		AttachmentPersistentState state = new AttachmentPersistentState(world);
 		assertFalse(world.hasAttached(PERSISTENT));
 
@@ -244,7 +251,7 @@ public class CommonAttachmentTests {
 		world.setAttached(PERSISTENT, expected);
 		CompoundTag fakeSave = state.save(new CompoundTag(), mockDRM());
 
-		world = mock(ServerLevel.class, CALLS_REAL_METHODS);
+		world = mockAndDisableSync(ServerLevel.class);
 		AttachmentPersistentState.read(world, fakeSave, mockDRM());
 		assertTrue(world.hasAttached(PERSISTENT));
 		assertEquals(expected, world.getAttached(PERSISTENT));

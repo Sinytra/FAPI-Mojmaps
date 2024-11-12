@@ -17,26 +17,33 @@
 package net.fabricmc.fabric.mixin.attachment;
 
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
-import net.fabricmc.fabric.impl.attachment.AttachmentEntrypoint;
 import net.fabricmc.fabric.impl.attachment.AttachmentSerializingImpl;
 import net.fabricmc.fabric.impl.attachment.AttachmentTargetImpl;
+import net.fabricmc.fabric.impl.attachment.AttachmentTypeImpl;
+import net.fabricmc.fabric.impl.attachment.sync.AttachmentChange;
+import net.fabricmc.fabric.impl.attachment.sync.s2c.AttachmentSyncPayloadS2C;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.status.ChunkStatus;
 
 @Mixin({BlockEntity.class, Entity.class, Level.class, ChunkAccess.class})
 abstract class AttachmentTargetsMixin implements AttachmentTargetImpl {
 	@Nullable
 	private IdentityHashMap<AttachmentType<?>, Object> fabric_dataAttachments = null;
+	@Nullable
+	private IdentityHashMap<AttachmentType<?>, AttachmentChange> fabric_syncedAttachments = null;
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -49,17 +56,12 @@ abstract class AttachmentTargetsMixin implements AttachmentTargetImpl {
 	@Override
 	@Nullable
 	public <T> T setAttached(AttachmentType<T> type, @Nullable T value) {
-		// Extremely inelegant, but the only alternative is separating out these two mixins and duplicating code
-		Object thisObject = this;
+		this.fabric_markChanged(type);
 
-		if (thisObject instanceof BlockEntity) {
-			((BlockEntity) thisObject).setChanged();
-		} else if (thisObject instanceof ChunkAccess) {
-			((ChunkAccess) thisObject).setUnsaved(true);
-
-			if (type.isPersistent() && ((ChunkAccess) thisObject).getPersistedStatus().equals(ChunkStatus.EMPTY)) {
-				AttachmentEntrypoint.LOGGER.warn("Attaching persistent attachment {} to chunk with chunk status EMPTY. Attachment might be discarded.", type.identifier());
-			}
+		if (this.fabric_shouldTryToSync() && type.isSynced()) {
+			AttachmentChange change = AttachmentChange.create(fabric_getSyncTargetInfo(), type, value);
+			acknowledgeSyncedEntry(type, change);
+			this.fabric_syncChange(type, new AttachmentSyncPayloadS2C(List.of(change)));
 		}
 
 		if (value == null) {
@@ -67,13 +69,7 @@ abstract class AttachmentTargetsMixin implements AttachmentTargetImpl {
 				return null;
 			}
 
-			T removed = (T) fabric_dataAttachments.remove(type);
-
-			if (fabric_dataAttachments.isEmpty()) {
-				fabric_dataAttachments = null;
-			}
-
-			return removed;
+			return (T) fabric_dataAttachments.remove(type);
 		} else {
 			if (fabric_dataAttachments == null) {
 				fabric_dataAttachments = new IdentityHashMap<>();
@@ -95,7 +91,17 @@ abstract class AttachmentTargetsMixin implements AttachmentTargetImpl {
 
 	@Override
 	public void fabric_readAttachmentsFromNbt(CompoundTag nbt, HolderLookup.Provider wrapperLookup) {
-		fabric_dataAttachments = AttachmentSerializingImpl.deserializeAttachmentData(nbt, wrapperLookup);
+		// Note on player targets: no syncing can happen here as the networkHandler is still null
+		// Instead it is done on player join (see AttachmentSync)
+		this.fabric_dataAttachments = AttachmentSerializingImpl.deserializeAttachmentData(nbt, wrapperLookup);
+
+		if (this.fabric_shouldTryToSync() && this.fabric_dataAttachments != null) {
+			this.fabric_dataAttachments.forEach((type, value) -> {
+				if (type.isSynced()) {
+					acknowledgeSynced(type, value);
+				}
+			});
+		}
 	}
 
 	@Override
@@ -106,5 +112,40 @@ abstract class AttachmentTargetsMixin implements AttachmentTargetImpl {
 	@Override
 	public Map<AttachmentType<?>, ?> fabric_getAttachments() {
 		return fabric_dataAttachments;
+	}
+
+	@Unique
+	private void acknowledgeSynced(AttachmentType<?> type, Object value) {
+		acknowledgeSyncedEntry(type, AttachmentChange.create(fabric_getSyncTargetInfo(), type, value));
+	}
+
+	@Unique
+	private void acknowledgeSyncedEntry(AttachmentType<?> type, @Nullable AttachmentChange change) {
+		if (change == null) {
+			if (fabric_syncedAttachments == null) {
+				return;
+			}
+
+			fabric_syncedAttachments.remove(type);
+		} else {
+			if (fabric_syncedAttachments == null) {
+				fabric_syncedAttachments = new IdentityHashMap<>();
+			}
+
+			fabric_syncedAttachments.put(type, change);
+		}
+	}
+
+	@Override
+	public void fabric_computeInitialSyncChanges(ServerPlayer player, Consumer<AttachmentChange> changeOutput) {
+		if (fabric_syncedAttachments == null) {
+			return;
+		}
+
+		for (Map.Entry<AttachmentType<?>, AttachmentChange> entry : fabric_syncedAttachments.entrySet()) {
+			if (((AttachmentTypeImpl<?>) entry.getKey()).syncPredicate().test(this, player)) {
+				changeOutput.accept(entry.getValue());
+			}
+		}
 	}
 }

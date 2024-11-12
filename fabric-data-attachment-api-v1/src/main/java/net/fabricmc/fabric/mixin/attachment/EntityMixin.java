@@ -22,13 +22,24 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentSyncPredicate;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
+import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.impl.attachment.AttachmentTargetImpl;
+import net.fabricmc.fabric.impl.attachment.AttachmentTypeImpl;
+import net.fabricmc.fabric.impl.attachment.sync.AttachmentSync;
+import net.fabricmc.fabric.impl.attachment.sync.AttachmentTargetInfo;
+import net.fabricmc.fabric.impl.attachment.sync.s2c.AttachmentSyncPayloadS2C;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 
 @Mixin(Entity.class)
 abstract class EntityMixin implements AttachmentTargetImpl {
+	@Shadow
+	private int id;
+
 	@Shadow
 	public abstract Level level();
 
@@ -46,5 +57,34 @@ abstract class EntityMixin implements AttachmentTargetImpl {
 	)
 	private void writeEntityAttachments(CompoundTag nbt, CallbackInfoReturnable<CompoundTag> cir) {
 		this.fabric_writeAttachmentsToNbt(nbt, level().registryAccess());
+	}
+
+	@Override
+	public AttachmentTargetInfo<?> fabric_getSyncTargetInfo() {
+		return new AttachmentTargetInfo.EntityTarget(this.id);
+	}
+
+	@Override
+	public void fabric_syncChange(AttachmentType<?> type, AttachmentSyncPayloadS2C payload) {
+		if (!this.level().isClientSide()) {
+			AttachmentSyncPredicate predicate = ((AttachmentTypeImpl<?>) type).syncPredicate();
+
+			if ((Object) this instanceof ServerPlayer self && predicate.test(this, self)) {
+				// Players do not track themselves
+				AttachmentSync.trySync(payload, self);
+			}
+
+			PlayerLookup.tracking((Entity) (Object) this)
+					.forEach(player -> {
+						if (predicate.test(this, player)) {
+							AttachmentSync.trySync(payload, player);
+						}
+					});
+		}
+	}
+
+	@Override
+	public boolean fabric_shouldTryToSync() {
+		return !this.level().isClientSide();
 	}
 }

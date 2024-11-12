@@ -17,6 +17,7 @@
 package net.fabricmc.fabric.mixin.attachment;
 
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
@@ -24,13 +25,17 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.fabricmc.fabric.impl.attachment.AttachmentTargetImpl;
+import net.fabricmc.fabric.impl.attachment.sync.AttachmentChange;
+import net.fabricmc.fabric.impl.attachment.sync.AttachmentTargetInfo;
+import net.fabricmc.fabric.impl.attachment.sync.s2c.AttachmentSyncPayloadS2C;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.chunk.ImposterProtoChunk;
 import net.minecraft.world.level.chunk.LevelChunk;
 
 @Mixin(ImposterProtoChunk.class)
-public class WrapperProtoChunkMixin implements AttachmentTargetImpl {
+abstract class WrapperProtoChunkMixin extends AttachmentTargetsMixin {
 	@Shadow
 	@Final
 	private LevelChunk wrapped;
@@ -70,5 +75,30 @@ public class WrapperProtoChunkMixin implements AttachmentTargetImpl {
 	@Override
 	public Map<AttachmentType<?>, ?> fabric_getAttachments() {
 		return ((AttachmentTargetImpl) this.wrapped).fabric_getAttachments();
+	}
+
+	@Override
+	public boolean fabric_shouldTryToSync() {
+		return ((AttachmentTargetImpl) wrapped).fabric_shouldTryToSync();
+	}
+
+	@Override
+	public void fabric_computeInitialSyncChanges(ServerPlayer player, Consumer<AttachmentChange> changeOutput) {
+		((AttachmentTargetImpl) wrapped).fabric_computeInitialSyncChanges(player, changeOutput);
+	}
+
+	@Override
+	public AttachmentTargetInfo<?> fabric_getSyncTargetInfo() {
+		return ((AttachmentTargetImpl) wrapped).fabric_getSyncTargetInfo();
+	}
+
+	@Override
+	public void fabric_syncChange(AttachmentType<?> type, AttachmentSyncPayloadS2C payload) {
+		((AttachmentTargetImpl) wrapped).fabric_syncChange(type, payload);
+	}
+
+	@Override
+	public void fabric_markChanged(AttachmentType<?> type) {
+		((AttachmentTargetImpl) wrapped).fabric_markChanged(type);
 	}
 }

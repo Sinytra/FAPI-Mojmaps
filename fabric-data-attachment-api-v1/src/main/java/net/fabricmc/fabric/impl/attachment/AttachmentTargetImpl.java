@@ -17,12 +17,17 @@
 package net.fabricmc.fabric.impl.attachment;
 
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.jetbrains.annotations.Nullable;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentTarget;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
+import net.fabricmc.fabric.impl.attachment.sync.AttachmentChange;
+import net.fabricmc.fabric.impl.attachment.sync.AttachmentTargetInfo;
+import net.fabricmc.fabric.impl.attachment.sync.s2c.AttachmentSyncPayloadS2C;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
 
 public interface AttachmentTargetImpl extends AttachmentTarget {
 	/**
@@ -30,7 +35,7 @@ public interface AttachmentTargetImpl extends AttachmentTarget {
 	 * WorldChunk, and when an entity is respawned and a new instance is created. For entity respawns, it is
 	 * triggered on player respawn, entity conversion, return from the End, or cross-world entity teleportation.
 	 * In the first two cases, only the attachments with {@link AttachmentType#copyOnDeath()} will be transferred.
-	*/
+	 */
 	@SuppressWarnings("unchecked")
 	static void transfer(AttachmentTarget original, AttachmentTarget target, boolean isDeath) {
 		Map<AttachmentType<?>, ?> attachments = ((AttachmentTargetImpl) original).fabric_getAttachments();
@@ -62,6 +67,28 @@ public interface AttachmentTargetImpl extends AttachmentTarget {
 	}
 
 	default boolean fabric_hasPersistentAttachments() {
+		throw new UnsupportedOperationException("Implemented via mixin");
+	}
+
+	default AttachmentTargetInfo<?> fabric_getSyncTargetInfo() {
+		// this only makes sense for server objects
+		throw new UnsupportedOperationException("Sync target info was not retrieved on server!");
+	}
+
+	/*
+	 * Computes changes that should be communicated to newcomers (i.e. clients that start tracking this target)
+	 */
+	default void fabric_computeInitialSyncChanges(ServerPlayer player, Consumer<AttachmentChange> changeOutput) {
+		throw new UnsupportedOperationException("Implemented via mixin");
+	}
+
+	default void fabric_syncChange(AttachmentType<?> type, AttachmentSyncPayloadS2C payload) {
+	}
+
+	default void fabric_markChanged(AttachmentType<?> type) {
+	}
+
+	default boolean fabric_shouldTryToSync() {
 		throw new UnsupportedOperationException("Implemented via mixin");
 	}
 }

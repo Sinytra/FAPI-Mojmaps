@@ -511,6 +511,7 @@ public final class BlockTagGenerator extends FabricTagProvider.BlockTagProvider 
 				.add(Blocks.STRIPPED_JUNGLE_LOG)
 				.add(Blocks.STRIPPED_MANGROVE_LOG)
 				.add(Blocks.STRIPPED_OAK_LOG)
+				.add(Blocks.STRIPPED_PALE_OAK_LOG)
 				.add(Blocks.STRIPPED_SPRUCE_LOG);
 
 		getOrCreateTagBuilder(ConventionalBlockTags.STRIPPED_WOODS)
@@ -521,6 +522,7 @@ public final class BlockTagGenerator extends FabricTagProvider.BlockTagProvider 
 				.add(Blocks.STRIPPED_JUNGLE_WOOD)
 				.add(Blocks.STRIPPED_MANGROVE_WOOD)
 				.add(Blocks.STRIPPED_OAK_WOOD)
+				.add(Blocks.STRIPPED_PALE_OAK_WOOD)
 				.add(Blocks.STRIPPED_SPRUCE_WOOD);
 	}
 

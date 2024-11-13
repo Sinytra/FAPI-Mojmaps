@@ -56,12 +56,12 @@ public final class FabricLootTableProviderImpl {
 		HashMap<ResourceLocation, ResourceCondition[]> conditionMap = new HashMap<>();
 
 		return registryLookup.thenCompose(lookup -> {
-			provider.accept((registryKey, builder) -> {
+			provider.generate((registryKey, builder) -> {
 				ResourceCondition[] conditions = FabricDataGenHelper.consumeConditions(builder);
-				conditionMap.put(registryKey.getValue(), conditions);
+				conditionMap.put(registryKey.location(), conditions);
 
-				if (builders.put(registryKey.getValue(), builder.type(contextType).build()) != null) {
-					throw new IllegalStateException("Duplicate loot table " + registryKey.getValue());
+				if (builders.put(registryKey.location(), builder.setParamSet(contextType).build()) != null) {
+					throw new IllegalStateException("Duplicate loot table " + registryKey.location());
 				}
 			});
 

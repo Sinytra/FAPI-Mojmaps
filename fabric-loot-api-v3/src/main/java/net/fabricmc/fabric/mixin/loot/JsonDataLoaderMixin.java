@@ -36,7 +36,7 @@ import net.minecraft.world.level.storage.loot.LootDataType;
 
 @Mixin(SimpleJsonResourceReloadListener.class)
 public class JsonDataLoaderMixin {
-	@Inject(method = "scanDirectory", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/resources/FileToIdConverter;fileToId(Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/resources/ResourceLocation;", shift = At.Shift.AFTER))
+	@Inject(method = "scanDirectory(Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/resources/FileToIdConverter;Lcom/mojang/serialization/DynamicOps;Lcom/mojang/serialization/Codec;Ljava/util/Map;)V", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/resources/FileToIdConverter;fileToId(Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/resources/ResourceLocation;", shift = At.Shift.AFTER))
 	private static <T> void fillSourceMap(ResourceManager manager, FileToIdConverter resourceFinder, DynamicOps<JsonElement> ops, Codec<T> codec, Map<ResourceLocation, T> result, CallbackInfo ci, @Local Map.Entry<ResourceLocation, Resource> entry, @Local(ordinal = 1) ResourceLocation id) {
 		final String dirName = ((ResourceFinderAccessor) resourceFinder).getPrefix();
 		if (!LootDataType.TABLE.registryKey().location().getPath().equals(dirName)) return;

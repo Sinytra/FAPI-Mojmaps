@@ -21,17 +21,20 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Set;
 
+import com.google.gson.JsonElement;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.JsonOps;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.SharedConstants;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resource.metadata.ResourceMetadataReader;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.BuiltInMetadata;
 import net.minecraft.server.packs.PackLocationInfo;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.metadata.MetadataSectionType;
 import net.minecraft.server.packs.metadata.pack.PackMetadataSection;
 import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.resources.IoSupplier;
@@ -53,7 +56,8 @@ public record PlaceholderResourcePack(PackType type, PackLocationInfo metadata) 
 			switch (segments[0]) {
 			case "pack.mcmeta":
 				return () -> {
-					String metadata = ModResourcePackUtil.GSON.toJson(PackMetadataSection.TYPE.toJson(getMetadata()));
+					DataResult<JsonElement> result = PackMetadataSection.TYPE.codec().encodeStart(JsonOps.INSTANCE, getMetadata());
+					String metadata = result.getOrThrow().toString();
 					return IOUtils.toInputStream(metadata, StandardCharsets.UTF_8);
 				};
 			case "pack.png":
@@ -84,7 +88,7 @@ public record PlaceholderResourcePack(PackType type, PackLocationInfo metadata) 
 
 	@Nullable
 	@Override
-	public <T> T parseMetadata(ResourceMetadataReader<T> metaReader) {
+	public <T> T getMetadataSection(MetadataSectionType<T> metaReader) {
 		return BuiltInMetadata.of(PackMetadataSection.TYPE, getMetadata()).get(metaReader);
 	}
 

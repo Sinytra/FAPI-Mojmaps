@@ -34,11 +34,9 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
 import net.minecraft.data.PackOutput;
-import net.minecraft.data.server.recipe.CraftingRecipeJsonBuilder;
-import net.minecraft.data.server.recipe.RecipeExporter;
-import net.minecraft.data.server.recipe.RecipeGenerator;
-import net.minecraft.data.server.recipe.ShapedRecipeJsonBuilder;
-import net.minecraft.data.server.recipe.ShapelessRecipeJsonBuilder;
+import net.minecraft.data.recipes.RecipeBuilder;
+import net.minecraft.data.recipes.RecipeOutput;
+import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -49,11 +47,11 @@ import net.fabricmc.fabric.api.resource.conditions.v1.ResourceCondition;
 import net.fabricmc.fabric.impl.datagen.FabricDataGenHelper;
 
 /**
- * Extend this class and implement {@link FabricRecipeProvider#getRecipeGenerator}.
+ * Extend this class and implement {@link FabricRecipeProvider#createRecipeProvider}.
  *
  * <p>Register an instance of the class with {@link FabricDataGenerator.Pack#addProvider} in a {@link net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint}.
  */
-public abstract class FabricRecipeProvider extends RecipeGenerator.RecipeProvider {
+public abstract class FabricRecipeProvider extends RecipeProvider.Runner {
 	protected final FabricDataOutput output;
 	private final CompletableFuture<HolderLookup.Provider> registriesFuture;
 
@@ -64,17 +62,17 @@ public abstract class FabricRecipeProvider extends RecipeGenerator.RecipeProvide
 	}
 
 	/**
-	 * Implement this method and then use the range of methods in {@link RecipeGenerator} or from one of the recipe json factories such as {@link ShapedRecipeJsonBuilder} or {@link ShapelessRecipeJsonBuilder}.
+	 * Implement this method and then use the range of methods in {@link RecipeProvider} or from one of the recipe json factories such as {@link ShapedRecipeJsonBuilder} or {@link ShapelessRecipeJsonBuilder}.
 	 */
 	@Override
-	protected abstract RecipeGenerator getRecipeGenerator(HolderLookup.Provider registryLookup, RecipeExporter exporter);
+	protected abstract RecipeProvider createRecipeProvider(HolderLookup.Provider registryLookup, RecipeOutput exporter);
 
 	/**
 	 * Return a new exporter that applies the specified conditions to any recipe json provider it receives.
 	 */
-	protected RecipeExporter withConditions(RecipeExporter exporter, ResourceCondition... conditions) {
+	protected RecipeOutput withConditions(RecipeOutput exporter, ResourceCondition... conditions) {
 		Preconditions.checkArgument(conditions.length > 0, "Must add at least one condition.");
-		return new RecipeExporter() {
+		return new RecipeOutput() {
 			@Override
 			public void accept(ResourceKey<Recipe<?>> key, Recipe<?> recipe, @Nullable AdvancementHolder advancementEntry) {
 				FabricDataGenHelper.addConditions(recipe, conditions);
@@ -82,12 +80,12 @@ public abstract class FabricRecipeProvider extends RecipeGenerator.RecipeProvide
 			}
 
 			@Override
-			public Advancement.Builder getAdvancementBuilder() {
-				return exporter.getAdvancementBuilder();
+			public Advancement.Builder advancement() {
+				return exporter.advancement();
 			}
 
 			@Override
-			public void addRootAdvancement() {
+			public void includeRootAdvancement() {
 			}
 		};
 	}
@@ -97,7 +95,7 @@ public abstract class FabricRecipeProvider extends RecipeGenerator.RecipeProvide
 		return registriesFuture.thenCompose((wrapperLookup -> {
 			Set<ResourceLocation> generatedRecipes = Sets.newHashSet();
 			List<CompletableFuture<?>> list = new ArrayList<>();
-			RecipeGenerator recipeGenerator = getRecipeGenerator(wrapperLookup, new RecipeExporter() {
+			RecipeProvider recipeGenerator = createRecipeProvider(wrapperLookup, new RecipeOutput() {
 				@Override
 				public void accept(ResourceKey<Recipe<?>> recipeKey, Recipe<?> recipe, @Nullable AdvancementHolder advancement) {
 					ResourceLocation identifier = getRecipeIdentifier(recipeKey.location());
@@ -124,16 +122,16 @@ public abstract class FabricRecipeProvider extends RecipeGenerator.RecipeProvide
 				}
 
 				@Override
-				public Advancement.Builder getAdvancementBuilder() {
+				public Advancement.Builder advancement() {
 					//noinspection removal
-					return Advancement.Builder.recipeAdvancement().parent(CraftingRecipeJsonBuilder.ROOT);
+					return Advancement.Builder.recipeAdvancement().parent(RecipeBuilder.ROOT_RECIPE_ADVANCEMENT);
 				}
 
 				@Override
-				public void addRootAdvancement() {
+				public void includeRootAdvancement() {
 				}
 			});
-			recipeGenerator.generate();
+			recipeGenerator.buildRecipes();
 			return CompletableFuture.allOf(list.toArray(CompletableFuture[]::new));
 		}));
 	}

@@ -35,6 +35,23 @@ import java.util.function.Consumer;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint;
+import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
+import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
+import net.fabricmc.fabric.api.datagen.v1.JsonKeySortOrderCallback;
+import net.fabricmc.fabric.api.datagen.v1.provider.FabricAdvancementProvider;
+import net.fabricmc.fabric.api.datagen.v1.provider.FabricBlockLootTableProvider;
+import net.fabricmc.fabric.api.datagen.v1.provider.FabricCodecDataProvider;
+import net.fabricmc.fabric.api.datagen.v1.provider.FabricDynamicRegistryProvider;
+import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider;
+import net.fabricmc.fabric.api.datagen.v1.provider.FabricRecipeProvider;
+import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider;
+import net.fabricmc.fabric.api.datagen.v1.provider.SimpleFabricLootTableProvider;
+import net.fabricmc.fabric.api.recipe.v1.ingredient.DefaultCustomIngredients;
+import net.fabricmc.fabric.api.resource.conditions.v1.ResourceCondition;
+import net.fabricmc.fabric.api.resource.conditions.v1.ResourceConditions;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementType;
@@ -49,9 +66,9 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.RecipeCategory;
+import net.minecraft.data.recipes.RecipeOutput;
+import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.registries.RegistryPatchGenerator;
-import net.minecraft.data.server.recipe.RecipeExporter;
-import net.minecraft.data.server.recipe.RecipeGenerator;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.network.chat.Component;
 import net.minecraft.references.Blocks;
@@ -77,23 +94,6 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePropertyCondition;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint;
-import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
-import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
-import net.fabricmc.fabric.api.datagen.v1.JsonKeySortOrderCallback;
-import net.fabricmc.fabric.api.datagen.v1.provider.FabricAdvancementProvider;
-import net.fabricmc.fabric.api.datagen.v1.provider.FabricBlockLootTableProvider;
-import net.fabricmc.fabric.api.datagen.v1.provider.FabricCodecDataProvider;
-import net.fabricmc.fabric.api.datagen.v1.provider.FabricDynamicRegistryProvider;
-import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider;
-import net.fabricmc.fabric.api.datagen.v1.provider.FabricRecipeProvider;
-import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider;
-import net.fabricmc.fabric.api.datagen.v1.provider.SimpleFabricLootTableProvider;
-import net.fabricmc.fabric.api.recipe.v1.ingredient.DefaultCustomIngredients;
-import net.fabricmc.fabric.api.resource.conditions.v1.ResourceCondition;
-import net.fabricmc.fabric.api.resource.conditions.v1.ResourceConditions;
-import net.fabricmc.loader.api.FabricLoader;
 
 public class DataGeneratorTestEntrypoint implements DataGeneratorEntrypoint {
 	private static final ResourceCondition ALWAYS_LOADED = ResourceConditions.alwaysTrue();
@@ -162,21 +162,21 @@ public class DataGeneratorTestEntrypoint implements DataGeneratorEntrypoint {
 		}
 
 		@Override
-		protected RecipeGenerator getRecipeGenerator(HolderLookup.Provider registryLookup, RecipeExporter exporter) {
-			return new RecipeGenerator(registryLookup, exporter) {
+		protected RecipeProvider createRecipeProvider(HolderLookup.Provider registryLookup, RecipeOutput exporter) {
+			return new RecipeProvider(registryLookup, exporter) {
 				@Override
-				public void generate() {
-					offerPlanksRecipe2(SIMPLE_BLOCK, ItemTags.ACACIA_LOGS, 1);
+				public void buildRecipes() {
+					planksFromLog(SIMPLE_BLOCK, ItemTags.ACACIA_LOGS, 1);
 
-					createShapeless(RecipeCategory.MISC, Items.DIAMOND_ORE, 4).input(Items.ITEM_FRAME)
-							.criterion("has_frame", conditionsFromItem(Items.ITEM_FRAME))
-							.offerTo(withConditions(exporter, ResourceConditions.registryContains(Registries.ITEM, BuiltInRegistries.ITEM.getKey(Items.DIAMOND_BLOCK))));
-					createShapeless(RecipeCategory.MISC, Items.EMERALD, 4).input(Items.ITEM_FRAME, 2)
-							.criterion("has_frame", conditionsFromItem(Items.ITEM_FRAME))
-							.offerTo(withConditions(exporter, ResourceConditions.registryContains(Biomes.PLAINS, Biomes.BADLANDS)));
+					shapeless(RecipeCategory.MISC, Items.DIAMOND_ORE, 4).requires(Items.ITEM_FRAME)
+							.unlockedBy("has_frame", has(Items.ITEM_FRAME))
+							.save(withConditions(output, ResourceConditions.registryContains(Registries.ITEM, BuiltInRegistries.ITEM.getKey(Items.DIAMOND_BLOCK))));
+					shapeless(RecipeCategory.MISC, Items.EMERALD, 4).requires(Items.ITEM_FRAME, 2)
+							.unlockedBy("has_frame", has(Items.ITEM_FRAME))
+							.save(withConditions(output, ResourceConditions.registryContains(Biomes.PLAINS, Biomes.BADLANDS)));
 
-					createShapeless(RecipeCategory.MISC, Items.GOLD_INGOT).input(Items.DIRT).criterion("has_dirt", conditionsFromItem(Items.DIRT)).offerTo(withConditions(exporter, NEVER_LOADED));
-					createShapeless(RecipeCategory.MISC, Items.DIAMOND).input(Items.STICK).criterion("has_stick", conditionsFromItem(Items.STICK)).offerTo(withConditions(exporter, ALWAYS_LOADED));
+					shapeless(RecipeCategory.MISC, Items.GOLD_INGOT).requires(Items.DIRT).unlockedBy("has_dirt", has(Items.DIRT)).save(withConditions(output, NEVER_LOADED));
+					shapeless(RecipeCategory.MISC, Items.DIAMOND).requires(Items.STICK).unlockedBy("has_stick", has(Items.STICK)).save(withConditions(output, ALWAYS_LOADED));
 
 					/* Generate test recipes using all types of custom ingredients for easy testing */
 					// Testing procedure for vanilla and fabric clients:
@@ -194,51 +194,51 @@ public class DataGeneratorTestEntrypoint implements DataGeneratorEntrypoint {
 					// - 9 undamaged pickaxes should match.
 					// - 1 undamaged pickaxe + 8 damaged pickaxes should match (regardless of the position).
 					// - 1 undamaged renamed pickaxe + 8 damaged pickaxes should match (components are not strictly matched here).
-					createShapeless(RecipeCategory.MISC, Items.DIAMOND_BLOCK)
-							.input(Ingredient.of(Items.DIAMOND_PICKAXE))
-							.input(Ingredient.of(Items.DIAMOND_PICKAXE))
-							.input(Ingredient.of(Items.DIAMOND_PICKAXE))
-							.input(Ingredient.of(Items.DIAMOND_PICKAXE))
-							.input(DefaultCustomIngredients.components(
+					shapeless(RecipeCategory.MISC, Items.DIAMOND_BLOCK)
+							.requires(Ingredient.of(Items.DIAMOND_PICKAXE))
+							.requires(Ingredient.of(Items.DIAMOND_PICKAXE))
+							.requires(Ingredient.of(Items.DIAMOND_PICKAXE))
+							.requires(Ingredient.of(Items.DIAMOND_PICKAXE))
+							.requires(DefaultCustomIngredients.components(
 								Ingredient.of(Items.DIAMOND_PICKAXE),
 								DataComponentPatch.builder()
 									.set(DataComponents.DAMAGE, 0)
 									.build()
 								)
 							)
-							.input(Ingredient.of(Items.DIAMOND_PICKAXE))
-							.input(Ingredient.of(Items.DIAMOND_PICKAXE))
-							.input(Ingredient.of(Items.DIAMOND_PICKAXE))
-							.input(Ingredient.of(Items.DIAMOND_PICKAXE))
-							.criterion("has_pickaxe", conditionsFromItem(Items.DIAMOND_PICKAXE))
-							.offerTo(exporter);
+							.requires(Ingredient.of(Items.DIAMOND_PICKAXE))
+							.requires(Ingredient.of(Items.DIAMOND_PICKAXE))
+							.requires(Ingredient.of(Items.DIAMOND_PICKAXE))
+							.requires(Ingredient.of(Items.DIAMOND_PICKAXE))
+							.unlockedBy("has_pickaxe", has(Items.DIAMOND_PICKAXE))
+							.save(output);
 
 					// Test AND
 					// To test: charcoal should give a torch, but coal should not.
-					createShapeless(RecipeCategory.MISC, Items.TORCH)
+					shapeless(RecipeCategory.MISC, Items.TORCH)
 							// charcoal only
-							.input(DefaultCustomIngredients.all(ingredientFromTag(ItemTags.COALS), Ingredient.of(Items.CHARCOAL)))
-							.criterion("has_charcoal", conditionsFromItem(Items.CHARCOAL))
-							.offerTo(exporter);
+							.requires(DefaultCustomIngredients.all(tag(ItemTags.COALS), Ingredient.of(Items.CHARCOAL)))
+							.unlockedBy("has_charcoal", has(Items.CHARCOAL))
+							.save(output);
 
 					// Test OR
 					// To test: a golden pickaxe or a golden shovel should give a block of gold.
-					createShapeless(RecipeCategory.MISC, Items.GOLD_BLOCK)
-							.input(DefaultCustomIngredients.any(Ingredient.of(Items.GOLDEN_PICKAXE), Ingredient.of(Items.GOLDEN_SHOVEL)))
-							.criterion("has_pickaxe", conditionsFromItem(Items.GOLDEN_PICKAXE))
-							.criterion("has_shovel", conditionsFromItem(Items.GOLDEN_SHOVEL))
-							.offerTo(exporter);
+					shapeless(RecipeCategory.MISC, Items.GOLD_BLOCK)
+							.requires(DefaultCustomIngredients.any(Ingredient.of(Items.GOLDEN_PICKAXE), Ingredient.of(Items.GOLDEN_SHOVEL)))
+							.unlockedBy("has_pickaxe", has(Items.GOLDEN_PICKAXE))
+							.unlockedBy("has_shovel", has(Items.GOLDEN_SHOVEL))
+							.save(output);
 
 					// Test difference
 					// To test: only copper, netherite and emerald should match the recipe.
-					createShapeless(RecipeCategory.MISC, Items.BEACON)
-							.input(DefaultCustomIngredients.difference(
+					shapeless(RecipeCategory.MISC, Items.BEACON)
+							.requires(DefaultCustomIngredients.difference(
 									DefaultCustomIngredients.any(
-											ingredientFromTag(ItemTags.BEACON_PAYMENT_ITEMS),
+											tag(ItemTags.BEACON_PAYMENT_ITEMS),
 											Ingredient.of(Items.COPPER_INGOT)),
 									Ingredient.of(Items.IRON_INGOT, Items.GOLD_INGOT, Items.DIAMOND)))
-							.criterion("has_payment", conditionsFromTag(ItemTags.BEACON_PAYMENT_ITEMS))
-							.offerTo(exporter);
+							.unlockedBy("has_payment", has(ItemTags.BEACON_PAYMENT_ITEMS))
+							.save(output);
 				}
 			};
 		}
@@ -300,10 +300,10 @@ public class DataGeneratorTestEntrypoint implements DataGeneratorEntrypoint {
 		}
 
 		@Override
-		protected void configure(HolderLookup.Provider registries) {
-			getOrCreateTagBuilder(BlockTags.FIRE).setReplace(true).add(SIMPLE_BLOCK);
-			getOrCreateTagBuilder(BlockTags.DIRT).add(SIMPLE_BLOCK);
-			getOrCreateTagBuilder(BlockTags.ACACIA_LOGS).forceAddTag(BlockTags.ANIMALS_SPAWNABLE_ON);
+		protected void addTags(HolderLookup.Provider registries) {
+			tag(BlockTags.FIRE).setReplace(true).add(SIMPLE_BLOCK);
+			tag(BlockTags.DIRT).add(SIMPLE_BLOCK);
+			tag(BlockTags.ACACIA_LOGS).forceAddTag(BlockTags.ANIMALS_SPAWNABLE_ON);
 		}
 	}
 
@@ -313,7 +313,7 @@ public class DataGeneratorTestEntrypoint implements DataGeneratorEntrypoint {
 		}
 
 		@Override
-		protected void configure(HolderLookup.Provider registries) {
+		protected void addTags(HolderLookup.Provider registries) {
 			copy(BlockTags.DIRT, ItemTags.DIRT);
 		}
 	}
@@ -324,8 +324,8 @@ public class DataGeneratorTestEntrypoint implements DataGeneratorEntrypoint {
 		}
 
 		@Override
-		protected void configure(HolderLookup.Provider registries) {
-			getOrCreateTagBuilder(TagKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath(MOD_ID, "biome_tag_test")))
+		protected void addTags(HolderLookup.Provider registries) {
+			tag(TagKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath(MOD_ID, "biome_tag_test")))
 					.add(Biomes.BADLANDS, Biomes.BAMBOO_JUNGLE)
 					.add(Biomes.BASALT_DELTAS);
 		}
@@ -337,8 +337,8 @@ public class DataGeneratorTestEntrypoint implements DataGeneratorEntrypoint {
 		}
 
 		@Override
-		protected void configure(HolderLookup.Provider registries) {
-			getOrCreateTagBuilder(TagKey.create(Registries.GAME_EVENT, ResourceLocation.fromNamespaceAndPath(MOD_ID, "game_event_tag_test")))
+		protected void addTags(HolderLookup.Provider registries) {
+			tag(TagKey.create(Registries.GAME_EVENT, ResourceLocation.fromNamespaceAndPath(MOD_ID, "game_event_tag_test")))
 					.add(GameEvent.SHRIEK.key());
 		}
 	}
@@ -381,8 +381,8 @@ public class DataGeneratorTestEntrypoint implements DataGeneratorEntrypoint {
 		@Override
 		public void generate() {
 			// Same condition twice to test recursive condition adding
-			withConditions(ALWAYS_LOADED).withConditions(ResourceConditions.not(NEVER_LOADED)).addDrop(SIMPLE_BLOCK);
-			addDrop(BLOCK_WITHOUT_ITEM, drops(SIMPLE_BLOCK));
+			withConditions(ALWAYS_LOADED).withConditions(ResourceConditions.not(NEVER_LOADED)).dropSelf(SIMPLE_BLOCK);
+			add(BLOCK_WITHOUT_ITEM, createSingleItemTable(SIMPLE_BLOCK));
 
 			excludeFromStrictValidation(BLOCK_WITHOUT_LOOT_TABLE);
 		}
@@ -394,7 +394,7 @@ public class DataGeneratorTestEntrypoint implements DataGeneratorEntrypoint {
 		}
 
 		@Override
-		public void accept(BiConsumer<ResourceKey<LootTable>, LootTable.Builder> consumer) {
+		public void generate(BiConsumer<ResourceKey<LootTable>, LootTable.Builder> consumer) {
 			withConditions(consumer, ALWAYS_LOADED).accept(
 					BuiltInLootTables.PIGLIN_BARTERING,
 					LootTable.lootTable().withPool(

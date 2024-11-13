@@ -21,14 +21,6 @@ import static net.fabricmc.fabric.test.datagen.DataGeneratorTestContent.MOD_ID;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
-import net.minecraft.client.renderer.texture.atlas.SpriteSource;
-import net.minecraft.client.renderer.texture.atlas.SpriteSources;
-import net.minecraft.client.renderer.texture.atlas.sources.DirectoryLister;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.data.PackOutput;
-import net.minecraft.data.client.BlockStateModelGenerator;
-import net.minecraft.data.client.ItemModelGenerator;
-import net.minecraft.resources.ResourceLocation;
 import net.fabricmc.fabric.api.client.datagen.v1.provider.FabricModelProvider;
 import net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
@@ -36,6 +28,14 @@ import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.JsonKeySortOrderCallback;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricCodecDataProvider;
 import net.fabricmc.fabric.test.datagen.DataGeneratorTestContent;
+import net.minecraft.client.data.models.BlockModelGenerators;
+import net.minecraft.client.data.models.ItemModelGenerators;
+import net.minecraft.client.renderer.texture.atlas.SpriteSource;
+import net.minecraft.client.renderer.texture.atlas.SpriteSources;
+import net.minecraft.client.renderer.texture.atlas.sources.DirectoryLister;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.data.PackOutput;
+import net.minecraft.resources.ResourceLocation;
 
 @SuppressWarnings("unused")
 public class DataGeneratorClientTestEntrypoint implements DataGeneratorEntrypoint {
@@ -73,16 +73,16 @@ public class DataGeneratorClientTestEntrypoint implements DataGeneratorEntrypoin
 		}
 
 		@Override
-		public void generateBlockStateModels(BlockStateModelGenerator blockStateModelGenerator) {
-			blockStateModelGenerator.registerSimpleCubeAll(DataGeneratorTestContent.SIMPLE_BLOCK);
-			blockStateModelGenerator.registerSimpleCubeAll(DataGeneratorTestContent.BLOCK_WITHOUT_ITEM);
-			blockStateModelGenerator.registerSimpleCubeAll(DataGeneratorTestContent.BLOCK_WITHOUT_LOOT_TABLE);
-			blockStateModelGenerator.registerSimpleCubeAll(DataGeneratorTestContent.BLOCK_WITH_VANILLA_LOOT_TABLE);
-			blockStateModelGenerator.registerSimpleCubeAll(DataGeneratorTestContent.BLOCK_THAT_DROPS_NOTHING);
+		public void generateBlockStateModels(BlockModelGenerators blockStateModelGenerator) {
+			blockStateModelGenerator.createTrivialCube(DataGeneratorTestContent.SIMPLE_BLOCK);
+			blockStateModelGenerator.createTrivialCube(DataGeneratorTestContent.BLOCK_WITHOUT_ITEM);
+			blockStateModelGenerator.createTrivialCube(DataGeneratorTestContent.BLOCK_WITHOUT_LOOT_TABLE);
+			blockStateModelGenerator.createTrivialCube(DataGeneratorTestContent.BLOCK_WITH_VANILLA_LOOT_TABLE);
+			blockStateModelGenerator.createTrivialCube(DataGeneratorTestContent.BLOCK_THAT_DROPS_NOTHING);
 		}
 
 		@Override
-		public void generateItemModels(ItemModelGenerator itemModelGenerator) {
+		public void generateItemModels(ItemModelGenerators itemModelGenerator) {
 			//itemModelGenerator.register(item, Models.SLAB);
 		}
 	}

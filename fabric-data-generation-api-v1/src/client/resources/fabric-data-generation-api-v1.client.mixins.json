@@ -5,7 +5,7 @@
   "client": [
     "MinecraftClientMixin",
     "ModelProviderBlockDefinitionsMixin",
-    "ModelProviderItemDefinitionsMixin",
+    "ModelProviderItemAssetsMixin",
     "ModelProviderMixin"
   ],
   "injectors": {

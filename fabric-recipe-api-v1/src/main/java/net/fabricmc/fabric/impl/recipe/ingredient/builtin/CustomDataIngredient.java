@@ -16,7 +16,7 @@
 
 package net.fabricmc.fabric.impl.recipe.ingredient.builtin;
 
-import java.util.List;
+import java.util.stream.Stream;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -58,14 +58,14 @@ public class CustomDataIngredient implements CustomIngredient {
 	}
 
 	@Override
-	public List<Holder<Item>> getMatchingItems() {
+	public Stream<Holder<Item>> getMatchingItems() {
 		return base.items();
 	}
 
 	@Override
 	public SlotDisplay toDisplay() {
 		return new SlotDisplay.Composite(
-				base.items().stream().map(this::createEntryDisplay).toList()
+				base.items().map(this::createEntryDisplay).toList()
 		);
 	}
 

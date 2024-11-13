@@ -22,7 +22,7 @@ import com.google.common.base.Preconditions;
 import org.jetbrains.annotations.ApiStatus;
 
 import net.minecraft.data.DataProvider;
-import net.minecraft.data.server.loottable.LootTableGenerator;
+import net.minecraft.data.loot.LootTableSubProvider;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.fabricmc.fabric.api.datagen.v1.loot.FabricBlockLootTableGenerator;
@@ -37,7 +37,7 @@ import net.fabricmc.fabric.impl.datagen.FabricDataGenHelper;
  * <p>Use {@link SimpleFabricLootTableProvider} for a simple abstract class that you can implement to handle standard loot table functions.
  */
 @ApiStatus.NonExtendable
-public interface FabricLootTableProvider extends LootTableGenerator, DataProvider {
+public interface FabricLootTableProvider extends LootTableSubProvider, DataProvider {
 	/**
 	 * Return a new exporter that applies the specified conditions to any loot table it receives.
 	 *

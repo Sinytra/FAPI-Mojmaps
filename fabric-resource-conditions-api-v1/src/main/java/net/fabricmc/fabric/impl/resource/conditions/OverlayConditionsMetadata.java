@@ -29,7 +29,7 @@ import net.minecraft.server.packs.metadata.MetadataSectionType;
 
 public record OverlayConditionsMetadata(List<Entry> overlays) {
 	public static final Codec<OverlayConditionsMetadata> CODEC = Entry.CODEC.listOf().fieldOf("entries").xmap(OverlayConditionsMetadata::new, OverlayConditionsMetadata::overlays).codec();
-	public static final MetadataSectionType<OverlayConditionsMetadata> SERIALIZER = MetadataSectionType.fromCodec(ResourceConditions.OVERLAYS_KEY, CODEC);
+	public static final MetadataSectionType<OverlayConditionsMetadata> SERIALIZER = new MetadataSectionType<>(ResourceConditions.OVERLAYS_KEY, CODEC);
 
 	public List<String> appliedOverlays() {
 		List<String> appliedOverlays = new ArrayList<>();

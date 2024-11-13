@@ -23,13 +23,16 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.jetbrains.annotations.Nullable;
+import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
+import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
+import net.fabricmc.fabric.impl.datagen.ForcedTagEntry;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistrySetBuilder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.data.server.tag.TagProvider;
+import net.minecraft.data.tags.TagsProvider;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
@@ -46,9 +49,6 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.material.Fluid;
-import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
-import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
-import net.fabricmc.fabric.impl.datagen.ForcedTagEntry;
 
 /**
  * Implement this class (or one of the inner classes) to generate a tag list.
@@ -67,7 +67,7 @@ import net.fabricmc.fabric.impl.datagen.ForcedTagEntry;
  * @see FluidTagProvider
  * @see EntityTypeTagProvider
  */
-public abstract class FabricTagProvider<T> extends TagProvider<T> {
+public abstract class FabricTagProvider<T> extends TagsProvider<T> {
 	/**
 	 * Constructs a new {@link FabricTagProvider} with the default computed path.
 	 *
@@ -81,16 +81,16 @@ public abstract class FabricTagProvider<T> extends TagProvider<T> {
 	}
 
 	/**
-	 * Implement this method and then use {@link FabricTagProvider#getOrCreateTagBuilder} to get and register new tag builders.
+	 * Implement this method and then use {@link FabricTagProvider#tag} to get and register new tag builders.
 	 */
-	protected abstract void configure(HolderLookup.Provider wrapperLookup);
+	protected abstract void addTags(HolderLookup.Provider wrapperLookup);
 
 	/**
 	 * Override to enable adding objects to the tag builder directly.
 	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	protected ResourceKey<T> reverseLookup(T element) {
-		Registry registry = BuiltInRegistries.REGISTRY.getValue((ResourceKey) registryRef);
+		Registry registry = BuiltInRegistries.REGISTRY.getValue((ResourceKey) registryKey);
 
 		if (registry != null) {
 			Optional<Holder<T>> key = registry.getResourceKey(element);
@@ -110,8 +110,8 @@ public abstract class FabricTagProvider<T> extends TagProvider<T> {
 	 * @return The {@link FabricTagBuilder} instance
 	 */
 	@Override
-	protected FabricTagBuilder getOrCreateTagBuilder(TagKey<T> tag) {
-		return new FabricTagBuilder(super.getOrCreateTagBuilder(tag));
+	protected FabricTagBuilder tag(TagKey<T> tag) {
+		return new FabricTagBuilder(super.tag(tag));
 	}
 
 	/**
@@ -157,7 +157,7 @@ public abstract class FabricTagProvider<T> extends TagProvider<T> {
 		public ItemTagProvider(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> completableFuture, @Nullable FabricTagProvider.BlockTagProvider blockTagProvider) {
 			super(output, Registries.ITEM, completableFuture);
 
-			this.blockTagBuilderProvider = blockTagProvider == null ? null : blockTagProvider::getTagBuilder;
+			this.blockTagBuilderProvider = blockTagProvider == null ? null : blockTagProvider::getOrCreateRawBuilder;
 		}
 
 		/**
@@ -179,7 +179,7 @@ public abstract class FabricTagProvider<T> extends TagProvider<T> {
 		 */
 		public void copy(TagKey<Block> blockTag, TagKey<Item> itemTag) {
 			TagBuilder blockTagBuilder = Objects.requireNonNull(this.blockTagBuilderProvider, "Pass Block tag provider via constructor to use copy").apply(blockTag);
-			TagBuilder itemTagBuilder = this.getTagBuilder(itemTag);
+			TagBuilder itemTagBuilder = this.getOrCreateRawBuilder(itemTag);
 			blockTagBuilder.build().forEach(itemTagBuilder::add);
 		}
 
@@ -227,12 +227,12 @@ public abstract class FabricTagProvider<T> extends TagProvider<T> {
 	}
 
 	/**
-	 * An extension to {@link ProvidedTagBuilder} that provides additional functionality.
+	 * An extension to {@link TagAppender} that provides additional functionality.
 	 */
-	public final class FabricTagBuilder extends ProvidedTagBuilder<T> {
-		private final TagProvider.ProvidedTagBuilder<T> parent;
+	public final class FabricTagBuilder extends TagAppender<T> {
+		private final TagsProvider.TagAppender<T> parent;
 
-		private FabricTagBuilder(ProvidedTagBuilder<T> parent) {
+		private FabricTagBuilder(TagAppender<T> parent) {
 			super(parent.builder);
 			this.parent = parent;
 		}

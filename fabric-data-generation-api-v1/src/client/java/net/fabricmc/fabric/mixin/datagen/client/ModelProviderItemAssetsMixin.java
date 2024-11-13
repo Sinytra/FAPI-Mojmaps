@@ -28,21 +28,20 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
-
-import net.minecraft.class_10434;
-import net.minecraft.core.Holder;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.data.client.ModelProvider;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.Item;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.impl.datagen.client.FabricModelProviderDefinitions;
+import net.minecraft.client.data.models.ModelProvider;
+import net.minecraft.client.renderer.item.ClientItem;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
 
-@Mixin(ModelProvider.class_10407.class)
-public class ModelProviderItemDefinitionsMixin implements FabricModelProviderDefinitions {
+@Mixin(ModelProvider.ItemInfoCollector.class)
+public class ModelProviderItemAssetsMixin implements FabricModelProviderDefinitions {
 	@Shadow
 	@Final
-	private Map<Item, class_10434> field_55249;
+	private Map<Item, ClientItem> ITEM_ASSETS;
 	@Unique
 	private FabricDataOutput fabricDataOutput;
 
@@ -51,13 +50,13 @@ public class ModelProviderItemDefinitionsMixin implements FabricModelProviderDef
 		this.fabricDataOutput = fabricDataOutput;
 	}
 
-	@WrapOperation(method = "method_65470", at = @At(value = "INVOKE", target = "Ljava/util/Map;containsKey(Ljava/lang/Object;)Z", ordinal = 1, remap = false))
-	private boolean filterItemsForProcessingMod(Map<Item, class_10434> map, Object o, Operation<Boolean> original) {
+	@WrapOperation(method = "lambda$finalizeAndValidate$0", at = @At(value = "INVOKE", target = "Ljava/util/Map;containsKey(Ljava/lang/Object;)Z", ordinal = 1, remap = false))
+	private boolean filterItemsForProcessingMod(Map<Item, ClientItem> map, Object o, Operation<Boolean> original) {
 		BlockItem blockItem = (BlockItem) o;
 
 		if (fabricDataOutput != null) {
 			// Only generate the item model if the block state json was registered
-			if (field_55249.containsKey(blockItem)) {
+			if (ITEM_ASSETS.containsKey(blockItem)) {
 				return false;
 			}
 
@@ -70,7 +69,7 @@ public class ModelProviderItemDefinitionsMixin implements FabricModelProviderDef
 		return original.call(map, blockItem);
 	}
 
-	@Redirect(method = "method_65469", at = @At(value = "INVOKE", target = "Ljava/util/stream/Stream;filter(Ljava/util/function/Predicate;)Ljava/util/stream/Stream;", ordinal = 0, remap = false))
+	@Redirect(method = "finalizeAndValidate", at = @At(value = "INVOKE", target = "Ljava/util/stream/Stream;filter(Ljava/util/function/Predicate;)Ljava/util/stream/Stream;", ordinal = 0, remap = false))
 	private Stream<Holder.Reference<Item>> filterItemsForProcessingMod(Stream<Holder.Reference<Item>> instance, Predicate<Holder.Reference<Item>> predicate) {
 		return instance.filter((item) -> {
 			if (fabricDataOutput != null) {

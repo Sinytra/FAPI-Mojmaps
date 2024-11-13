@@ -89,7 +89,7 @@ public class RegistryLoaderMixin {
 			},
 			at = @At(
 					value = "INVOKE",
-					target = "Lnet/minecraft/resources/FileToIdConverter;method_65309(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/resources/FileToIdConverter;"
+					target = "Lnet/minecraft/resources/FileToIdConverter;registry(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/resources/FileToIdConverter;"
 			)
 	)
 	private static FileToIdConverter prependDirectoryWithNamespace(ResourceKey<? extends Registry<?>> registryKey, Operation<FileToIdConverter> original) {

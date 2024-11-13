@@ -16,7 +16,7 @@
 
 package net.fabricmc.fabric.api.recipe.v1.ingredient;
 
-import java.util.List;
+import java.util.stream.Stream;
 
 import org.jetbrains.annotations.ApiStatus;
 import net.fabricmc.fabric.impl.recipe.ingredient.CustomIngredientImpl;
@@ -71,7 +71,7 @@ public interface CustomIngredient {
 	 *
 	 * <p>Note: no caching needs to be done by the implementation, this is already handled by the ingredient itself.
 	 */
-	List<Holder<Item>> getMatchingItems();
+	Stream<Holder<Item>> getMatchingItems();
 
 	/**
 	 * Returns whether this ingredient always requires {@linkplain #test direct stack testing}.
@@ -95,7 +95,7 @@ public interface CustomIngredient {
 	 */
 	default SlotDisplay toDisplay() {
 		// Matches the vanilla logic in Ingredient.toDisplay()
-		return HolderSet.direct(getMatchingItems()).unwrap().map(
+		return HolderSet.direct(getMatchingItems().toList()).unwrap().map(
 				SlotDisplay.TagSlotDisplay::new,
 				(itemEntries) -> new SlotDisplay.Composite(
 						itemEntries.stream().map(Ingredient::createDisplayWithRemainder).toList()

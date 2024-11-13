@@ -30,25 +30,25 @@ public final class EnchantmentTagGenerator extends FabricTagProvider.Enchantment
 	}
 
 	@Override
-	protected void configure(HolderLookup.Provider registries) {
-		getOrCreateTagBuilder(ConventionalEnchantmentTags.INCREASE_BLOCK_DROPS)
+	protected void addTags(HolderLookup.Provider registries) {
+		tag(ConventionalEnchantmentTags.INCREASE_BLOCK_DROPS)
 				.add(Enchantments.FORTUNE);
-		getOrCreateTagBuilder(ConventionalEnchantmentTags.INCREASE_ENTITY_DROPS)
+		tag(ConventionalEnchantmentTags.INCREASE_ENTITY_DROPS)
 				.add(Enchantments.LOOTING);
-		getOrCreateTagBuilder(ConventionalEnchantmentTags.WEAPON_DAMAGE_ENHANCEMENTS)
+		tag(ConventionalEnchantmentTags.WEAPON_DAMAGE_ENHANCEMENTS)
 				.add(Enchantments.SHARPNESS)
 				.add(Enchantments.SMITE)
 				.add(Enchantments.BANE_OF_ARTHROPODS)
 				.add(Enchantments.POWER)
 				.add(Enchantments.IMPALING);
-		getOrCreateTagBuilder(ConventionalEnchantmentTags.ENTITY_SPEED_ENHANCEMENTS)
+		tag(ConventionalEnchantmentTags.ENTITY_SPEED_ENHANCEMENTS)
 				.add(Enchantments.SOUL_SPEED)
 				.add(Enchantments.SWIFT_SNEAK)
 				.add(Enchantments.DEPTH_STRIDER);
-		getOrCreateTagBuilder(ConventionalEnchantmentTags.ENTITY_AUXILIARY_MOVEMENT_ENHANCEMENTS)
+		tag(ConventionalEnchantmentTags.ENTITY_AUXILIARY_MOVEMENT_ENHANCEMENTS)
 				.add(Enchantments.FEATHER_FALLING)
 				.add(Enchantments.FROST_WALKER);
-		getOrCreateTagBuilder(ConventionalEnchantmentTags.ENTITY_DEFENSE_ENHANCEMENTS)
+		tag(ConventionalEnchantmentTags.ENTITY_DEFENSE_ENHANCEMENTS)
 				.add(Enchantments.PROTECTION)
 				.add(Enchantments.BLAST_PROTECTION)
 				.add(Enchantments.PROJECTILE_PROTECTION)
@@ -58,9 +58,9 @@ public final class EnchantmentTagGenerator extends FabricTagProvider.Enchantment
 
 		// Backwards compat with pre-1.21 tags. Done after so optional tag is last for better readability.
 		// TODO: Remove backwards compat tag entries in 1.22
-		getOrCreateTagBuilder(ConventionalEnchantmentTags.ENTITY_SPEED_ENHANCEMENTS)
+		tag(ConventionalEnchantmentTags.ENTITY_SPEED_ENHANCEMENTS)
 				.addOptionalTag(ResourceLocation.fromNamespaceAndPath("c", "entity_movement_enhancement"));
-		getOrCreateTagBuilder(ConventionalEnchantmentTags.ENTITY_DEFENSE_ENHANCEMENTS)
+		tag(ConventionalEnchantmentTags.ENTITY_DEFENSE_ENHANCEMENTS)
 				.addOptionalTag(ResourceLocation.fromNamespaceAndPath("c", "entity_defense_enhancement"));
 	}
 }

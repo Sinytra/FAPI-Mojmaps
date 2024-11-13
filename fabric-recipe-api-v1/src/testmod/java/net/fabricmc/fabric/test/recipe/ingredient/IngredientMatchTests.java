@@ -40,9 +40,9 @@ public class IngredientMatchTests {
 	public void testAllIngredient(GameTestHelper context) {
 		Ingredient allIngredient = DefaultCustomIngredients.all(Ingredient.of(Items.APPLE, Items.CARROT), Ingredient.of(Items.STICK, Items.CARROT));
 
-		assertEquals(1, allIngredient.items().size());
-		assertEquals(Items.CARROT, allIngredient.items().getFirst().value());
-		assertEquals(false, allIngredient.items().isEmpty());
+		assertEquals(1, allIngredient.items().toList().size());
+		assertEquals(Items.CARROT, allIngredient.items().toList().getFirst().value());
+		assertEquals(false, allIngredient.items().toList().isEmpty());
 
 		assertEquals(false, allIngredient.test(new ItemStack(Items.APPLE)));
 		assertEquals(true, allIngredient.test(new ItemStack(Items.CARROT)));
@@ -50,8 +50,8 @@ public class IngredientMatchTests {
 
 		Ingredient emptyAllIngredient = DefaultCustomIngredients.all(Ingredient.of(Items.APPLE), Ingredient.of(Items.STICK));
 
-		assertEquals(0, emptyAllIngredient.items().size());
-		assertEquals(true, emptyAllIngredient.items().isEmpty());
+		assertEquals(0, emptyAllIngredient.items().toList().size());
+		assertEquals(true, emptyAllIngredient.items().toList().isEmpty());
 
 		assertEquals(false, emptyAllIngredient.test(new ItemStack(Items.APPLE)));
 		assertEquals(false, emptyAllIngredient.test(new ItemStack(Items.STICK)));
@@ -63,12 +63,12 @@ public class IngredientMatchTests {
 	public void testAnyIngredient(GameTestHelper context) {
 		Ingredient anyIngredient = DefaultCustomIngredients.any(Ingredient.of(Items.APPLE, Items.CARROT), Ingredient.of(Items.STICK, Items.CARROT));
 
-		assertEquals(4, anyIngredient.items().size());
-		assertEquals(Items.APPLE, anyIngredient.items().getFirst().value());
-		assertEquals(Items.CARROT, anyIngredient.items().get(1).value());
-		assertEquals(Items.STICK, anyIngredient.items().get(2).value());
-		assertEquals(Items.CARROT, anyIngredient.items().get(3).value());
-		assertEquals(false, anyIngredient.items().isEmpty());
+		assertEquals(4, anyIngredient.items().toList().size());
+		assertEquals(Items.APPLE, anyIngredient.items().toList().getFirst().value());
+		assertEquals(Items.CARROT, anyIngredient.items().toList().get(1).value());
+		assertEquals(Items.STICK, anyIngredient.items().toList().get(2).value());
+		assertEquals(Items.CARROT, anyIngredient.items().toList().get(3).value());
+		assertEquals(false, anyIngredient.items().toList().isEmpty());
 
 		assertEquals(true, anyIngredient.test(new ItemStack(Items.APPLE)));
 		assertEquals(true, anyIngredient.test(new ItemStack(Items.CARROT)));
@@ -81,9 +81,9 @@ public class IngredientMatchTests {
 	public void testDifferenceIngredient(GameTestHelper context) {
 		Ingredient differenceIngredient = DefaultCustomIngredients.difference(Ingredient.of(Items.APPLE, Items.CARROT), Ingredient.of(Items.STICK, Items.CARROT));
 
-		assertEquals(1, differenceIngredient.items().size());
-		assertEquals(Items.APPLE, differenceIngredient.items().getFirst().value());
-		assertEquals(false, differenceIngredient.items().isEmpty());
+		assertEquals(1, differenceIngredient.items().toList().size());
+		assertEquals(Items.APPLE, differenceIngredient.items().toList().getFirst().value());
+		assertEquals(false, differenceIngredient.items().toList().isEmpty());
 
 		assertEquals(true, differenceIngredient.test(new ItemStack(Items.APPLE)));
 		assertEquals(false, differenceIngredient.test(new ItemStack(Items.CARROT)));
@@ -111,15 +111,15 @@ public class IngredientMatchTests {
 		assertEquals(true, undamagedIngredient.test(renamedUndamagedDiamondPickaxe));
 		assertEquals(false, noNameUndamagedIngredient.test(renamedUndamagedDiamondPickaxe));
 
-		assertEquals(3, undamagedIngredient.items().size());
-		ItemStack result0 = undamagedIngredient.items().getFirst().value().getDefaultStack();
-		ItemStack result1 = undamagedIngredient.items().get(1).value().getDefaultStack();
+		assertEquals(3, undamagedIngredient.items().toList().size());
+		ItemStack result0 = undamagedIngredient.items().toList().getFirst().value().getDefaultInstance();
+		ItemStack result1 = undamagedIngredient.items().toList().get(1).value().getDefaultInstance();
 
 		assertEquals(Items.DIAMOND_PICKAXE, result0.getItem());
 		assertEquals(Items.NETHERITE_PICKAXE, result1.getItem());
 		assertEquals(DataComponentPatch.EMPTY, result0.getComponentsPatch());
 		assertEquals(DataComponentPatch.EMPTY, result1.getComponentsPatch());
-		assertEquals(false, undamagedIngredient.items().isEmpty());
+		assertEquals(false, undamagedIngredient.items().toList().isEmpty());
 
 		// Undamaged is fine
 		assertEquals(true, undamagedIngredient.test(new ItemStack(Items.DIAMOND_PICKAXE)));
@@ -190,7 +190,7 @@ public class IngredientMatchTests {
 		stack.set(DataComponents.CUSTOM_DATA, CustomData.of(rejectedNbt2));
 		assertEquals(false, customDataIngredient.test(stack));
 
-		List<Holder<Item>> matchingItems = customDataIngredient.items();
+		List<Holder<Item>> matchingItems = customDataIngredient.items().toList();
 		assertEquals(1, matchingItems.size());
 		assertEquals(Items.STICK, matchingItems.getFirst().value());
 		// Test disabled as the vanilla API no longer exposes the stack with data.

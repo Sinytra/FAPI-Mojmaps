@@ -32,11 +32,11 @@ public class TestBiomeTagProvider extends FabricTagProvider<Biome> {
 	}
 
 	@Override
-	protected void configure(HolderLookup.Provider registries) {
-		getOrCreateTagBuilder(TagKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath(FabricBiomeTest.MOD_ID, "biome_tag_test")))
+	protected void addTags(HolderLookup.Provider registries) {
+		tag(TagKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath(FabricBiomeTest.MOD_ID, "biome_tag_test")))
 				.add(TestBiomes.CUSTOM_PLAINS)
 				.add(TestBiomes.TEST_END_HIGHLANDS);
-		getOrCreateTagBuilder(TagKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath(FabricBiomeTest.MOD_ID, "tag_selector_test")))
+		tag(TagKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath(FabricBiomeTest.MOD_ID, "tag_selector_test")))
 				.add(Biomes.BEACH)
 				.add(Biomes.DESERT)
 				.add(Biomes.SAVANNA)

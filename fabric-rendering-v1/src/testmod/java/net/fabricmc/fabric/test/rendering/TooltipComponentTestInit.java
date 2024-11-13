@@ -18,10 +18,10 @@ package net.fabricmc.fabric.test.rendering;
 
 import java.util.Map;
 import java.util.Optional;
+import net.fabricmc.api.ModInitializer;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.item.equipment.EquipmentModels;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
@@ -32,7 +32,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.equipment.ArmorMaterial;
 import net.minecraft.world.item.equipment.ArmorType;
-import net.fabricmc.api.ModInitializer;
+import net.minecraft.world.item.equipment.EquipmentAssets;
 
 public class TooltipComponentTestInit implements ModInitializer {
 	public static final ResourceKey<Item> CUSTOM_TOOLTIP_ITEM_KEY = ResourceKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("fabric-rendering-v1-testmod", "custom_tooltip"));
@@ -77,7 +77,7 @@ public class TooltipComponentTestInit implements ModInitializer {
 				0,
 				0.5F,
 				ItemTags.REPAIRS_LEATHER_ARMOR,
-				EquipmentModels.IRON
+				EquipmentAssets.IRON
 		);
 	}
 }

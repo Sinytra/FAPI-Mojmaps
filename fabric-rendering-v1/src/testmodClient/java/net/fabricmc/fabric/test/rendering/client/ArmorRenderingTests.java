@@ -35,7 +35,7 @@ public class ArmorRenderingTests implements ClientModInitializer {
 	public void onInitializeClient() {
 		ArmorRenderer.register((matrices, vertexConsumers, stack, renderState, slot, light, model) -> {
 			if (armorModel == null) {
-				armorModel = new HumanoidModel<>(Minecraft.getInstance().getEntityModelLoader().getModelPart(ModelLayers.PLAYER_OUTER_ARMOR));
+				armorModel = new HumanoidModel<>(Minecraft.getInstance().getEntityModels().bakeLayer(ModelLayers.PLAYER_OUTER_ARMOR));
 			}
 
 			armorModel.setupAnim(renderState);

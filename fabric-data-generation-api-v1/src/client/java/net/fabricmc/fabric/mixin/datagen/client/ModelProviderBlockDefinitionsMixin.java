@@ -23,13 +23,13 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import net.minecraft.core.Holder;
-import net.minecraft.data.client.ModelProvider;
-import net.minecraft.world.level.block.Block;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.impl.datagen.client.FabricModelProviderDefinitions;
+import net.minecraft.client.data.models.ModelProvider;
+import net.minecraft.core.Holder;
+import net.minecraft.world.level.block.Block;
 
-@Mixin(ModelProvider.class_10406.class)
+@Mixin(ModelProvider.BlockStateGeneratorCollector.class)
 public class ModelProviderBlockDefinitionsMixin implements FabricModelProviderDefinitions {
 	@Unique
 	private FabricDataOutput fabricDataOutput;
@@ -40,7 +40,7 @@ public class ModelProviderBlockDefinitionsMixin implements FabricModelProviderDe
 	}
 
 	// Target the first .filter() call, to filter out blocks that are not from the mod we are processing.
-	@Redirect(method = "method_65462", at = @At(value = "INVOKE", target = "Ljava/util/stream/Stream;filter(Ljava/util/function/Predicate;)Ljava/util/stream/Stream;", ordinal = 0, remap = false))
+	@Redirect(method = "validate", at = @At(value = "INVOKE", target = "Ljava/util/stream/Stream;filter(Ljava/util/function/Predicate;)Ljava/util/stream/Stream;", ordinal = 0, remap = false))
 	private Stream<Holder.Reference<Block>> filterBlocksForProcessingMod(Stream<Holder.Reference<Block>> instance, Predicate<Holder.Reference<Block>> predicate) {
 		return instance.filter((block) -> {
 			if (fabricDataOutput != null) {

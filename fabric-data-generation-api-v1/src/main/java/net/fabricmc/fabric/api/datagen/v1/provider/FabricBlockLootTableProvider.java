@@ -25,26 +25,26 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 
 import com.google.common.collect.Sets;
+import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
+import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
+import net.fabricmc.fabric.impl.datagen.loot.FabricLootTableProviderImpl;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.CachedOutput;
-import net.minecraft.data.server.loottable.BlockLootTableGenerator;
+import net.minecraft.data.loot.BlockLootSubProvider;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
-import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
-import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
-import net.fabricmc.fabric.impl.datagen.loot.FabricLootTableProviderImpl;
 
 /**
  * Extend this class and implement {@link FabricBlockLootTableProvider#generate}.
  *
  * <p>Register an instance of the class with {@link FabricDataGenerator.Pack#addProvider} in a {@link net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint}.
  */
-public abstract class FabricBlockLootTableProvider extends BlockLootTableGenerator implements FabricLootTableProvider {
+public abstract class FabricBlockLootTableProvider extends BlockLootSubProvider implements FabricLootTableProvider {
 	private final FabricDataOutput output;
 	private final Set<ResourceLocation> excludedFromStrictValidation = new HashSet<>();
 	private final CompletableFuture<HolderLookup.Provider> registryLookupFuture;
@@ -58,7 +58,7 @@ public abstract class FabricBlockLootTableProvider extends BlockLootTableGenerat
 	/**
 	 * Implement this method to add block drops.
 	 *
-	 * <p>Use the range of {@link BlockLootTableGenerator#addDrop} methods to generate block drops.
+	 * <p>Use the range of {@link BlockLootSubProvider#dropSelf} methods to generate block drops.
 	 */
 	@Override
 	public abstract void generate();
@@ -71,10 +71,10 @@ public abstract class FabricBlockLootTableProvider extends BlockLootTableGenerat
 	}
 
 	@Override
-	public void accept(BiConsumer<ResourceKey<LootTable>, LootTable.Builder> biConsumer) {
+	public void generate(BiConsumer<ResourceKey<LootTable>, LootTable.Builder> biConsumer) {
 		generate();
 
-		for (Map.Entry<ResourceKey<LootTable>, LootTable.Builder> entry : lootTables.entrySet()) {
+		for (Map.Entry<ResourceKey<LootTable>, LootTable.Builder> entry : map.entrySet()) {
 			ResourceKey<LootTable> registryKey = entry.getKey();
 
 			biConsumer.accept(registryKey, entry.getValue());
@@ -88,7 +88,7 @@ public abstract class FabricBlockLootTableProvider extends BlockLootTableGenerat
 					Optional<ResourceKey<LootTable>> blockLootTableId = BuiltInRegistries.BLOCK.getValue(blockId).getLootTable();
 
 					if (blockLootTableId.isPresent() && blockLootTableId.get().location().getNamespace().equals(output.getModId())) {
-						if (!lootTables.containsKey(blockLootTableId.get())) {
+						if (!map.containsKey(blockLootTableId.get())) {
 							missing.add(blockId);
 						}
 					}

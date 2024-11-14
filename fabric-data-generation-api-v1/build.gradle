@@ -54,7 +54,7 @@ loom {
 test.dependsOn runDatagenClient
 
 tasks.register('datapackZip', Zip) {
-	dependsOn runDatagen
+	dependsOn runDatagenClient
 	archiveFileName = "${base.archivesName.get()}-${project.version}-test-datapack.zip"
 	destinationDirectory = layout.buildDirectory.dir('libs')
 

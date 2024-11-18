@@ -296,8 +296,8 @@ public interface BiomeModificationContext {
 		}
 
 		/**
-		 * @see BiomeSpecialEffects#method_65135()
-		 * @see BiomeSpecialEffects.Builder#method_65137(int)
+		 * @see BiomeSpecialEffects#getBackgroundMusicVolume()
+		 * @see BiomeSpecialEffects.Builder#backgroundMusicVolume(float)
 		 */
 		void setMusicVolume(float volume);
 	}

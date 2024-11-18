@@ -28,7 +28,7 @@ import net.minecraft.world.phys.HitResult;
 
 /**
  * Convenience interface for blocks that want more stack picking context than what
- * {@link Block#getCloneItemStack(LevelReader, BlockPos, BlockState)} provides.
+ * {@link Block#getCloneItemStack(LevelReader, BlockPos, BlockState, boolean)} provides.
  *
  * <p>The hit result is guaranteed to be a {@link BlockHitResult} that did not miss.
  */

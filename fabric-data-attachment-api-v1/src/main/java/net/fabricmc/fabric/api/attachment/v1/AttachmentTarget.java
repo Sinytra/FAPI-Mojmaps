@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>Fabric implements this on {@link Entity}, {@link BlockEntity}, {@link ServerLevel} and {@link ChunkAccess} via mixin.</p>
  *
  * <p>Note about {@link BlockEntity} and {@link ChunkAccess} targets: these objects need to be notified of changes to their
- * state (using {@link BlockEntity#setChanged()} and {@link ChunkAccess#setNeedsSaving(boolean)} respectively), otherwise the modifications will not take effect properly.
+ * state (using {@link BlockEntity#setChanged()} and {@link ChunkAccess#markUnsaved()} respectively), otherwise the modifications will not take effect properly.
  * The {@link #setAttached(AttachmentType, Object)} method handles this automatically, but this needs to be done manually
  * when attached data is mutable, for example:
  * <pre>{@code

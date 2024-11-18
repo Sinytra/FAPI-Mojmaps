@@ -69,11 +69,11 @@ public final class PlayerPickItemEvents {
 		 * @param player the player attempting to pick an item from a block
 		 * @param pos the position of the block being picked from
 		 * @param state the state of the block being picked from
-		 * @param includeData whether block entity data should be included in the pick item stack
+		 * @param requestIncludeData whether the client has requested additional data to be included in the picked item stack
 		 * @return a pick item stack to give to the player, or {@code null} if the default pick item stack should be given
 		 */
 		@Nullable
-		ItemStack onPickItemFromBlock(ServerPlayer player, BlockPos pos, BlockState state, boolean includeData);
+		ItemStack onPickItemFromBlock(ServerPlayer player, BlockPos pos, BlockState state, boolean requestIncludeData);
 	}
 
 	@FunctionalInterface
@@ -83,10 +83,10 @@ public final class PlayerPickItemEvents {
 		 *
 		 * @param player the player attempting to pick an item from a entity
 		 * @param entity the entity being picked from
-		 * @param includeData whether additional data should be included in the pick item stack; unused in vanilla
+		 * @param requestIncludeData whether the client has requested additional data to be included in the picked item stack; unused in vanilla
 		 * @return a pick item stack to give to the player, or {@code null} if the default pick item stack should be given
 		 */
 		@Nullable
-		ItemStack onPickItemFromEntity(ServerPlayer player, Entity entity, boolean includeData);
+		ItemStack onPickItemFromEntity(ServerPlayer player, Entity entity, boolean requestIncludeData);
 	}
 }

@@ -34,6 +34,12 @@ transitive-accessible	class	net/minecraft/client/renderer/RenderType$CompositeRe
 transitive-accessible	class	net/minecraft/client/renderer/RenderType$CompositeState
 transitive-accessible	class	net/minecraft/client/renderer/RenderType$OutlineProperty
 transitive-accessible	method	net/minecraft/client/renderer/blockentity/BlockEntityRenderers	register	(Lnet/minecraft/world/level/block/entity/BlockEntityType;Lnet/minecraft/client/renderer/blockentity/BlockEntityRendererProvider;)V
+transitive-accessible	field	net/minecraft/client/renderer/item/ItemModels	ID_MAPPER	Lnet/minecraft/util/ExtraCodecs$LateBoundIdMapper;
+transitive-accessible	field	net/minecraft/client/color/item/ItemTintSources	ID_MAPPER	Lnet/minecraft/util/ExtraCodecs$LateBoundIdMapper;
+transitive-accessible	field	net/minecraft/client/renderer/item/properties/conditional/ConditionalItemModelProperties	ID_MAPPER	Lnet/minecraft/util/ExtraCodecs$LateBoundIdMapper;
+transitive-accessible	field	net/minecraft/client/renderer/item/properties/numeric/RangeSelectItemModelProperties	ID_MAPPER	Lnet/minecraft/util/ExtraCodecs$LateBoundIdMapper;
+transitive-accessible	field	net/minecraft/client/renderer/item/properties/select/SelectItemModelProperties	ID_MAPPER	Lnet/minecraft/util/ExtraCodecs$LateBoundIdMapper;
+transitive-accessible	field	net/minecraft/client/renderer/special/SpecialModelRenderers	ID_MAPPER	Lnet/minecraft/util/ExtraCodecs$LateBoundIdMapper;
 transitive-accessible	method	net/minecraft/world/entity/ai/sensing/SensorType	<init>	(Ljava/util/function/Supplier;)V
 transitive-accessible	method	net/minecraft/world/entity/schedule/Activity	<init>	(Ljava/lang/String;)V
 transitive-accessible	method	net/minecraft/world/entity/LivingEntity	hurtArmor	(Lnet/minecraft/world/damagesource/DamageSource;F)V

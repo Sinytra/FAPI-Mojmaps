@@ -57,7 +57,7 @@ public class ModelProviderItemAssetsMixin implements FabricModelProviderDefiniti
 		if (fabricDataOutput != null) {
 			// Only generate the item model if the block state json was registered
 			if (ITEM_ASSETS.containsKey(blockItem)) {
-				return false;
+				return true;
 			}
 
 			if (!BuiltInRegistries.ITEM.getKey(blockItem).getNamespace().equals(fabricDataOutput.getModId())) {

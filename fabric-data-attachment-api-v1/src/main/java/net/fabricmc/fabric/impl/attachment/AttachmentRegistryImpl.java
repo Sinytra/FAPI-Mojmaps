@@ -32,7 +32,7 @@ import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentSyncPredicate;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.fabricmc.fabric.impl.attachment.sync.AttachmentSync;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 
@@ -78,7 +78,7 @@ public final class AttachmentRegistryImpl {
 		@Nullable
 		private Codec<A> persistenceCodec = null;
 		@Nullable
-		private StreamCodec<FriendlyByteBuf, A> packetCodec = null;
+		private StreamCodec<? super RegistryFriendlyByteBuf, A> packetCodec = null;
 		@Nullable
 		private AttachmentSyncPredicate syncPredicate = null;
 		private boolean copyOnDeath = false;
@@ -105,7 +105,8 @@ public final class AttachmentRegistryImpl {
 			return this;
 		}
 
-		public AttachmentRegistry.Builder<A> syncWith(StreamCodec<FriendlyByteBuf, A> packetCodec, AttachmentSyncPredicate syncPredicate) {
+		@Deprecated
+		public AttachmentRegistry.Builder<A> syncWith(StreamCodec<? super RegistryFriendlyByteBuf, A> packetCodec, AttachmentSyncPredicate syncPredicate) {
 			Objects.requireNonNull(packetCodec, "packet codec cannot be null");
 			Objects.requireNonNull(syncPredicate, "sync predicate cannot be null");
 

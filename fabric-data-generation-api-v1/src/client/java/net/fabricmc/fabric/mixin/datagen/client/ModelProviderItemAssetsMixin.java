@@ -41,7 +41,7 @@ import net.minecraft.world.item.Item;
 public class ModelProviderItemAssetsMixin implements FabricModelProviderDefinitions {
 	@Shadow
 	@Final
-	private Map<Item, ClientItem> ITEM_ASSETS;
+	private Map<Item, ClientItem> itemInfos;
 	@Unique
 	private FabricDataOutput fabricDataOutput;
 
@@ -56,7 +56,7 @@ public class ModelProviderItemAssetsMixin implements FabricModelProviderDefiniti
 
 		if (fabricDataOutput != null) {
 			// Only generate the item model if the block state json was registered
-			if (ITEM_ASSETS.containsKey(blockItem)) {
+			if (itemInfos.containsKey(blockItem)) {
 				return true;
 			}
 

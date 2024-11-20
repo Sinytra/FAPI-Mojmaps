@@ -191,7 +191,7 @@ transitive-accessible	method	net/minecraft/client/data/models/BlockModelGenerato
 transitive-accessible	method	net/minecraft/client/data/models/BlockModelGenerators	createAirLikeBlock	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/item/Item;)V
 transitive-accessible	method	net/minecraft/client/data/models/BlockModelGenerators	createAirLikeBlock	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/resources/ResourceLocation;)V
 transitive-accessible	method	net/minecraft/client/data/models/BlockModelGenerators	createParticleOnlyBlockModel	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/resources/ResourceLocation;
-transitive-accessible	method	net/minecraft/client/data/models/BlockModelGenerators	registerBuilltin	(Lnet/minecraft/world/level/block/Block;)V
+transitive-accessible	method	net/minecraft/client/data/models/BlockModelGenerators	createParticleOnlyBlock	(Lnet/minecraft/world/level/block/Block;)V
 transitive-accessible	method	net/minecraft/client/data/models/BlockModelGenerators	createFullAndCarpetBlocks	(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;)V
 transitive-accessible	method	net/minecraft/client/data/models/BlockModelGenerators	createFlowerBed	(Lnet/minecraft/world/level/block/Block;)V
 transitive-accessible	method	net/minecraft/client/data/models/BlockModelGenerators	createColoredBlockWithRandomRotations	(Lnet/minecraft/client/data/models/model/TexturedModel$Provider;[Lnet/minecraft/world/level/block/Block;)V

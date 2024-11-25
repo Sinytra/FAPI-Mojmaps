@@ -40,7 +40,7 @@ public abstract class AbstractFurnaceBlockEntityMixin extends BaseContainerBlock
 	@Shadow
 	protected NonNullList<ItemStack> items;
 	@Shadow
-	int cookTime;
+	int field_55576;
 	@Shadow
 	int cookTimeTotal;
 	@Unique
@@ -75,7 +75,7 @@ public abstract class AbstractFurnaceBlockEntityMixin extends BaseContainerBlock
 
 			if (!bl && this.level instanceof ServerLevel world) {
 				this.cookTimeTotal = getTotalCookTime(world, (AbstractFurnaceBlockEntity) (Object) this);
-				this.cookTime = 0;
+				this.field_55576 = 0;
 			}
 		}
 	}

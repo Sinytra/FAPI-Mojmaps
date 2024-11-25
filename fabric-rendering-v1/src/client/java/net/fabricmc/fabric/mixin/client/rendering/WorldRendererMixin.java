@@ -77,6 +77,18 @@ public abstract class WorldRendererMixin {
 	@Inject(method = "setupRender", at = @At("RETURN"))
 	private void afterTerrainSetup(Camera camera, Frustum frustum, boolean hasForcedFrustum, boolean spectator, CallbackInfo ci) {
 		context.setFrustum(frustum);
+	}
+
+	@Inject(
+			method = "lambda$addMainPass$1",
+			at = @At(
+				value = "INVOKE_STRING",
+				target = "Lnet/minecraft/util/profiling/ProfilerFiller;push(Ljava/lang/String;)V",
+				args = "ldc=terrain",
+				shift = Shift.AFTER
+			) // Points to after profiler.push("terrain");
+	)
+	private void beforeTerrainSolid(CallbackInfo ci) {
 		WorldRenderEvents.AFTER_SETUP.invoker().afterSetup(context);
 	}
 

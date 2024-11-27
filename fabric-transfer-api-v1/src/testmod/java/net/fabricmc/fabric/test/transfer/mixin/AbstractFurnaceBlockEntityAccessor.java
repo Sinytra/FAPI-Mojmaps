@@ -22,6 +22,6 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(AbstractFurnaceBlockEntity.class)
 public interface AbstractFurnaceBlockEntityAccessor {
-	@Accessor("field_55576")
-	int getCookTime();
+	@Accessor
+	int getCookingTimer();
 }

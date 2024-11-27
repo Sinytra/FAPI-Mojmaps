@@ -40,9 +40,9 @@ public abstract class AbstractFurnaceBlockEntityMixin extends BaseContainerBlock
 	@Shadow
 	protected NonNullList<ItemStack> items;
 	@Shadow
-	int field_55576;
+	int cookingTimer;
 	@Shadow
-	int cookTimeTotal;
+	int cookingTotalTime;
 	@Unique
 	private boolean fabric_suppressSpecialLogic = false;
 
@@ -74,8 +74,8 @@ public abstract class AbstractFurnaceBlockEntityMixin extends BaseContainerBlock
 			boolean bl = !stack.isEmpty() && ItemStack.isSameItemSameComponents(stack, itemStack);
 
 			if (!bl && this.level instanceof ServerLevel world) {
-				this.cookTimeTotal = getTotalCookTime(world, (AbstractFurnaceBlockEntity) (Object) this);
-				this.field_55576 = 0;
+				this.cookingTotalTime = getTotalCookTime(world, (AbstractFurnaceBlockEntity) (Object) this);
+				this.cookingTimer = 0;
 			}
 		}
 	}

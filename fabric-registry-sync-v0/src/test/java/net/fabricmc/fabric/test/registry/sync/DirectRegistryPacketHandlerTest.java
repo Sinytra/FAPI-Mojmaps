@@ -24,11 +24,20 @@ import java.util.Map;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import net.fabricmc.fabric.impl.registry.sync.packet.DirectRegistryPacketHandler;
+import net.minecraft.SharedConstants;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.Bootstrap;
+import net.fabricmc.fabric.impl.registry.sync.packet.DirectRegistryPacketHandler;
 
 public class DirectRegistryPacketHandlerTest {
+	@BeforeAll
+	static void beforeAll() {
+		SharedConstants.tryDetectVersion();
+		Bootstrap.bootStrap();
+	}
+
 	@Test
 	void emptyRegistrySync() {
 		DirectRegistryPacketHandler handler = new DirectRegistryPacketHandler();
@@ -46,7 +55,7 @@ public class DirectRegistryPacketHandlerTest {
 			handler.receivePayload(payload);
 		}
 
-		assertMatchesDeep(registry, handler.getSyncedRegistryMap());
+		assertMatchesDeep(registry, handler.getSyncedPacketData().idMap());
 	}
 
 	@Test
@@ -67,7 +76,7 @@ public class DirectRegistryPacketHandlerTest {
 			handler.receivePayload(payload);
 		}
 
-		assertMatchesDeep(registry, handler.getSyncedRegistryMap());
+		assertMatchesDeep(registry, handler.getSyncedPacketData().idMap());
 	}
 
 	@Test
@@ -91,7 +100,7 @@ public class DirectRegistryPacketHandlerTest {
 			handler.receivePayload(payload);
 		}
 
-		assertMatchesDeep(registry, handler.getSyncedRegistryMap());
+		assertMatchesDeep(registry, handler.getSyncedPacketData().idMap());
 	}
 
 	private static Object2IntMap<ResourceLocation> createRegistry(int size) {

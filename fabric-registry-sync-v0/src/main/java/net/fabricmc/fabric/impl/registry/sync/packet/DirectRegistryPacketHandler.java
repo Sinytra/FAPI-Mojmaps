@@ -17,7 +17,9 @@
 package net.fabricmc.fabric.impl.registry.sync.packet;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,7 +31,11 @@ import com.google.common.base.Preconditions;
 import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.annotations.Nullable;
+import net.fabricmc.fabric.api.event.registry.RegistryAttribute;
+import net.fabricmc.fabric.api.event.registry.RegistryAttributeHolder;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -63,6 +69,9 @@ public class DirectRegistryPacketHandler extends RegistryPacketHandler<DirectReg
 	@Nullable
 	private Map<ResourceLocation, Object2IntMap<ResourceLocation>> syncedRegistryMap;
 
+	@Nullable
+	private Map<ResourceLocation, EnumSet<RegistryAttribute>> syncedRegistryAttributes;
+
 	private boolean isPacketFinished = false;
 	private int totalPacketReceived = 0;
 
@@ -87,6 +96,7 @@ public class DirectRegistryPacketHandler extends RegistryPacketHandler<DirectReg
 
 			for (ResourceLocation regId : regIds) {
 				buf.writeUtf(regId.getPath());
+				buf.writeByte(encodeRegistryAttributes(regId));
 
 				Object2IntMap<ResourceLocation> idMap = registryMap.get(regId);
 
@@ -179,6 +189,7 @@ public class DirectRegistryPacketHandler extends RegistryPacketHandler<DirectReg
 
 		computeBufSize(combinedBuf);
 		syncedRegistryMap = new LinkedHashMap<>();
+		syncedRegistryAttributes = new LinkedHashMap<>();
 		int regNamespaceGroupAmount = combinedBuf.readVarInt();
 
 		for (int i = 0; i < regNamespaceGroupAmount; i++) {
@@ -187,6 +198,7 @@ public class DirectRegistryPacketHandler extends RegistryPacketHandler<DirectReg
 
 			for (int j = 0; j < regNamespaceGroupLength; j++) {
 				String regPath = combinedBuf.readUtf();
+				EnumSet<RegistryAttribute> attributes = decodeRegistryAttributes(combinedBuf.readByte());
 				Object2IntMap<ResourceLocation> idMap = new Object2IntLinkedOpenHashMap<>();
 				int idNamespaceGroupAmount = combinedBuf.readVarInt();
 
@@ -212,7 +224,9 @@ public class DirectRegistryPacketHandler extends RegistryPacketHandler<DirectReg
 					}
 				}
 
-				syncedRegistryMap.put(ResourceLocation.fromNamespaceAndPath(regNamespace, regPath), idMap);
+				ResourceLocation registryId = ResourceLocation.fromNamespaceAndPath(regNamespace, regPath);
+				syncedRegistryMap.put(registryId, idMap);
+				syncedRegistryAttributes.put(registryId, attributes);
 			}
 		}
 
@@ -233,13 +247,22 @@ public class DirectRegistryPacketHandler extends RegistryPacketHandler<DirectReg
 
 	@Override
 	@Nullable
-	public Map<ResourceLocation, Object2IntMap<ResourceLocation>> getSyncedRegistryMap() {
+	public SyncedPacketData getSyncedPacketData() {
 		Preconditions.checkState(isPacketFinished);
-		Map<ResourceLocation, Object2IntMap<ResourceLocation>> map = syncedRegistryMap;
+
+		if (syncedRegistryMap == null || syncedRegistryAttributes == null) {
+			return null;
+		}
+
+		Map<ResourceLocation, Object2IntMap<ResourceLocation>> map = Collections.unmodifiableMap(syncedRegistryMap);
+		Map<ResourceLocation, EnumSet<RegistryAttribute>> attributes = Collections.unmodifiableMap(syncedRegistryAttributes);
+
 		isPacketFinished = false;
 		totalPacketReceived = 0;
 		syncedRegistryMap = null;
-		return map;
+		syncedRegistryAttributes = null;
+
+		return new SyncedPacketData(map, attributes);
 	}
 
 	private DirectRegistryPacketHandler.Payload createPayload(FriendlyByteBuf buf) {
@@ -280,5 +303,33 @@ public class DirectRegistryPacketHandler extends RegistryPacketHandler<DirectReg
 		public Id<? extends CustomPacketPayload> getId() {
 			return ID;
 		}
+	}
+
+	private static byte encodeRegistryAttributes(ResourceLocation identifier) {
+		Registry<?> registry = BuiltInRegistries.REGISTRY.getValue(identifier);
+
+		if (registry == null) {
+			return 0;
+		}
+
+		RegistryAttributeHolder holder = RegistryAttributeHolder.get(registry);
+		byte encoded = 0;
+
+		// Only send the optional marker.
+		if (holder.hasAttribute(RegistryAttribute.OPTIONAL)) {
+			encoded |= 0x1;
+		}
+
+		return encoded;
+	}
+
+	private static EnumSet<RegistryAttribute> decodeRegistryAttributes(byte encoded) {
+		EnumSet<RegistryAttribute> attributes = EnumSet.noneOf(RegistryAttribute.class);
+
+		if ((encoded & 0x1) != 0) {
+			attributes.add(RegistryAttribute.OPTIONAL);
+		}
+
+		return attributes;
 	}
 }

@@ -38,7 +38,7 @@ public class FabricRegistryClientInit implements ClientModInitializer {
 
 	private <T extends RegistryPacketHandler.RegistrySyncPayload> void registerSyncPacketReceiver(RegistryPacketHandler<T> packetHandler) {
 		ClientConfigurationNetworking.registerGlobalReceiver(packetHandler.getPacketId(), (payload, context) -> {
-			RegistrySyncManager.receivePacket(context.client(), packetHandler, payload, RegistrySyncManager.DEBUG || !context.client().isLocalServer())
+			ClientRegistrySyncHandler.receivePacket(context.client(), packetHandler, payload, RegistrySyncManager.DEBUG || !context.client().isLocalServer())
 					.whenComplete((complete, throwable) -> {
 						if (throwable != null) {
 							LOGGER.error("Registry remapping failed!", throwable);

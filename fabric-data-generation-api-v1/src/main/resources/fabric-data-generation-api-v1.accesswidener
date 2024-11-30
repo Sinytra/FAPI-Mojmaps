@@ -24,11 +24,15 @@ accessible	field	net/minecraft/world/level/storage/loot/parameters/LootContextPa
 transitive-accessible	method	net/minecraft/data/BlockFamilies	familyBuilder	(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/data/BlockFamily$Builder;
 transitive-accessible	field	net/minecraft/client/data/models/BlockModelGenerators	blockStateOutput	Ljava/util/function/Consumer;
 transitive-accessible	field	net/minecraft/client/data/models/BlockModelGenerators	modelOutput	Ljava/util/function/BiConsumer;
+transitive-accessible	field	net/minecraft/client/data/models/BlockModelGenerators	itemModelOutput	Lnet/minecraft/client/data/models/ItemModelOutput;
+accessible	field	net/minecraft/client/data/models/ItemModelGenerators	itemModelOutput	Lnet/minecraft/client/data/models/ItemModelOutput;
+accessible	field	net/minecraft/client/data/models/ItemModelGenerators	modelOutput	Ljava/util/function/BiConsumer;
 transitive-accessible	method	net/minecraft/client/data/models/model/TextureSlot	create	(Ljava/lang/String;)Lnet/minecraft/client/data/models/model/TextureSlot;
 transitive-accessible	method	net/minecraft/client/data/models/model/TextureSlot	create	(Ljava/lang/String;Lnet/minecraft/client/data/models/model/TextureSlot;)Lnet/minecraft/client/data/models/model/TextureSlot;
 transitive-accessible	method	net/minecraft/client/data/models/model/TexturedModel	createDefault	(Ljava/util/function/Function;Lnet/minecraft/client/data/models/model/ModelTemplate;)Lnet/minecraft/client/data/models/model/TexturedModel$Provider;
 transitive-accessible	class	net/minecraft/client/data/models/BlockModelGenerators$BlockFamilyProvider
 transitive-accessible	class	net/minecraft/client/data/models/BlockModelGenerators$WoodProvider
+transitive-accessible	class	net/minecraft/client/data/models/BlockModelGenerators$PlantType
 accessible	class	net/minecraft/client/data/models/ModelProvider$ItemInfoCollector
 accessible	class	net/minecraft/client/data/models/ModelProvider$BlockStateGeneratorCollector
 transitive-accessible	method	net/minecraft/data/recipes/RecipeProvider	buildRecipes	()V

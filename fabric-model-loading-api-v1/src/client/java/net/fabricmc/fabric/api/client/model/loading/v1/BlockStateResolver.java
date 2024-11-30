@@ -16,23 +16,23 @@
 
 package net.fabricmc.fabric.api.client.model.loading.v1;
 
-import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.client.renderer.block.model.UnbakedBlockStateModel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
- * Block state resolvers are responsible for mapping each {@link BlockState} of a block to an {@link UnbakedModel}.
+ * Block state resolvers are responsible for mapping each {@link BlockState} of a block to a {@link UnbakedBlockStateModel}.
  * They replace the {@code blockstates/} JSON files. One block can be mapped to only one block state resolver; multiple
  * resolvers will not receive the same block.
  *
  * <p>Block state resolvers can be used to create custom block state formats or dynamically resolve block state models.
  *
- * <p>Use {@link ModelResolver} instead of this interface if interacting with the block and block states directly is not
- * necessary. This includes custom model deserializers and loaders.
+ * <p>Use {@link ModelModifier.OnLoad} instead of this interface if interacting with the block and block states directly
+ * is not necessary. This includes custom model deserializers and loaders.
  *
- * @see ModelResolver
  * @see ModelModifier.OnLoad
+ * @see ModelModifier.OnLoadBlock
  */
 @FunctionalInterface
 public interface BlockStateResolver {
@@ -43,9 +43,7 @@ public interface BlockStateResolver {
 	 * This method must be called exactly once for each block state.
 	 *
 	 * <p>Note that if multiple block states share the same unbaked model instance, it will be baked multiple times
-	 * (once per block state that has the model set), which is not efficient. To improve efficiency in this case, the
-	 * model should be delegated to using {@link DelegatingUnbakedModel} to ensure that it is only baked once. The inner
-	 * model can be loaded using {@link ModelResolver} if custom loading logic is necessary.
+	 * (once per block state that has the model set).
 	 */
 	void resolveBlockStates(Context context);
 
@@ -65,6 +63,6 @@ public interface BlockStateResolver {
 		 * @param state the block state for which this model should be used
 		 * @param model the unbaked model for this block state
 		 */
-		void setModel(BlockState state, UnbakedModel model);
+		void setModel(BlockState state, UnbakedBlockStateModel model);
 	}
 }

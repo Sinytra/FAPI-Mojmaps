@@ -23,28 +23,20 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import com.google.common.collect.ImmutableList;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.UnknownNullability;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.fabricmc.fabric.api.client.model.loading.v1.BlockStateResolver;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelModifier;
-import net.fabricmc.fabric.api.client.model.loading.v1.ModelResolver;
 import net.minecraft.client.renderer.block.BlockModelShaper;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.block.model.UnbakedBlockStateModel;
 import net.minecraft.client.resources.model.BlockStateModelLoader;
-import net.minecraft.client.resources.model.Material;
-import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ModelResourceLocation;
-import net.minecraft.client.resources.model.ModelState;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
@@ -58,12 +50,10 @@ public class ModelLoadingEventDispatcher {
 
 	private final ModelLoadingPluginContextImpl pluginContext;
 
-	private final ModelResolverContext modelResolverContext = new ModelResolverContext();
 	private final BlockStateResolverContext blockStateResolverContext = new BlockStateResolverContext();
 
 	private final OnLoadModifierContext onLoadModifierContext = new OnLoadModifierContext();
-	private final ObjectArrayList<BeforeBakeModifierContext> beforeBakeModifierContextStack = new ObjectArrayList<>();
-	private final ObjectArrayList<AfterBakeModifierContext> afterBakeModifierContextStack = new ObjectArrayList<>();
+	private final OnLoadBlockModifierContext onLoadBlockModifierContext = new OnLoadBlockModifierContext();
 
 	public ModelLoadingEventDispatcher(List<ModelLoadingPlugin> plugins) {
 		this.pluginContext = new ModelLoadingPluginContextImpl();
@@ -77,15 +67,41 @@ public class ModelLoadingEventDispatcher {
 		}
 	}
 
-	public void addExtraModels(Consumer<ResourceLocation> extraModelConsumer) {
-		for (ResourceLocation id : pluginContext.extraModels) {
-			extraModelConsumer.accept(id);
-		}
+	public void forEachExtraModel(Consumer<ResourceLocation> extraModelConsumer) {
+		pluginContext.extraModels.forEach(extraModelConsumer);
 	}
 
-	public BlockStateModelLoader.LoadedModels loadBlockStateModels() {
-		Map<ModelResourceLocation, BlockStateModelLoader.LoadedModel> map = new HashMap<>();
+	@Nullable
+	public UnbakedModel modifyModelOnLoad(@Nullable UnbakedModel model, ResourceLocation id) {
+		onLoadModifierContext.prepare(id);
+		return pluginContext.modifyModelOnLoad().invoker().modifyModelOnLoad(model, onLoadModifierContext);
+	}
 
+	public BlockStateModelLoader.LoadedModels modifyBlockModelsOnLoad(BlockStateModelLoader.LoadedModels models) {
+		Map<ModelResourceLocation, BlockStateModelLoader.LoadedModel> map = models.models();
+
+		if (!(map instanceof HashMap)) {
+			map = new HashMap<>(map);
+			models = new BlockStateModelLoader.LoadedModels(map);
+		}
+
+		putResolvedBlockStates(map);
+
+		map.replaceAll((id, blockModel) -> {
+			UnbakedBlockStateModel original = blockModel.model();
+			UnbakedBlockStateModel modified = modifyBlockModelOnLoad(original, id, blockModel.state());
+
+			if (original != modified) {
+				return new BlockStateModelLoader.LoadedModel(blockModel.state(), modified);
+			}
+
+			return blockModel;
+		});
+
+		return models;
+	}
+
+	private void putResolvedBlockStates(Map<ModelResourceLocation, BlockStateModelLoader.LoadedModel> map) {
 		pluginContext.blockStateResolvers.forEach((block, resolver) -> {
 			Optional<ResourceKey<Block>> optionalKey = BuiltInRegistries.BLOCK.getResourceKey(block);
 
@@ -95,22 +111,18 @@ public class ModelLoadingEventDispatcher {
 
 			ResourceLocation blockId = optionalKey.get().location();
 
-			BiConsumer<BlockState, UnbakedModel> output = (state, model) -> {
+			resolveBlockStates(resolver, block, (state, model) -> {
 				ModelResourceLocation modelId = BlockModelShaper.stateToModelLocation(blockId, state);
 				map.put(modelId, new BlockStateModelLoader.LoadedModel(state, model));
-			};
-
-			resolveBlockStates(resolver, block, output);
+			});
 		});
-
-		return new BlockStateModelLoader.LoadedModels(map);
 	}
 
-	private void resolveBlockStates(BlockStateResolver resolver, Block block, BiConsumer<BlockState, UnbakedModel> output) {
+	private void resolveBlockStates(BlockStateResolver resolver, Block block, BiConsumer<BlockState, UnbakedBlockStateModel> output) {
 		BlockStateResolverContext context = blockStateResolverContext;
 		context.prepare(block);
 
-		Reference2ReferenceMap<BlockState, UnbakedModel> resolvedModels = context.models;
+		Reference2ReferenceMap<BlockState, UnbakedBlockStateModel> resolvedModels = context.models;
 		ImmutableList<BlockState> allStates = block.getStateDefinition().getPossibleStates();
 		boolean thrown = false;
 
@@ -129,7 +141,7 @@ public class ModelLoadingEventDispatcher {
 			} else {
 				for (BlockState state : allStates) {
 					@Nullable
-					UnbakedModel model = resolvedModels.get(state);
+					UnbakedBlockStateModel model = resolvedModels.get(state);
 
 					if (model == null) {
 						LOGGER.error("Block state resolver did not provide a model for state {} in block {}. Using missing model.", state, block);
@@ -143,62 +155,14 @@ public class ModelLoadingEventDispatcher {
 		resolvedModels.clear();
 	}
 
-	@Nullable
-	public UnbakedModel resolveModel(ResourceLocation id) {
-		modelResolverContext.prepare(id);
-		return pluginContext.resolveModel().invoker().resolveModel(modelResolverContext);
-	}
-
-	public UnbakedModel modifyModelOnLoad(UnbakedModel model, @UnknownNullability ResourceLocation resourceId, @UnknownNullability ModelResourceLocation topLevelId) {
-		onLoadModifierContext.prepare(resourceId, topLevelId);
-		return pluginContext.modifyModelOnLoad().invoker().modifyModelOnLoad(model, onLoadModifierContext);
-	}
-
-	public UnbakedModel modifyModelBeforeBake(UnbakedModel model, @UnknownNullability ResourceLocation resourceId, @UnknownNullability ModelResourceLocation topLevelId, Function<Material, TextureAtlasSprite> textureGetter, ModelState settings, ModelBaker baker) {
-		if (beforeBakeModifierContextStack.isEmpty()) {
-			beforeBakeModifierContextStack.add(new BeforeBakeModifierContext());
-		}
-
-		BeforeBakeModifierContext context = beforeBakeModifierContextStack.pop();
-		context.prepare(resourceId, topLevelId, textureGetter, settings, baker);
-
-		model = pluginContext.modifyModelBeforeBake().invoker().modifyModelBeforeBake(model, context);
-
-		beforeBakeModifierContextStack.push(context);
-		return model;
-	}
-
-	@Nullable
-	public BakedModel modifyModelAfterBake(@Nullable BakedModel model, @UnknownNullability ResourceLocation resourceId, @UnknownNullability ModelResourceLocation topLevelId, UnbakedModel sourceModel, Function<Material, TextureAtlasSprite> textureGetter, ModelState settings, ModelBaker baker) {
-		if (afterBakeModifierContextStack.isEmpty()) {
-			afterBakeModifierContextStack.add(new AfterBakeModifierContext());
-		}
-
-		AfterBakeModifierContext context = afterBakeModifierContextStack.pop();
-		context.prepare(resourceId, topLevelId, sourceModel, textureGetter, settings, baker);
-
-		model = pluginContext.modifyModelAfterBake().invoker().modifyModelAfterBake(model, context);
-
-		afterBakeModifierContextStack.push(context);
-		return model;
-	}
-
-	private static class ModelResolverContext implements ModelResolver.Context {
-		private ResourceLocation id;
-
-		private void prepare(ResourceLocation id) {
-			this.id = id;
-		}
-
-		@Override
-		public ResourceLocation id() {
-			return id;
-		}
+	private UnbakedBlockStateModel modifyBlockModelOnLoad(UnbakedBlockStateModel model, ModelResourceLocation id, BlockState state) {
+		onLoadBlockModifierContext.prepare(id, state);
+		return pluginContext.modifyBlockModelOnLoad().invoker().modifyModelOnLoad(model, onLoadBlockModifierContext);
 	}
 
 	private static class BlockStateResolverContext implements BlockStateResolver.Context {
 		private Block block;
-		private final Reference2ReferenceMap<BlockState, UnbakedModel> models = new Reference2ReferenceOpenHashMap<>();
+		private final Reference2ReferenceMap<BlockState, UnbakedBlockStateModel> models = new Reference2ReferenceOpenHashMap<>();
 
 		private void prepare(Block block) {
 			this.block = block;
@@ -211,7 +175,7 @@ public class ModelLoadingEventDispatcher {
 		}
 
 		@Override
-		public void setModel(BlockState state, UnbakedModel model) {
+		public void setModel(BlockState state, UnbakedBlockStateModel model) {
 			Objects.requireNonNull(model, "state cannot be null");
 			Objects.requireNonNull(model, "model cannot be null");
 
@@ -226,123 +190,35 @@ public class ModelLoadingEventDispatcher {
 	}
 
 	private static class OnLoadModifierContext implements ModelModifier.OnLoad.Context {
-		@UnknownNullability
-		private ResourceLocation resourceId;
-		@UnknownNullability
-		private ModelResourceLocation topLevelId;
+		private ResourceLocation id;
 
-		private void prepare(@UnknownNullability ResourceLocation resourceId, @UnknownNullability ModelResourceLocation topLevelId) {
-			this.resourceId = resourceId;
-			this.topLevelId = topLevelId;
+		private void prepare(ResourceLocation id) {
+			this.id = id;
 		}
 
 		@Override
-		@UnknownNullability("#topLevelId() != null")
-		public ResourceLocation resourceId() {
-			return resourceId;
-		}
-
-		@Override
-		@UnknownNullability("#resourceId() != null")
-		public ModelResourceLocation topLevelId() {
-			return topLevelId;
+		public ResourceLocation id() {
+			return id;
 		}
 	}
 
-	private static class BeforeBakeModifierContext implements ModelModifier.BeforeBake.Context {
-		@UnknownNullability
-		private ResourceLocation resourceId;
-		@UnknownNullability
-		private ModelResourceLocation topLevelId;
-		private Function<Material, TextureAtlasSprite> textureGetter;
-		private ModelState settings;
-		private ModelBaker baker;
+	private static class OnLoadBlockModifierContext implements ModelModifier.OnLoadBlock.Context {
+		private ModelResourceLocation id;
+		private BlockState state;
 
-		private void prepare(@UnknownNullability ResourceLocation resourceId, @UnknownNullability ModelResourceLocation topLevelId, Function<Material, TextureAtlasSprite> textureGetter, ModelState settings, ModelBaker baker) {
-			this.resourceId = resourceId;
-			this.topLevelId = topLevelId;
-			this.textureGetter = textureGetter;
-			this.settings = settings;
-			this.baker = baker;
+		private void prepare(ModelResourceLocation id, BlockState state) {
+			this.id = id;
+			this.state = state;
 		}
 
 		@Override
-		@UnknownNullability("#topLevelId() != null")
-		public ResourceLocation resourceId() {
-			return resourceId;
+		public ModelResourceLocation id() {
+			return id;
 		}
 
 		@Override
-		@UnknownNullability("#resourceId() != null")
-		public ModelResourceLocation topLevelId() {
-			return topLevelId;
-		}
-
-		@Override
-		public Function<Material, TextureAtlasSprite> textureGetter() {
-			return textureGetter;
-		}
-
-		@Override
-		public ModelState settings() {
-			return settings;
-		}
-
-		@Override
-		public ModelBaker baker() {
-			return baker;
-		}
-	}
-
-	private static class AfterBakeModifierContext implements ModelModifier.AfterBake.Context {
-		@UnknownNullability
-		private ResourceLocation resourceId;
-		@UnknownNullability
-		private ModelResourceLocation topLevelId;
-		private UnbakedModel sourceModel;
-		private Function<Material, TextureAtlasSprite> textureGetter;
-		private ModelState settings;
-		private ModelBaker baker;
-
-		private void prepare(@UnknownNullability ResourceLocation resourceId, @UnknownNullability ModelResourceLocation topLevelId, UnbakedModel sourceModel, Function<Material, TextureAtlasSprite> textureGetter, ModelState settings, ModelBaker baker) {
-			this.resourceId = resourceId;
-			this.topLevelId = topLevelId;
-			this.sourceModel = sourceModel;
-			this.textureGetter = textureGetter;
-			this.settings = settings;
-			this.baker = baker;
-		}
-
-		@Override
-		@UnknownNullability("#topLevelId() != null")
-		public ResourceLocation resourceId() {
-			return resourceId;
-		}
-
-		@Override
-		@UnknownNullability("#resourceId() != null")
-		public ModelResourceLocation topLevelId() {
-			return topLevelId;
-		}
-
-		@Override
-		public UnbakedModel sourceModel() {
-			return sourceModel;
-		}
-
-		@Override
-		public Function<Material, TextureAtlasSprite> textureGetter() {
-			return textureGetter;
-		}
-
-		@Override
-		public ModelState settings() {
-			return settings;
-		}
-
-		@Override
-		public ModelBaker baker() {
-			return baker;
+		public BlockState state() {
+			return state;
 		}
 	}
 }

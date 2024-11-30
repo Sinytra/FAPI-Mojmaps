@@ -21,7 +21,6 @@ import java.util.Collection;
 import org.jetbrains.annotations.ApiStatus;
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.impl.client.model.loading.ModelLoadingPluginManager;
-import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.level.block.Block;
@@ -70,27 +69,13 @@ public interface ModelLoadingPlugin {
 		void registerBlockStateResolver(Block block, BlockStateResolver resolver);
 
 		/**
-		 * Event access to register model resolvers.
-		 */
-		Event<ModelResolver> resolveModel();
-
-		/**
 		 * Event access to monitor unbaked model loads and replace the loaded model.
 		 */
 		Event<ModelModifier.OnLoad> modifyModelOnLoad();
 
 		/**
-		 * Event access to replace the unbaked model used for baking without replacing the cached model.
-		 *
-		 * <p>This is useful for mods which wish to wrap a model without affecting other models that use it as a parent
-		 * (e.g. wrap a block's model into a non-{@link BlockModel} class but still allow the item model to be
-		 * loaded and baked without exceptions).
+		 * Event access to monitor unbaked block model loads and replace the loaded model.
 		 */
-		Event<ModelModifier.BeforeBake> modifyModelBeforeBake();
-
-		/**
-		 * Event access to monitor baked model loads and replace the loaded model.
-		 */
-		Event<ModelModifier.AfterBake> modifyModelAfterBake();
+		Event<ModelModifier.OnLoadBlock> modifyBlockModelOnLoad();
 	}
 }

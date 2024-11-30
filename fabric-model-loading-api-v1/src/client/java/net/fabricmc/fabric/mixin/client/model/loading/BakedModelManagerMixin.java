@@ -16,50 +16,58 @@
 
 package net.fabricmc.fabric.mixin.client.model.loading;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+import com.llamalad7.mixinextras.sugar.Local;
+import org.jetbrains.annotations.Nullable;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.fabricmc.fabric.api.client.model.loading.v1.FabricBakedModelManager;
-import net.fabricmc.fabric.impl.client.model.loading.ModelLoadingConstants;
+import net.fabricmc.fabric.impl.client.model.loading.BakedModelsHooks;
 import net.fabricmc.fabric.impl.client.model.loading.ModelLoadingEventDispatcher;
 import net.fabricmc.fabric.impl.client.model.loading.ModelLoadingPluginManager;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.BlockStateModelLoader;
+import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.ModelDiscovery;
 import net.minecraft.client.resources.model.ModelManager;
-import net.minecraft.client.resources.model.ModelResourceLocation;
-import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.util.Tuple;
 
 @Mixin(ModelManager.class)
 abstract class BakedModelManagerMixin implements FabricBakedModelManager {
+	@Shadow
+	@Final
+	private BakedModel missingModel;
+
 	@Unique
+	@Nullable
 	private volatile CompletableFuture<ModelLoadingEventDispatcher> eventDispatcherFuture;
 
-	@Shadow
-	private Map<ModelResourceLocation, BakedModel> models;
+	@Unique
+	@Nullable
+	private Map<ResourceLocation, BakedModel> extraModels;
 
 	@Override
 	public BakedModel getModel(ResourceLocation id) {
-		return models.get(ModelLoadingConstants.toResourceModelId(id));
+		if (extraModels == null) {
+			return missingModel;
+		}
+
+		return extraModels.getOrDefault(id, missingModel);
 	}
 
 	@Inject(method = "reload", at = @At("HEAD"))
@@ -75,51 +83,45 @@ abstract class BakedModelManagerMixin implements FabricBakedModelManager {
 		});
 	}
 
-	@ModifyExpressionValue(method = "reload", at = @At(value = "INVOKE", target = "net/minecraft/client/render/model/BakedModelManager.reloadBlockStates(Lnet/minecraft/client/render/model/BlockStatesLoader;Lnet/minecraft/resource/ResourceManager;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;"))
-	private CompletableFuture<BlockStateModelLoader.LoadedModels> hookBlockStateModelLoading(CompletableFuture<BlockStateModelLoader.LoadedModels> modelsFuture) {
-		CompletableFuture<BlockStateModelLoader.LoadedModels> resolvedModelsFuture = eventDispatcherFuture.thenApplyAsync(ModelLoadingEventDispatcher::loadBlockStateModels);
-		return modelsFuture.thenCombine(resolvedModelsFuture, (models, resolvedModels) -> {
-			Map<ModelResourceLocation, BlockStateModelLoader.LoadedModel> map = models.models();
+	@ModifyExpressionValue(method = "reload", at = @At(value = "INVOKE", target = "net/minecraft/client/render/model/BlockStatesLoader.load(Lnet/minecraft/client/render/model/UnbakedModel;Lnet/minecraft/resource/ResourceManager;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;"))
+	private CompletableFuture<BlockStateModelLoader.LoadedModels> hookBlockStateModels(CompletableFuture<BlockStateModelLoader.LoadedModels> modelsFuture) {
+		return modelsFuture.thenCombine(eventDispatcherFuture, (models, eventDispatcher) -> eventDispatcher.modifyBlockModelsOnLoad(models));
+	}
 
-			if (!(map instanceof HashMap)) {
-				map = new HashMap<>(map);
-				models = new BlockStateModelLoader.LoadedModels(map);
+	@ModifyArg(method = "reload", at = @At(value = "INVOKE", target = "java/util/concurrent/CompletableFuture.thenApplyAsync(Ljava/util/function/Function;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;", ordinal = 1), index = 0)
+	private Function<Void, ModelDiscovery> hookModelDiscovery(Function<Void, ModelDiscovery> function) {
+		return v -> {
+			CompletableFuture<ModelLoadingEventDispatcher> future = eventDispatcherFuture;
+
+			if (future == null) {
+				return function.apply(v);
 			}
 
-			map.putAll(resolvedModels.models());
-			return models;
-		});
-	}
-
-	@Redirect(
-			method = "reload",
-			at = @At(
-					value = "INVOKE",
-					target = "java/util/concurrent/CompletableFuture.thenCombineAsync(Ljava/util/concurrent/CompletionStage;Ljava/util/function/BiFunction;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;",
-					ordinal = 0,
-					remap = false
-			))
-	private CompletableFuture<ModelDiscovery> hookModelDiscovery(
-			CompletableFuture<BlockStateModelLoader.LoadedModels> self,
-			CompletionStage<Map<ResourceLocation, UnbakedModel>> otherFuture,
-			BiFunction<BlockStateModelLoader.LoadedModels, Map<ResourceLocation, UnbakedModel>, ModelDiscovery> function,
-			Executor executor) {
-		CompletableFuture<Tuple<BlockStateModelLoader.LoadedModels, Map<ResourceLocation, UnbakedModel>>> pairFuture = self.thenCombine(otherFuture, Tuple::new);
-		return pairFuture.thenCombineAsync(eventDispatcherFuture, (pair, eventDispatcher) -> {
-			ModelLoadingEventDispatcher.CURRENT.set(eventDispatcher);
-			ModelDiscovery referencedModelsCollector = function.apply(pair.getA(), pair.getB());
+			ModelLoadingEventDispatcher.CURRENT.set(future.join());
+			ModelDiscovery referencedModelsCollector = function.apply(v);
 			ModelLoadingEventDispatcher.CURRENT.remove();
 			return referencedModelsCollector;
-		}, executor);
+		};
 	}
 
-	@ModifyArg(method = "reload", at = @At(value = "INVOKE", target = "java/util/concurrent/CompletableFuture.thenApplyAsync (Ljava/util/function/Function;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;", ordinal = 1), index = 0)
+	@ModifyArg(method = "reload", at = @At(value = "INVOKE", target = "java/util/concurrent/CompletableFuture.thenApplyAsync(Ljava/util/function/Function;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;", ordinal = 3), index = 0)
 	private Function<Void, Object> hookModelBaking(Function<Void, Object> function) {
 		return v -> {
-			ModelLoadingEventDispatcher.CURRENT.set(eventDispatcherFuture.join());
+			CompletableFuture<ModelLoadingEventDispatcher> future = eventDispatcherFuture;
+
+			if (future == null) {
+				return function.apply(v);
+			}
+
+			ModelLoadingEventDispatcher.CURRENT.set(future.join());
 			Object bakingResult = function.apply(v);
 			ModelLoadingEventDispatcher.CURRENT.remove();
 			return bakingResult;
 		};
+	}
+
+	@Inject(method = "apply", at = @At(value = "INVOKE_STRING", target = "net/minecraft/util/profiler/Profiler.swap(Ljava/lang/String;)V", args = "ldc=cache"))
+	private void onUpload(CallbackInfo ci, @Local ModelBakery.BakingResult bakedModels) {
+		extraModels = ((BakedModelsHooks) (Object) bakedModels).fabric_getExtraModels();
 	}
 }

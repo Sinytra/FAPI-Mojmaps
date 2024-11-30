@@ -14,8 +14,23 @@
  * limitations under the License.
  */
 
-package net.fabricmc.fabric.impl.client.model.loading;
+package net.fabricmc.fabric.mixin.client.model.loading;
 
-public interface ModelLoaderHooks {
-	ModelLoadingEventDispatcher fabric_getDispatcher();
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import net.fabricmc.fabric.api.client.model.loading.v1.UnwrappableBakedModel;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.DelegateBakedModel;
+
+@Mixin(DelegateBakedModel.class)
+abstract class WrapperBakedModelMixin implements UnwrappableBakedModel {
+	@Shadow
+	@Final
+	protected BakedModel parent;
+
+	@Override
+	public BakedModel getWrappedModel() {
+		return parent;
+	}
 }

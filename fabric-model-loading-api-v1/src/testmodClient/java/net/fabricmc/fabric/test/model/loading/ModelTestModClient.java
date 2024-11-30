@@ -16,27 +16,26 @@
 
 package net.fabricmc.fabric.test.model.loading;
 
-import java.util.function.Supplier;
+import com.mojang.math.Transformation;
+import java.util.List;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.model.loading.v1.DelegatingUnbakedModel;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelModifier;
+import net.fabricmc.fabric.api.client.model.loading.v1.WrapperUnbakedModel;
 import net.fabricmc.fabric.api.client.rendering.v1.LivingEntityFeatureRendererRegistrationCallback;
-import net.fabricmc.fabric.api.renderer.v1.model.ForwardingBakedModel;
-import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
-import net.minecraft.client.renderer.block.BlockModelShaper;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.block.model.MultiVariant;
+import net.minecraft.client.renderer.block.model.TextureSlots;
+import net.minecraft.client.renderer.block.model.UnbakedBlockStateModel;
+import net.minecraft.client.renderer.block.model.Variant;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.MissingBlockModel;
-import net.minecraft.client.resources.model.ModelResourceLocation;
-import net.minecraft.client.resources.model.UnbakedModel;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
+import net.minecraft.client.resources.model.ModelBaker;
+import net.minecraft.client.resources.model.ModelState;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.CrossCollisionBlock;
@@ -49,69 +48,32 @@ public class ModelTestModClient implements ClientModInitializer {
 	public static final ResourceLocation GOLD_BLOCK_MODEL_ID = ResourceLocation.withDefaultNamespace("block/gold_block");
 	public static final ResourceLocation BROWN_GLAZED_TERRACOTTA_MODEL_ID = ResourceLocation.withDefaultNamespace("block/brown_glazed_terracotta");
 
-	static class DownQuadRemovingModel extends ForwardingBakedModel {
-		DownQuadRemovingModel(BakedModel model) {
-			wrapped = model;
-		}
-
-		@Override
-		public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context) {
-			context.pushTransform(q -> q.cullFace() != Direction.DOWN);
-			super.emitBlockQuads(blockView, state, pos, randomSupplier, context);
-			context.popTransform();
-		}
-	}
+	//static class DownQuadRemovingModel extends ForwardingBakedModel {
+	//	DownQuadRemovingModel(BakedModel model) {
+	//		wrapped = model;
+	//	}
+	//
+	//	@Override
+	//	public void emitBlockQuads(BlockRenderView blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context) {
+	//		context.pushTransform(q -> q.cullFace() != Direction.DOWN);
+	//		super.emitBlockQuads(blockView, state, pos, randomSupplier, context);
+	//		context.popTransform();
+	//	}
+	//}
 
 	@Override
 	public void onInitializeClient() {
 		ModelLoadingPlugin.register(pluginContext -> {
 			pluginContext.addModels(HALF_RED_SAND_MODEL_ID);
 
-			// remove bottom face of gold blocks
-			pluginContext.modifyModelAfterBake().register(ModelModifier.WRAP_PHASE, (model, context) -> {
-				ResourceLocation id = context.resourceId();
-
-				if (id != null && id.equals(GOLD_BLOCK_MODEL_ID)) {
-					return new DownQuadRemovingModel(model);
-				}
-
-				return model;
-			});
-
-			// make fences with west: true and everything else false appear to be a missing model visually
-			ModelResourceLocation fenceId = BlockModelShaper.stateToModelLocation(Blocks.OAK_FENCE.defaultBlockState().setValue(CrossCollisionBlock.WEST, true));
-			pluginContext.modifyModelOnLoad().register(ModelModifier.OVERRIDE_PHASE, (model, context) -> {
-				ModelResourceLocation id = context.topLevelId();
-
-				if (id != null && id.equals(fenceId)) {
-					return new DelegatingUnbakedModel(MissingBlockModel.LOCATION);
-				}
-
-				return model;
-			});
-
-			// make brown glazed terracotta appear to be a missing model visually, but without affecting the item, by using pre-bake
-			// using load here would make the item also appear missing
-			pluginContext.modifyModelBeforeBake().register(ModelModifier.OVERRIDE_PHASE, (model, context) -> {
-				ResourceLocation id = context.resourceId();
-
-				if (id != null && id.equals(BROWN_GLAZED_TERRACOTTA_MODEL_ID)) {
-					return MissingBlockModel.missingModel();
-				}
-
-				return model;
-			});
-
 			// Make wheat stages 1->6 use the same model as stage 0. This can be done with resource packs, this is just a test.
 			pluginContext.registerBlockStateResolver(Blocks.WHEAT, context -> {
 				BlockState state = context.block().defaultBlockState();
 
-				// All the block state models are top-level...
-				// Use a delegating unbaked model to make sure the identical models only get baked a single time.
 				ResourceLocation wheatStage0Id = ResourceLocation.withDefaultNamespace("block/wheat_stage0");
 				ResourceLocation wheatStage7Id = ResourceLocation.withDefaultNamespace("block/wheat_stage7");
-				UnbakedModel wheatStage0Model = new DelegatingUnbakedModel(wheatStage0Id);
-				UnbakedModel wheatStage7Model = new DelegatingUnbakedModel(wheatStage7Id);
+				UnbakedBlockStateModel wheatStage0Model = simpleGroupableModel(wheatStage0Id);
+				UnbakedBlockStateModel wheatStage7Model = simpleGroupableModel(wheatStage7Id);
 
 				for (int age = 0; age <= 6; age++) {
 					context.setModel(state.setValue(CropBlock.AGE, age), wheatStage0Model);
@@ -119,6 +81,52 @@ public class ModelTestModClient implements ClientModInitializer {
 
 				context.setModel(state.setValue(CropBlock.AGE, 7), wheatStage7Model);
 			});
+
+			// Replace the brown glazed terracotta model with a missing model without affecting child models.
+			// Since 1.21.4, the item model is not a child model, so it is also affected.
+			pluginContext.modifyModelOnLoad().register(ModelModifier.WRAP_PHASE, (model, context) -> {
+				if (context.id().equals(BROWN_GLAZED_TERRACOTTA_MODEL_ID)) {
+					return new WrapperUnbakedModel(model) {
+						@Override
+						public void resolveDependencies(Resolver resolver) {
+							super.resolveDependencies(resolver);
+							resolver.resolve(MissingBlockModel.LOCATION);
+						}
+
+						@Override
+						public BakedModel bake(TextureSlots textures, ModelBaker baker, ModelState settings, boolean ambientOcclusion, boolean isSideLit, ItemTransforms transformation) {
+							return baker.bake(MissingBlockModel.LOCATION, settings);
+						}
+					};
+				}
+
+				return model;
+			});
+
+			// Make oak fences with west: true and everything else false appear to be a missing model visually.
+			BlockState westOakFence = Blocks.OAK_FENCE.defaultBlockState().setValue(CrossCollisionBlock.WEST, true);
+			pluginContext.modifyBlockModelOnLoad().register(ModelModifier.OVERRIDE_PHASE, (model, context) -> {
+				if (context.state() == westOakFence) {
+					return simpleGroupableModel(MissingBlockModel.LOCATION);
+				}
+
+				return model;
+			});
+
+			// TODO 1.21.4: reintroduce test once FRAPI+Indigo are ported
+			// remove bottom face of gold blocks
+			//pluginContext.modifyModelOnLoad().register(ModelModifier.WRAP_PHASE, (model, context) -> {
+			//	if (context.id().equals(GOLD_BLOCK_MODEL_ID)) {
+			//		return new WrapperUnbakedModel(model) {
+			//			@Override
+			//			public BakedModel bake(ModelTextures textures, Baker baker, ModelBakeSettings settings, boolean ambientOcclusion, boolean isSideLit, ModelTransformation transformation) {
+			//				return new DownQuadRemovingModel(super.bake(textures, baker, settings, ambientOcclusion, isSideLit, transformation));
+			//			}
+			//		};
+			//	}
+			//
+			//	return model;
+			//});
 		});
 
 		ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(SpecificModelReloadListener.INSTANCE);
@@ -132,5 +140,9 @@ public class ModelTestModClient implements ClientModInitializer {
 
 	public static ResourceLocation id(String path) {
 		return ResourceLocation.fromNamespaceAndPath(ID, path);
+	}
+
+	private static UnbakedBlockStateModel simpleGroupableModel(ResourceLocation model) {
+		return new MultiVariant(List.of(new Variant(model, Transformation.identity(), false, 1)));
 	}
 }

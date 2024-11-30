@@ -16,9 +16,14 @@
 
 package net.fabricmc.fabric.impl.client.model.loading;
 
-import net.fabricmc.fabric.api.client.model.loading.v1.BlockStateResolver;
+import java.util.Map;
+import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.Block;
+import org.jetbrains.annotations.Nullable;
 
-record BlockStateResolverHolder(BlockStateResolver resolver, Block block, ResourceLocation blockId) {
+public interface BakedModelsHooks {
+	@Nullable
+	Map<ResourceLocation, BakedModel> fabric_getExtraModels();
+
+	void fabric_setExtraModels(@Nullable Map<ResourceLocation, BakedModel> extraModels);
 }

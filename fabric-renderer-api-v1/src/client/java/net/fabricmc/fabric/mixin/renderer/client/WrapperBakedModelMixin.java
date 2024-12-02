@@ -14,78 +14,42 @@
  * limitations under the License.
  */
 
-package net.fabricmc.fabric.test.renderer.client;
+package net.fabricmc.fabric.mixin.renderer.client;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.jetbrains.annotations.Nullable;
-import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
-import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.DelegateBakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class SingleMeshBakedModel implements BakedModel {
-	private final Mesh mesh;
-	private final TextureAtlasSprite particleSprite;
-
-	public SingleMeshBakedModel(Mesh mesh, TextureAtlasSprite particleSprite) {
-		this.mesh = mesh;
-		this.particleSprite = particleSprite;
-	}
+@Mixin(DelegateBakedModel.class)
+abstract class WrapperBakedModelMixin implements BakedModel {
+	@Shadow
+	@Final
+	protected BakedModel parent;
 
 	@Override
 	public boolean isVanillaAdapter() {
-		return false;
+		return parent.isVanillaAdapter();
 	}
 
 	@Override
 	public void emitBlockQuads(QuadEmitter emitter, BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, Predicate<@Nullable Direction> cullTest) {
-		mesh.outputTo(emitter);
+		parent.emitBlockQuads(emitter, blockView, state, pos, randomSupplier, cullTest);
 	}
 
 	@Override
 	public void emitItemQuads(QuadEmitter emitter, Supplier<RandomSource> randomSupplier) {
-		mesh.outputTo(emitter);
-	}
-
-	@Override
-	public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, RandomSource random) {
-		return Collections.emptyList();
-	}
-
-	@Override
-	public boolean useAmbientOcclusion() {
-		return true;
-	}
-
-	@Override
-	public boolean isGui3d() {
-		return false;
-	}
-
-	@Override
-	public boolean usesBlockLight() {
-		return true;
-	}
-
-	@Override
-	public TextureAtlasSprite getParticleIcon() {
-		return particleSprite;
-	}
-
-	@Override
-	public ItemTransforms getTransforms() {
-		return ModelHelper.MODEL_TRANSFORM_BLOCK;
+		parent.emitItemQuads(emitter, randomSupplier);
 	}
 }

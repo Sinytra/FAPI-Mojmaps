@@ -16,36 +16,29 @@
 
 package net.fabricmc.fabric.mixin.client.indigo.renderer;
 
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.client.color.item.ItemColors;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.entity.ItemRenderer;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.world.item.ItemStack;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.fabricmc.fabric.impl.client.indigo.renderer.render.ItemRenderContext;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.world.item.ItemDisplayContext;
 
 @Mixin(ItemRenderer.class)
-public abstract class ItemRendererMixin {
-	@Final
-	@Shadow
-	private ItemColors colors;
-
+abstract class ItemRendererMixin {
 	@Unique
-	private final ThreadLocal<ItemRenderContext> fabric_contexts = ThreadLocal.withInitial(() -> new ItemRenderContext(colors));
+	private static final ThreadLocal<ItemRenderContext> CONTEXTS = ThreadLocal.withInitial(ItemRenderContext::new);
 
-	@Inject(method = "renderItem(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IILnet/minecraft/client/resources/model/BakedModel;Z)V", at = @At(value = "HEAD"), cancellable = true)
-	public void hook_renderItem(ItemStack stack, ItemDisplayContext transformMode, PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, int light, int overlay, BakedModel model, boolean notInHand, CallbackInfo ci) {
+	@Inject(method = "renderItem(Lnet/minecraft/world/item/ItemDisplayContext;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;II[ILnet/minecraft/client/resources/model/BakedModel;Lnet/minecraft/client/renderer/RenderType;Lnet/minecraft/client/renderer/item/ItemStackRenderState$FoilType;)V", at = @At(value = "HEAD"), cancellable = true)
+	private static void hookRenderItem(ItemDisplayContext transformationMode, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay, int[] tints, BakedModel model, RenderType layer, ItemStackRenderState.FoilType glint, CallbackInfo ci) {
 		if (!model.isVanillaAdapter()) {
-			fabric_contexts.get().renderModel(stack, transformMode, matrixStack, vertexConsumerProvider, light, overlay, model);
+			CONTEXTS.get().render(transformationMode, matrices, vertexConsumers, light, overlay, tints, model, layer, glint);
 			ci.cancel();
 		}
 	}

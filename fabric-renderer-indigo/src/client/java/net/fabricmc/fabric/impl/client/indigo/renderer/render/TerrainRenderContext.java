@@ -20,7 +20,6 @@ import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import java.util.function.Function;
-import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.fabricmc.fabric.impl.client.indigo.renderer.aocalc.AoCalculator;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
@@ -35,9 +34,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Implementation of {@link RenderContext} used during terrain rendering.
- * Dispatches calls from models during chunk rebuild to the appropriate consumer,
- * and holds/manages all of the state needed by them.
+ * Used during terrain block buffering to invoke {@link BakedModel#emitBlockQuads}.
  */
 public class TerrainRenderContext extends AbstractBlockRenderContext {
 	public static final ThreadLocal<TerrainRenderContext> POOL = ThreadLocal.withInitial(TerrainRenderContext::new);
@@ -80,7 +77,7 @@ public class TerrainRenderContext extends AbstractBlockRenderContext {
 	}
 
 	/** Called from chunk renderer hook. */
-	public void tessellateBlock(BlockState blockState, BlockPos blockPos, final BakedModel model, PoseStack matrixStack) {
+	public void tessellateBlock(BlockState blockState, BlockPos blockPos, BakedModel model, PoseStack matrixStack) {
 		try {
 			Vec3 offset = blockState.getOffset(blockPos);
 			matrixStack.translate(offset.x, offset.y, offset.z);
@@ -92,7 +89,7 @@ public class TerrainRenderContext extends AbstractBlockRenderContext {
 
 			aoCalc.clear();
 			blockInfo.prepareForBlock(blockState, blockPos, model.useAmbientOcclusion());
-			model.emitBlockQuads(blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, blockInfo.randomSupplier, this);
+			model.emitBlockQuads(getEmitter(), blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, blockInfo.randomSupplier, blockInfo::shouldCullSide);
 		} catch (Throwable throwable) {
 			CrashReport crashReport = CrashReport.forThrowable(throwable, "Tessellating block in world - Indigo Renderer");
 			CrashReportCategory crashReportSection = crashReport.addCategory("Block being tessellated");

@@ -18,13 +18,21 @@ package net.fabricmc.fabric.api.renderer.v1.model;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
-import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
+
+import org.jetbrains.annotations.Nullable;
+import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
+import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.impl.renderer.VanillaModelEncoder;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
+import net.minecraft.client.renderer.item.ItemModel;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
@@ -40,7 +48,8 @@ import net.minecraft.world.level.block.state.BlockState;
  */
 public interface FabricBakedModel {
 	/**
-	 * When true, signals renderer this producer is implemented through {@link BakedModel#getQuads(BlockState, net.minecraft.core.Direction, RandomSource)}.
+	 * When true, signals renderer this producer is implemented through
+	 * {@link BakedModel#getQuads(BlockState, Direction, RandomSource)}.
 	 * Also means the model does not rely on any non-vanilla features.
 	 * Allows the renderer to optimize or route vanilla models through the unmodified vanilla pipeline if desired.
 	 *
@@ -59,14 +68,15 @@ public interface FabricBakedModel {
 	 *
 	 * <p>During chunk rebuild, this method will always be called exactly one time per block
 	 * position, irrespective of which or how many faces or block render layers are included
-	 * in the model. Models must output all quads/meshes in a single pass.
+	 * in the model. Models must output all quads in a single pass.
 	 *
 	 * <p>Also called to render block models outside of chunk rebuild or block entity rendering.
 	 * Typically, this happens when the block is being rendered as an entity, not as a block placed in the world.
 	 * Currently, this happens for falling blocks and blocks being pushed by a piston, but renderers
-	 * should invoke this for all calls to {@link ModelBlockRenderer#tesselateBlock(BlockAndTintGetter, BakedModel, BlockState, BlockPos, PoseStack, VertexConsumer, boolean, RandomSource, long, int)}
-	 * that occur outside of chunk rebuilds to allow for features added by mods, unless
-	 * {@link #isVanillaAdapter()} returns true.
+	 * should invoke this for all calls to
+	 * {@link ModelBlockRenderer#tesselateBlock(BlockAndTintGetter, BakedModel, BlockState, BlockPos, PoseStack, VertexConsumer, boolean, RandomSource, long, int)}
+	 * that occur outside of chunk rebuilds to allow for features added by mods, unless {@link #isVanillaAdapter()}
+	 * returns true.
 	 *
 	 * <p>Outside of chunk rebuilds, this method will be called every frame. Model implementations should
 	 * rely on pre-baked meshes as much as possible and keep transformation to a minimum.  The provided
@@ -74,25 +84,25 @@ public interface FabricBakedModel {
 	 * state lookups are best avoided or will require special handling. Block entity lookups are
 	 * likely to fail and/or give meaningless results.
 	 *
-	 * <p>In all cases, renderer will handle face occlusion and filter quads on faces obscured by
-	 * neighboring blocks (if appropriate).  Models only need to consider "sides" to the
-	 * extent the model is driven by connection with neighbor blocks or other world state.
-	 *
-	 * <p>Note: with {@link BakedModel#getQuads(BlockState, net.minecraft.core.Direction, RandomSource)}, the random
+	 * <p>Note: with {@link BakedModel#getQuads(BlockState, Direction, RandomSource)}, the random
 	 * parameter is normally initialized with the same seed prior to each face layer.
 	 * Model authors should note this method is called only once per block, and call the provided
 	 * Random supplier multiple times if re-seeding is necessary.
 	 *
-	 * @param blockView Access to world state. Cast to {@code RenderAttachedBlockView} to
-	 * retrieve block entity data unless thread safety can be guaranteed.
+	 * @param emitter Accepts model output.
+	 * @param blockView Access to world state.
 	 * @param state Block state for model being rendered.
 	 * @param pos Position of block for model being rendered.
-	 * @param randomSupplier  Random object seeded per vanilla conventions. Call multiple times to re-seed.
-	 * Will not be thread-safe. Do not cache or retain a reference.
-	 * @param context Accepts model output.
+	 * @param randomSupplier Random object seeded per vanilla conventions. Call multiple times to re-seed.
+	 *                       Will not be thread-safe. Do not cache or retain a reference.
+	 * @param cullTest A test that returns {@code true} for faces which will be culled and {@code false} for faces which
+	 *                 may or may not be culled. Meant to be used to cull groups of quads or expensive dynamic quads
+	 *                 early for performance. Early culled quads will likely not be added the emitter, so callers of
+	 *                 this method must account for this. In general, prefer using
+	 *                 {@link MutableQuadView#cullFace(Direction)} instead of this test.
 	 */
-	default void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context) {
-		VanillaModelEncoder.emitBlockQuads((BakedModel) this, state, randomSupplier, context);
+	default void emitBlockQuads(QuadEmitter emitter, BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, Predicate<@Nullable Direction> cullTest) {
+		VanillaModelEncoder.emitBlockQuads(emitter, (BakedModel) this, state, randomSupplier, cullTest);
 	}
 
 	/**
@@ -107,22 +117,19 @@ public interface FabricBakedModel {
 	 * case handling in model implementations.
 	 *
 	 * <p>Calls to this method will generally happen on the main client thread but nothing
-	 * prevents a mod or renderer from calling this method concurrently. Implementations
-	 * should not mutate the ItemStack parameter, and best practice will be to make the
-	 * method thread-safe.
+	 * prevents a mod or renderer from calling this method concurrently. Best practice will
+	 * be to make the method thread-safe.
 	 *
-	 * <p>Implementing this method does NOT mitigate the need to implement a functional
-	 * {@link BakedModel#getOverrides()} method, because this method will be called
-	 * on the <em>result</em> of  {@link BakedModel#getOverrides}.  However, that
-	 * method can simply return the base model because the output from this method will
-	 * be used for rendering.
-	 *
-	 * <p>Renderer implementations should also use this method to obtain the quads used
-	 * for item enchantment glint rendering.  This means models can put geometric variation
-	 * logic here, instead of returning every possible shape from {@link BakedModel#getOverrides}
-	 * as vanilla baked models.
+	 * <p>This method receives very limited context, which is done to ensure that
+	 * {@link ItemStackRenderState}, after being updated, can be reused an arbitrary amount of times and
+	 * produce the same result each time. To depend on additional context, such as the
+	 * {@link ItemStack} or {@link ItemDisplayContext}, it is recommended to use a custom
+	 * {@link ItemModel}, capture the necessary context such that it cannot be modified externally
+	 * (for example, the {@link ItemStack} can be modified after the render state is updated, so it
+	 * should not be captured directly), and construct a new {@link BakedModel} which then uses
+	 * the captured context in this method.
 	 */
-	default void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context) {
-		VanillaModelEncoder.emitItemQuads((BakedModel) this, null, randomSupplier, context);
+	default void emitItemQuads(QuadEmitter emitter, Supplier<RandomSource> randomSupplier) {
+		VanillaModelEncoder.emitItemQuads(emitter, (BakedModel) this, null, randomSupplier);
 	}
 }

@@ -63,7 +63,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * (Though they can use these as an example if they wish.)
  */
 @Mixin(SectionCompiler.class)
-public abstract class SectionBuilderMixin {
+abstract class SectionBuilderMixin {
 	@Shadow
 	abstract BufferBuilder getOrBeginLayer(Map<RenderType, BufferBuilder> builders, SectionBufferBuilderPack allocatorStorage, RenderType layer);
 
@@ -99,13 +99,11 @@ public abstract class SectionBuilderMixin {
 	@Redirect(method = "compile", require = 1, at = @At(value = "INVOKE",
 			target = "Lnet/minecraft/client/renderer/block/BlockRenderDispatcher;renderBatched(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;ZLnet/minecraft/util/RandomSource;)V"))
 	private void hookBuildRenderBlock(BlockRenderDispatcher renderManager, BlockState blockState, BlockPos blockPos, BlockAndTintGetter blockView, PoseStack matrix, VertexConsumer bufferBuilder, boolean checkSides, RandomSource random) {
-		if (blockState.getRenderShape() == RenderShape.MODEL) {
-			final BakedModel model = renderManager.getBlockModel(blockState);
+		final BakedModel model = renderManager.getBlockModel(blockState);
 
-			if (Indigo.ALWAYS_TESSELATE_INDIGO || !model.isVanillaAdapter()) {
-				((AccessChunkRendererRegion) blockView).fabric_getRenderer().tessellateBlock(blockState, blockPos, model, matrix);
-				return;
-			}
+		if (Indigo.ALWAYS_TESSELATE_INDIGO || !model.isVanillaAdapter()) {
+			((AccessChunkRendererRegion) blockView).fabric_getRenderer().tessellateBlock(blockState, blockPos, model, matrix);
+			return;
 		}
 
 		renderManager.renderBatched(blockState, blockPos, blockView, matrix, bufferBuilder, checkSides, random);

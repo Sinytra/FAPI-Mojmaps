@@ -32,7 +32,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Context for non-terrain block rendering.
+ * Used during non-terrain block buffering to invoke {@link BakedModel#emitBlockQuads}.
  */
 public class BlockRenderContext extends AbstractBlockRenderContext {
 	private VertexConsumer vertexConsumer;
@@ -57,12 +57,12 @@ public class BlockRenderContext extends AbstractBlockRenderContext {
 		return vertexConsumer;
 	}
 
-	public void render(BlockAndTintGetter blockView, BakedModel model, BlockState state, BlockPos pos, PoseStack matrixStack, VertexConsumer buffer, boolean cull, RandomSource random, long seed, int overlay) {
+	public void render(BlockAndTintGetter blockView, BakedModel model, BlockState state, BlockPos pos, PoseStack matrixStack, VertexConsumer vertexConsumer, boolean cull, RandomSource random, long seed, int overlay) {
 		try {
 			Vec3 offset = state.getOffset(pos);
 			matrixStack.translate(offset.x, offset.y, offset.z);
 
-			this.vertexConsumer = buffer;
+			this.vertexConsumer = vertexConsumer;
 			this.matrix = matrixStack.last().pose();
 			this.normalMatrix = matrixStack.last().normal();
 			this.overlay = overlay;
@@ -75,7 +75,7 @@ public class BlockRenderContext extends AbstractBlockRenderContext {
 			blockInfo.prepareForWorld(blockView, cull);
 			blockInfo.prepareForBlock(state, pos, model.useAmbientOcclusion());
 
-			model.emitBlockQuads(blockView, state, pos, blockInfo.randomSupplier, this);
+			model.emitBlockQuads(getEmitter(), blockView, state, pos, blockInfo.randomSupplier, blockInfo::shouldCullSide);
 		} catch (Throwable throwable) {
 			CrashReport crashReport = CrashReport.forThrowable(throwable, "Tessellating block model - Indigo Renderer");
 			CrashReportCategory crashReportSection = crashReport.addCategory("Block model being tessellated");

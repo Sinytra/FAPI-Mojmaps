@@ -16,67 +16,44 @@
 
 package net.fabricmc.fabric.test.renderer.client;
 
-import java.util.Set;
-
 import org.jetbrains.annotations.Nullable;
-import net.fabricmc.fabric.api.client.model.loading.v1.ModelResolver;
+import net.fabricmc.fabric.api.client.model.loading.v1.ModelModifier;
 import net.fabricmc.fabric.api.renderer.v1.material.ShadeMode;
 import net.fabricmc.fabric.test.renderer.RendererTest;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
 
-public class ModelResolverImpl implements ModelResolver {
-	private static final Set<ResourceLocation> FRAME_MODEL_LOCATIONS = Set.of(
-			RendererTest.id("block/frame"),
-			RendererTest.id("item/frame"),
-			RendererTest.id("item/frame_multipart"),
-			RendererTest.id("item/frame_variant")
-	);
+public class ModelResolverImpl implements ModelModifier.OnLoad {
+	private static final ResourceLocation FRAME_MODEL_LOCATION = RendererTest.id("block/frame");
+	private static final ResourceLocation PILLAR_MODEL_LOCATION = RendererTest.id("block/pillar");
+	private static final ResourceLocation OCTAGONAL_COLUMN_MODEL_LOCATION = RendererTest.id("block/octagonal_column");
+	private static final ResourceLocation OCTAGONAL_COLUMN_VANILLA_MODEL_LOCATION = RendererTest.id("block/octagonal_column_vanilla");
+	private static final ResourceLocation RIVERSTONE_MODEL_LOCATION = RendererTest.id("block/riverstone");
 
-	private static final Set<ResourceLocation> PILLAR_MODEL_LOCATIONS = Set.of(
-			RendererTest.id("block/pillar"),
-			RendererTest.id("item/pillar")
-	);
-
-	private static final Set<ResourceLocation> OCTAGONAL_COLUMN_MODEL_LOCATIONS = Set.of(
-			RendererTest.id("block/octagonal_column"),
-			RendererTest.id("item/octagonal_column")
-	);
-
-	private static final Set<ResourceLocation> OCTAGONAL_COLUMN_VANILLA_MODEL_LOCATIONS = Set.of(
-			RendererTest.id("block/octagonal_column_vanilla")
-	);
-
-	private static final Set<ResourceLocation> RIVERSTONE_MODEL_LOCATIONS = Set.of(
-			RendererTest.id("block/riverstone"),
-			RendererTest.id("item/riverstone")
-	);
-
-	@Override
 	@Nullable
-	public UnbakedModel resolveModel(Context context) {
+	public UnbakedModel modifyModelOnLoad(@Nullable UnbakedModel model, Context context) {
 		ResourceLocation id = context.id();
 
-		if (FRAME_MODEL_LOCATIONS.contains(id)) {
+		if (FRAME_MODEL_LOCATION.equals(id)) {
 			return new FrameUnbakedModel();
 		}
 
-		if (PILLAR_MODEL_LOCATIONS.contains(id)) {
+		if (PILLAR_MODEL_LOCATION.equals(id)) {
 			return new PillarUnbakedModel();
 		}
 
-		if (OCTAGONAL_COLUMN_MODEL_LOCATIONS.contains(id)) {
+		if (OCTAGONAL_COLUMN_MODEL_LOCATION.equals(id)) {
 			return new OctagonalColumnUnbakedModel(ShadeMode.ENHANCED);
 		}
 
-		if (OCTAGONAL_COLUMN_VANILLA_MODEL_LOCATIONS.contains(id)) {
+		if (OCTAGONAL_COLUMN_VANILLA_MODEL_LOCATION.equals(id)) {
 			return new OctagonalColumnUnbakedModel(ShadeMode.VANILLA);
 		}
 
-		if (RIVERSTONE_MODEL_LOCATIONS.contains(id)) {
+		if (RIVERSTONE_MODEL_LOCATION.equals(id)) {
 			return new RiverstoneUnbakedModel();
 		}
 
-		return null;
+		return model;
 	}
 }

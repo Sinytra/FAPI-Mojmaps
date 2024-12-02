@@ -95,21 +95,21 @@ public class BlockRenderInfo {
 		blockState = null;
 	}
 
-	int blockColor(int colorIndex) {
-		return 0xFF000000 | blockColorMap.getColor(blockState, blockView, blockPos, colorIndex);
+	int blockColor(int tintIndex) {
+		return 0xFF000000 | blockColorMap.getColor(blockState, blockView, blockPos, tintIndex);
 	}
 
-	boolean shouldDrawFace(@Nullable Direction face) {
-		if (face == null || !enableCulling) {
+	boolean shouldDrawSide(@Nullable Direction side) {
+		if (side == null || !enableCulling) {
 			return true;
 		}
 
-		final int mask = 1 << face.get3DDataValue();
+		final int mask = 1 << side.get3DDataValue();
 
 		if ((cullCompletionFlags & mask) == 0) {
 			cullCompletionFlags |= mask;
 
-			if (Block.shouldRenderFace(blockState, blockView.getBlockState(searchPos.setWithOffset(blockPos, face)), face)) {
+			if (Block.shouldRenderFace(blockState, blockView.getBlockState(searchPos.setWithOffset(blockPos, side)), side)) {
 				cullResultFlags |= mask;
 				return true;
 			} else {
@@ -118,6 +118,10 @@ public class BlockRenderInfo {
 		} else {
 			return (cullResultFlags & mask) != 0;
 		}
+	}
+
+	boolean shouldCullSide(@Nullable Direction side) {
+		return !shouldDrawSide(side);
 	}
 
 	RenderType effectiveRenderLayer(BlendMode blendMode) {

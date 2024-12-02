@@ -29,6 +29,9 @@ import org.jetbrains.annotations.Nullable;
  * and you would normally access the model by its identifier and then cast it:
  * call {@link #unwrap(BakedModel, Predicate)} on the model first, in case another
  * mod is wrapping your model to alter its rendering.
+ *
+ * <p>Note: This interface is automatically implemented on {@link DelegateBakedModel} and subclasses via Mixin and
+ * interface injection.
  */
 public interface UnwrappableBakedModel {
 	/**
@@ -37,7 +40,9 @@ public interface UnwrappableBakedModel {
 	 * <p>If there are multiple layers of wrapping, this method does not necessarily return the innermost model.
 	 */
 	@Nullable
-	BakedModel getWrappedModel();
+	default BakedModel getWrappedModel() {
+		return null;
+	}
 
 	/**
 	 * Iteratively unwrap the given model until the given condition returns true or all models in the hierarchy have

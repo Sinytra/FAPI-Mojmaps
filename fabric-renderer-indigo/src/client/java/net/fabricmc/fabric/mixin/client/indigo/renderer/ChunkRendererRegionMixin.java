@@ -23,7 +23,7 @@ import net.fabricmc.fabric.impl.client.indigo.renderer.render.TerrainRenderConte
 import net.minecraft.client.renderer.chunk.RenderChunkRegion;
 
 @Mixin(RenderChunkRegion.class)
-public abstract class ChunkRendererRegionMixin implements AccessChunkRendererRegion {
+abstract class ChunkRendererRegionMixin implements AccessChunkRendererRegion {
 	@Unique
 	private TerrainRenderContext fabric_renderer;
 

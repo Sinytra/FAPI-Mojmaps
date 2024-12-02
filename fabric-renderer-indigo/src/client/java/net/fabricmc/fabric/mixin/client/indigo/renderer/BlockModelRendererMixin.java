@@ -32,15 +32,14 @@ import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 
 @Mixin(ModelBlockRenderer.class)
-public abstract class BlockModelRendererMixin {
+abstract class BlockModelRendererMixin {
 	@Unique
-	private final ThreadLocal<BlockRenderContext> fabric_contexts = ThreadLocal.withInitial(BlockRenderContext::new);
+	private static final ThreadLocal<BlockRenderContext> CONTEXTS = ThreadLocal.withInitial(BlockRenderContext::new);
 
 	@Inject(at = @At("HEAD"), method = "tesselateBlock(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/client/resources/model/BakedModel;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;ZLnet/minecraft/util/RandomSource;JI)V", cancellable = true)
-	private void hookRender(BlockAndTintGetter blockView, BakedModel model, BlockState state, BlockPos pos, PoseStack matrix, VertexConsumer buffer, boolean cull, RandomSource rand, long seed, int overlay, CallbackInfo ci) {
+	private void hookRender(BlockAndTintGetter blockView, BakedModel model, BlockState state, BlockPos pos, PoseStack matrices, VertexConsumer vertexConsumer, boolean cull, RandomSource random, long seed, int overlay, CallbackInfo ci) {
 		if (!model.isVanillaAdapter()) {
-			BlockRenderContext context = fabric_contexts.get();
-			context.render(blockView, model, state, pos, matrix, buffer, cull, rand, seed, overlay);
+			CONTEXTS.get().render(blockView, model, state, pos, matrices, vertexConsumer, cull, random, seed, overlay);
 			ci.cancel();
 		}
 	}

@@ -18,10 +18,15 @@ package net.fabricmc.fabric.test.renderer.client;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.jetbrains.annotations.Nullable;
-import net.minecraft.client.render.model.json.ModelOverrideList;
+import net.fabricmc.fabric.api.block.v1.FabricBlockState;
+import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
+import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
+import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
+import net.fabricmc.fabric.test.renderer.Registration;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -29,15 +34,8 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
-import net.fabricmc.fabric.api.block.v1.FabricBlockState;
-import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
-import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
-import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
-import net.fabricmc.fabric.test.renderer.Registration;
 
 /**
  * Very crude implementation of a pillar block model that connects with pillars above and below.
@@ -60,8 +58,7 @@ public class PillarBakedModel implements BakedModel {
 	}
 
 	@Override
-	public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context) {
-		QuadEmitter emitter = context.getEmitter();
+	public void emitBlockQuads(QuadEmitter emitter, BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, Predicate<@Nullable Direction> cullTest) {
 		// Do not use the passed state to ensure that this model connects
 		// to and from blocks with a custom appearance correctly.
 		BlockState worldState = blockView.getBlockState(pos);
@@ -90,9 +87,7 @@ public class PillarBakedModel implements BakedModel {
 	}
 
 	@Override
-	public void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context) {
-		QuadEmitter emitter = context.getEmitter();
-
+	public void emitItemQuads(QuadEmitter emitter, Supplier<RandomSource> randomSupplier) {
 		for (Direction side : Direction.values()) {
 			emitter.square(side, 0, 0, 1, 1, 0);
 			emitter.spriteBake(sprites[ConnectedTexture.ALONE.ordinal()], MutableQuadView.BAKE_LOCK_UV);
@@ -140,11 +135,6 @@ public class PillarBakedModel implements BakedModel {
 	}
 
 	@Override
-	public boolean isBuiltin() {
-		return false;
-	}
-
-	@Override
 	public TextureAtlasSprite getParticleIcon() {
 		return sprites[0];
 	}
@@ -152,10 +142,5 @@ public class PillarBakedModel implements BakedModel {
 	@Override
 	public ItemTransforms getTransforms() {
 		return ModelHelper.MODEL_TRANSFORM_BLOCK;
-	}
-
-	@Override
-	public ModelOverrideList getOverrides() {
-		return ModelOverrideList.EMPTY;
 	}
 }

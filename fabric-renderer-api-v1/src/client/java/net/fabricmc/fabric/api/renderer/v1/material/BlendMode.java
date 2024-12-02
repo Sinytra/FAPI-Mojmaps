@@ -18,6 +18,7 @@ package net.fabricmc.fabric.api.renderer.v1.material;
 
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Controls how sprite pixels will be blended with the scene.
@@ -52,13 +53,14 @@ public enum BlendMode {
 	 */
 	TRANSLUCENT(RenderType.translucent());
 
+	@Nullable
 	public final RenderType blockRenderLayer;
 
-	BlendMode(RenderType blockRenderLayer) {
+	BlendMode(@Nullable RenderType blockRenderLayer) {
 		this.blockRenderLayer = blockRenderLayer;
 	}
 
-	public static BlendMode fromRenderLayer(RenderType renderLayer) {
+	public static BlendMode fromRenderLayer(@Nullable RenderType renderLayer) {
 		if (renderLayer == RenderType.solid()) {
 			return SOLID;
 		} else if (renderLayer == RenderType.cutoutMipped()) {

@@ -25,7 +25,7 @@ import net.minecraft.core.Direction;
  * via {@link #bakeSprite(MutableQuadView, TextureAtlasSprite, int)}. Also used by the API
  * itself to implement automatic block-breaking models for enhanced models.
  */
-public class TextureHelper {
+public final class TextureHelper {
 	private TextureHelper() { }
 
 	private static final float NORMALIZER = 1f / 16f;

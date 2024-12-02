@@ -18,32 +18,32 @@ package net.fabricmc.fabric.test.renderer.client;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.jetbrains.annotations.Nullable;
+import net.fabricmc.fabric.api.blockview.v2.FabricBlockView;
+import net.fabricmc.fabric.api.renderer.v1.Renderer;
+import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
+import net.fabricmc.fabric.api.renderer.v1.material.MaterialFinder;
+import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
+import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
+import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
+import net.fabricmc.fabric.api.renderer.v1.mesh.QuadTransform;
+import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.render.model.json.ModelOverrideList;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.EmptyBlockAndTintGetter;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.fabricmc.fabric.api.blockview.v2.FabricBlockView;
-import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
-import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
-import net.fabricmc.fabric.api.renderer.v1.material.MaterialFinder;
-import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
-import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
-import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
-import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 
 public class FrameBakedModel implements BakedModel {
 	private final Mesh frameMesh;
@@ -55,7 +55,7 @@ public class FrameBakedModel implements BakedModel {
 		this.frameMesh = frameMesh;
 		this.frameSprite = frameSprite;
 
-		MaterialFinder finder = RendererAccess.INSTANCE.getRenderer().materialFinder();
+		MaterialFinder finder = Renderer.get().materialFinder();
 		this.translucentMaterial = finder.blendMode(BlendMode.TRANSLUCENT).find();
 		finder.clear();
 		this.translucentEmissiveMaterial = finder.blendMode(BlendMode.TRANSLUCENT).emissive(true).find();
@@ -67,9 +67,9 @@ public class FrameBakedModel implements BakedModel {
 	}
 
 	@Override
-	public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context) {
+	public void emitBlockQuads(QuadEmitter emitter, BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, Predicate<@Nullable Direction> cullTest) {
 		// Emit our frame mesh
-		this.frameMesh.outputTo(context.getEmitter());
+		frameMesh.outputTo(emitter);
 
 		// We should not access the block entity from here. We should instead use the immutable render data provided by the block entity.
 		if (!(((FabricBlockView) blockView).getBlockEntityRenderData(pos) instanceof Block mimickedBlock)) {
@@ -77,39 +77,41 @@ public class FrameBakedModel implements BakedModel {
 		}
 
 		BlockState innerState = mimickedBlock.defaultBlockState();
+		BakedModel innerModel = Minecraft.getInstance().getBlockRenderer().getBlockModel(innerState);
 
 		// Now, we emit a transparent scaled-down version of the inner model
 		// Try both emissive and non-emissive versions of the translucent material
 		RenderMaterial material = pos.getX() % 2 == 0 ? translucentMaterial : translucentEmissiveMaterial;
 
-		emitInnerQuads(context, material, () -> {
-			// Use emitBlockQuads to allow for Renderer API features
-			Minecraft.getInstance().getBlockRenderer().getBlockModel(innerState).emitBlockQuads(blockView, innerState, pos, randomSupplier, context);
-		});
+		// Let's push a transform to scale the model down and make it transparent
+		emitter.pushTransform(createInnerTransform(material));
+		// Emit the inner block model
+		innerModel.emitBlockQuads(emitter, blockView, innerState, pos, randomSupplier, cullTest);
+		// Let's not forget to pop the transform!
+		emitter.popTransform();
 	}
 
 	@Override
-	public void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context) {
+	public void emitItemQuads(QuadEmitter emitter, Supplier<RandomSource> randomSupplier) {
 		// Emit our frame mesh
-		this.frameMesh.outputTo(context.getEmitter());
+		frameMesh.outputTo(emitter);
 
-		// Emit a scaled-down fence for testing, trying both materials again.
-		RenderMaterial material = stack.has(DataComponents.CUSTOM_NAME) ? translucentEmissiveMaterial : translucentMaterial;
+		BlockState innerState = Blocks.OAK_FENCE.defaultBlockState();
+		BakedModel innerModel = Minecraft.getInstance().getBlockRenderer().getBlockModel(innerState);
 
-		ItemStack innerItem = Items.CRAFTING_TABLE.getDefaultInstance();
-		BakedModel innerModel = Minecraft.getInstance().getItemRenderer().getModel(innerItem, null, null, 0);
-
-		emitInnerQuads(context, material, () -> {
-			innerModel.emitItemQuads(innerItem, randomSupplier, context);
-		});
+		// Let's push a transform to scale the model down and make it transparent
+		emitter.pushTransform(createInnerTransform(translucentMaterial));
+		// Emit the inner block model
+		innerModel.emitBlockQuads(emitter, EmptyBlockAndTintGetter.INSTANCE, innerState, BlockPos.ZERO, randomSupplier, face -> false);
+		// Let's not forget to pop the transform!
+		emitter.popTransform();
 	}
 
 	/**
-	 * Emit a scaled-down version of the inner model.
+	 * Create a transform to scale down the model, make it translucent, and assign the given material.
 	 */
-	private void emitInnerQuads(RenderContext context, RenderMaterial material, Runnable innerModelEmitter) {
-		// Let's push a transform to scale the model down and make it transparent
-		context.pushTransform(quad -> {
+	private static QuadTransform createInnerTransform(RenderMaterial material) {
+		return quad -> {
 			// Scale model down
 			for (int vertex = 0; vertex < 4; ++vertex) {
 				float x = quad.x(vertex) * 0.8f + 0.1f;
@@ -133,13 +135,7 @@ public class FrameBakedModel implements BakedModel {
 
 			// Return true because we want the quad to be rendered
 			return true;
-		});
-
-		// Emit the inner block model
-		innerModelEmitter.run();
-
-		// Let's not forget to pop the transform!
-		context.popTransform();
+		};
 	}
 
 	@Override
@@ -163,11 +159,6 @@ public class FrameBakedModel implements BakedModel {
 	}
 
 	@Override
-	public boolean isBuiltin() {
-		return false;
-	}
-
-	@Override
 	public TextureAtlasSprite getParticleIcon() {
 		return this.frameSprite;
 	}
@@ -175,10 +166,5 @@ public class FrameBakedModel implements BakedModel {
 	@Override
 	public ItemTransforms getTransforms() {
 		return ModelHelper.MODEL_TRANSFORM_BLOCK;
-	}
-
-	@Override
-	public ModelOverrideList getOverrides() {
-		return ModelOverrideList.EMPTY;
 	}
 }

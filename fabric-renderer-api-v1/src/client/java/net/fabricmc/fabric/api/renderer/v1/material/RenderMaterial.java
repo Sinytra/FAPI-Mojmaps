@@ -17,8 +17,9 @@
 package net.fabricmc.fabric.api.renderer.v1.material;
 
 import net.fabricmc.fabric.api.renderer.v1.Renderer;
-import net.fabricmc.fabric.api.renderer.v1.mesh.MeshBuilder;
+import net.fabricmc.fabric.api.renderer.v1.mesh.MutableMesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -29,7 +30,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * <p>A material instance is always immutable and thread-safe.  References to a material
  * remain valid until the end of the current game session.
  *
- * <p>Materials can be registered and shared between mods using {@link Renderer#registerMaterial(net.minecraft.resources.ResourceLocation, RenderMaterial)}.
+ * <p>Materials can be registered and shared between mods using {@link Renderer#registerMaterial(ResourceLocation, RenderMaterial)}.
  * The registering mod is responsible for creating each registered material at startup.
  *
  * <p>Materials are not required to know their registration identity, and two materials
@@ -54,7 +55,7 @@ import net.minecraft.world.level.block.state.BlockState;
  *
  * <p>Special materials are implemented directly by the Renderer implementation, typically
  * with the aim of providing advanced/extended features. Such materials may offer additional
- * vertex attributes via extensions to {@link MeshBuilder} and {@link MutableQuadView}.
+ * vertex attributes via extensions to {@link MutableMesh} and {@link MutableQuadView}.
  *
  * <p>Special materials can be obtained using {@link Renderer#materialById(ResourceLocation)}
  * with a known identifier. Renderers may provide other means of access. Popular
@@ -63,22 +64,14 @@ import net.minecraft.world.level.block.state.BlockState;
  */
 public interface RenderMaterial extends MaterialView {
 	/**
-	 * This will be identical to the material that would be obtained by calling {@link MaterialFinder#find()}
-	 * on a new, unaltered, {@link MaterialFinder} instance.  It is defined here for clarity and convenience.
+	 * This will be identical to the material that would be obtained by calling {@link MaterialFinder#find()} on a new,
+	 * unaltered, {@link MaterialFinder} instance. It is defined here for clarity and convenience.
 	 *
-	 * <p>Quads using this material use {@link net.minecraft.client.renderer.ItemBlockRenderTypes#getChunkRenderType(BlockState)} of
-	 * the associated block to determine texture blending, honor block color index, are non-emissive, and apply both
-	 * diffuse and ambient occlusion shading to vertex colors.
+	 * <p>Quads using this material use {@link ItemBlockRenderTypes#getChunkRenderType(BlockState)} of the associated block to
+	 * determine texture blending, honor block color index, are non-emissive, and apply both diffuse and ambient
+	 * occlusion shading to vertex colors.
 	 *
 	 * <p>All standard, non-fluid baked models are rendered using this material.
 	 */
-	ResourceLocation MATERIAL_STANDARD = ResourceLocation.fromNamespaceAndPath("fabric", "standard");
-
-	/**
-	 * Do not use. Always returns 1.
-	 */
-	@Deprecated
-	default int spriteDepth() {
-		return 1;
-	}
+	ResourceLocation STANDARD_ID = ResourceLocation.fromNamespaceAndPath("fabric", "standard");
 }

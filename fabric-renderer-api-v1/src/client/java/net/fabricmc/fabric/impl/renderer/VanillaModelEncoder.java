@@ -17,16 +17,15 @@
 package net.fabricmc.fabric.impl.renderer;
 
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.jetbrains.annotations.Nullable;
 import net.fabricmc.fabric.api.renderer.v1.Renderer;
-import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.material.ShadeMode;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
-import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.resources.model.BakedModel;
@@ -38,18 +37,16 @@ import net.minecraft.world.level.block.state.BlockState;
  * Routines for adaptation of vanilla {@link BakedModel}s to FRAPI pipelines.
  */
 public class VanillaModelEncoder {
-	private static final Renderer RENDERER = RendererAccess.INSTANCE.getRenderer();
-	private static final RenderMaterial STANDARD_MATERIAL = RENDERER.materialFinder().shadeMode(ShadeMode.VANILLA).find();
-	private static final RenderMaterial NO_AO_MATERIAL = RENDERER.materialFinder().shadeMode(ShadeMode.VANILLA).ambientOcclusion(TriState.FALSE).find();
+	private static final RenderMaterial STANDARD_MATERIAL = Renderer.get().materialFinder().shadeMode(ShadeMode.VANILLA).find();
+	private static final RenderMaterial NO_AO_MATERIAL = Renderer.get().materialFinder().shadeMode(ShadeMode.VANILLA).ambientOcclusion(TriState.FALSE).find();
 
-	public static void emitBlockQuads(BakedModel model, @Nullable BlockState state, Supplier<RandomSource> randomSupplier, RenderContext context) {
-		QuadEmitter emitter = context.getEmitter();
+	public static void emitBlockQuads(QuadEmitter emitter, BakedModel model, @Nullable BlockState state, Supplier<RandomSource> randomSupplier, Predicate<@Nullable Direction> cullTest) {
 		final RenderMaterial defaultMaterial = model.useAmbientOcclusion() ? STANDARD_MATERIAL : NO_AO_MATERIAL;
 
 		for (int i = 0; i <= ModelHelper.NULL_FACE_ID; i++) {
 			final Direction cullFace = ModelHelper.faceFromIndex(i);
 
-			if (!context.hasTransform() && context.isFaceCulled(cullFace)) {
+			if (cullTest.test(cullFace)) {
 				// Skip entire quad list if possible.
 				continue;
 			}
@@ -65,9 +62,7 @@ public class VanillaModelEncoder {
 		}
 	}
 
-	public static void emitItemQuads(BakedModel model, @Nullable BlockState state, Supplier<RandomSource> randomSupplier, RenderContext context) {
-		QuadEmitter emitter = context.getEmitter();
-
+	public static void emitItemQuads(QuadEmitter emitter, BakedModel model, @Nullable BlockState state, Supplier<RandomSource> randomSupplier) {
 		for (int i = 0; i <= ModelHelper.NULL_FACE_ID; i++) {
 			final Direction cullFace = ModelHelper.faceFromIndex(i);
 			final List<BakedQuad> quads = model.getQuads(state, cullFace, randomSupplier.get());

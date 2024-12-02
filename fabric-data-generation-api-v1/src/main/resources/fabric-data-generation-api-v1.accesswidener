@@ -2,7 +2,7 @@ accessWidener	v2	named
 accessible	field	net/minecraft/data/DataGenerator	vanillaPackOutput	Lnet/minecraft/data/PackOutput;
 mutable	field	net/minecraft/data/DataGenerator	vanillaPackOutput	Lnet/minecraft/data/PackOutput;
 accessible	class	net/minecraft/data/recipes/RecipeProvider$Runner
-extendable	method	net/minecraft/data/recipes/RecipeProvider$Runner	run	(Lnet/minecraft/data/CachedOutput;)Ljava/util/concurrent/CompletableFuture;
+transitive-extendable	method	net/minecraft/data/recipes/RecipeProvider$Runner	run	(Lnet/minecraft/data/CachedOutput;)Ljava/util/concurrent/CompletableFuture;
 accessible	field	net/minecraft/data/tags/TagsProvider$TagAppender	builder	Lnet/minecraft/tags/TagBuilder;
 transitive-extendable	method	net/minecraft/data/tags/TagsProvider$TagAppender	add	(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/data/tags/TagsProvider$TagAppender;
 transitive-extendable	method	net/minecraft/data/tags/TagsProvider$TagAppender	add	([Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/data/tags/TagsProvider$TagAppender;
@@ -25,8 +25,8 @@ transitive-accessible	method	net/minecraft/data/BlockFamilies	familyBuilder	(Lne
 transitive-accessible	field	net/minecraft/client/data/models/BlockModelGenerators	blockStateOutput	Ljava/util/function/Consumer;
 transitive-accessible	field	net/minecraft/client/data/models/BlockModelGenerators	modelOutput	Ljava/util/function/BiConsumer;
 transitive-accessible	field	net/minecraft/client/data/models/BlockModelGenerators	itemModelOutput	Lnet/minecraft/client/data/models/ItemModelOutput;
-accessible	field	net/minecraft/client/data/models/ItemModelGenerators	itemModelOutput	Lnet/minecraft/client/data/models/ItemModelOutput;
-accessible	field	net/minecraft/client/data/models/ItemModelGenerators	modelOutput	Ljava/util/function/BiConsumer;
+transitive-accessible	field	net/minecraft/client/data/models/ItemModelGenerators	itemModelOutput	Lnet/minecraft/client/data/models/ItemModelOutput;
+transitive-accessible	field	net/minecraft/client/data/models/ItemModelGenerators	modelOutput	Ljava/util/function/BiConsumer;
 transitive-accessible	method	net/minecraft/client/data/models/model/TextureSlot	create	(Ljava/lang/String;)Lnet/minecraft/client/data/models/model/TextureSlot;
 transitive-accessible	method	net/minecraft/client/data/models/model/TextureSlot	create	(Ljava/lang/String;Lnet/minecraft/client/data/models/model/TextureSlot;)Lnet/minecraft/client/data/models/model/TextureSlot;
 transitive-accessible	method	net/minecraft/client/data/models/model/TexturedModel	createDefault	(Ljava/util/function/Function;Lnet/minecraft/client/data/models/model/ModelTemplate;)Lnet/minecraft/client/data/models/model/TexturedModel$Provider;

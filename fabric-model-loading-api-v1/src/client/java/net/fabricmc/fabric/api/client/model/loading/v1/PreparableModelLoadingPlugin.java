@@ -16,9 +16,13 @@
 
 package net.fabricmc.fabric.api.client.model.loading.v1;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
+
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.UnmodifiableView;
 import net.fabricmc.fabric.impl.client.model.loading.ModelLoadingPluginManager;
 import net.minecraft.server.packs.resources.ResourceManager;
 
@@ -37,6 +41,14 @@ public interface PreparableModelLoadingPlugin<T> {
 	 */
 	static <T> void register(DataLoader<T> loader, PreparableModelLoadingPlugin<T> plugin) {
 		ModelLoadingPluginManager.registerPlugin(loader, plugin);
+	}
+
+	/**
+	 * Gets a list of all registered preparable model loading plugins.
+	 */
+	@UnmodifiableView
+	static List<Holder<?>> getAll() {
+		return ModelLoadingPluginManager.PREPARABLE_PLUGINS_VIEW;
 	}
 
 	/**
@@ -60,5 +72,16 @@ public interface PreparableModelLoadingPlugin<T> {
 		 * @param executor The executor that <b>must</b> be used to schedule any completable future.
 		 */
 		CompletableFuture<T> load(ResourceManager resourceManager, Executor executor);
+	}
+
+	/**
+	 * Bundles a {@link PreparableModelLoadingPlugin} with its corresponding {@link DataLoader}
+	 * for retrieval through {@link #getAll()}.
+	 */
+	@ApiStatus.NonExtendable
+	interface Holder<T> {
+		DataLoader<T> loader();
+
+		PreparableModelLoadingPlugin<T> plugin();
 	}
 }

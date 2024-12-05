@@ -16,20 +16,23 @@
 
 package net.fabricmc.fabric.mixin.object.builder.client;
 
-import net.minecraft.client.renderer.Sheets;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.state.properties.WoodType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import net.fabricmc.fabric.impl.object.builder.client.SignTypeTextureHelper;
+import net.minecraft.client.renderer.Sheets;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.state.properties.WoodType;
 
 @Mixin(WoodType.class)
-public abstract class WoodTypeMixin {
+abstract class WoodTypeMixin {
 	@Inject(method = "register", at = @At("RETURN"))
-	private static void register(WoodType type, CallbackInfoReturnable<WoodType> cir) {
-		final ResourceLocation identifier = ResourceLocation.parse(type.name());
-		Sheets.SIGN_MATERIALS.put(type, Sheets.createSignMaterial(identifier));
-		Sheets.HANGING_SIGN_MATERIALS.put(type, Sheets.createHangingSignMaterial(identifier));
+	private static void onReturnRegister(WoodType type, CallbackInfoReturnable<WoodType> cir) {
+		if (SignTypeTextureHelper.shouldAddTextures) {
+			final ResourceLocation identifier = ResourceLocation.parse(type.name());
+			Sheets.SIGN_MATERIALS.put(type, Sheets.createSignMaterial(identifier));
+			Sheets.HANGING_SIGN_MATERIALS.put(type, Sheets.createHangingSignMaterial(identifier));
+		}
 	}
 }

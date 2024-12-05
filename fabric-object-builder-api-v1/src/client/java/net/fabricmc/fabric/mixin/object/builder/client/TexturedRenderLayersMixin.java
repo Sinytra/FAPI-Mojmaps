@@ -16,36 +16,29 @@
 
 package net.fabricmc.fabric.mixin.object.builder.client;
 
-import net.minecraft.client.renderer.Sheets;
-import net.minecraft.client.resources.model.Material;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.state.properties.WoodType;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import net.fabricmc.fabric.impl.object.builder.client.SignTypeTextureHelper;
+import net.minecraft.client.renderer.Sheets;
+import net.minecraft.resources.ResourceLocation;
 
 @Mixin(Sheets.class)
-public class TexturedRenderLayersMixin {
-	@Shadow
-	@Final
-	public static ResourceLocation SIGN_SHEET;
-
-	@Inject(method = "createSignMaterial", at = @At("HEAD"), cancellable = true)
-	private static void modifyTextureId(WoodType type, CallbackInfoReturnable<Material> cir) {
-		if (type.name().indexOf(ResourceLocation.NAMESPACE_SEPARATOR) != -1) {
-			ResourceLocation identifier = ResourceLocation.parse(type.name());
-			cir.setReturnValue(new Material(SIGN_SHEET, ResourceLocation.fromNamespaceAndPath(identifier.getNamespace(), "entity/signs/" + identifier.getPath())));
-		}
+abstract class TexturedRenderLayersMixin {
+	@Inject(method = "<clinit>*", at = @At("RETURN"))
+	private static void onReturnClinit(CallbackInfo ci) {
+		SignTypeTextureHelper.shouldAddTextures = true;
 	}
 
-	@Inject(method = "createHangingSignMaterial", at = @At("HEAD"), cancellable = true)
-	private static void modifyHangingTextureId(WoodType type, CallbackInfoReturnable<Material> cir) {
-		if (type.name().indexOf(ResourceLocation.NAMESPACE_SEPARATOR) != -1) {
-			ResourceLocation identifier = ResourceLocation.parse(type.name());
-			cir.setReturnValue(new Material(SIGN_SHEET, ResourceLocation.fromNamespaceAndPath(identifier.getNamespace(), "entity/signs/hanging/" + identifier.getPath())));
-		}
+	@Redirect(method = "createSignMaterial", at = @At(value = "INVOKE", target = "net/minecraft/util/Identifier.ofVanilla(Ljava/lang/String;)Lnet/minecraft/util/Identifier;"))
+	private static ResourceLocation redirectSignVanillaId(String name) {
+		return ResourceLocation.parse(name);
+	}
+
+	@Redirect(method = "createHangingSignMaterial", at = @At(value = "INVOKE", target = "net/minecraft/util/Identifier.ofVanilla(Ljava/lang/String;)Lnet/minecraft/util/Identifier;"))
+	private static ResourceLocation redirectHangingVanillaId(String name) {
+		return ResourceLocation.parse(name);
 	}
 }

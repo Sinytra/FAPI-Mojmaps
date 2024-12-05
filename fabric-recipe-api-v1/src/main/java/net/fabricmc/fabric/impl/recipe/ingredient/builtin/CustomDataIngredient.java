@@ -16,6 +16,7 @@
 
 package net.fabricmc.fabric.impl.recipe.ingredient.builtin;
 
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import com.mojang.serialization.MapCodec;
@@ -38,6 +39,7 @@ import net.minecraft.world.item.crafting.display.SlotDisplay;
 
 public class CustomDataIngredient implements CustomIngredient {
 	public static final CustomIngredientSerializer<CustomDataIngredient> SERIALIZER = new Serializer();
+
 	private final Ingredient base;
 	private final CompoundTag nbt;
 
@@ -91,6 +93,19 @@ public class CustomDataIngredient implements CustomIngredient {
 
 	private CompoundTag getNbt() {
 		return nbt;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		CustomDataIngredient that = (CustomDataIngredient) o;
+		return base.equals(that.base) && nbt.equals(that.nbt);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(base, nbt);
 	}
 
 	private static class Serializer implements CustomIngredientSerializer<CustomDataIngredient> {

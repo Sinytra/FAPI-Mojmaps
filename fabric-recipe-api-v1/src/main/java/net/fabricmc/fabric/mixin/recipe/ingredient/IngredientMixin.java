@@ -26,13 +26,16 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredient;
 import net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredientSerializer;
 import net.fabricmc.fabric.api.recipe.v1.ingredient.FabricIngredient;
 import net.fabricmc.fabric.impl.recipe.ingredient.CustomIngredientImpl;
 import net.fabricmc.fabric.impl.recipe.ingredient.CustomIngredientPacketCodec;
+import net.minecraft.core.HolderSet;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.Ingredient;
 
 @Mixin(Ingredient.class)
@@ -41,6 +44,10 @@ public class IngredientMixin implements FabricIngredient {
 	@Shadow
 	@Final
 	public static Codec<Ingredient> CODEC;
+
+	@Shadow
+	@Final
+	private HolderSet<Item> values;
 
 	@Inject(method = "<clinit>", at = @At("TAIL"), cancellable = true)
 	private static void injectCodec(CallbackInfo ci) {
@@ -68,5 +75,19 @@ public class IngredientMixin implements FabricIngredient {
 	)
 	private static StreamCodec<RegistryFriendlyByteBuf, Ingredient> useCustomIngredientPacketCodec(StreamCodec<RegistryFriendlyByteBuf, Ingredient> original) {
 		return new CustomIngredientPacketCodec(original);
+	}
+
+	@Inject(method = "equals(Ljava/lang/Object;)Z", at = @At("HEAD"))
+	private void onHeadEquals(Object obj, CallbackInfoReturnable<Boolean> cir) {
+		if (obj instanceof CustomIngredientImpl) {
+			// This will only get called when this isn't custom and other is custom, in which case the
+			// ingredients can never be equal.
+			cir.setReturnValue(false);
+		}
+	}
+
+	@Override
+	public int hashCode() {
+		return values.hashCode();
 	}
 }

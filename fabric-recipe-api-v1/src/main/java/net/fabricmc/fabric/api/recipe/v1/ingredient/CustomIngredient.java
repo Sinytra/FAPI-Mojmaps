@@ -21,7 +21,6 @@ import java.util.stream.Stream;
 import org.jetbrains.annotations.ApiStatus;
 import net.fabricmc.fabric.impl.recipe.ingredient.CustomIngredientImpl;
 import net.minecraft.core.Holder;
-import net.minecraft.core.HolderSet;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -44,6 +43,9 @@ import net.minecraft.world.item.crafting.display.SlotDisplay;
  *     // extra ingredient data, dependent on the serializer
  * }
  * }</pre>
+ *
+ * <p>Implementors of this interface are strongly encouraged to also implement
+ * {@link Object#equals(Object)} and {@link Object#hashCode()}.
  *
  * @see CustomIngredientSerializer
  */
@@ -95,11 +97,7 @@ public interface CustomIngredient {
 	 */
 	default SlotDisplay toDisplay() {
 		// Matches the vanilla logic in Ingredient.toDisplay()
-		return HolderSet.direct(getMatchingItems().toList()).unwrap().map(
-				SlotDisplay.TagSlotDisplay::new,
-				(itemEntries) -> new SlotDisplay.Composite(
-						itemEntries.stream().map(Ingredient::createDisplayWithRemainder).toList()
-				));
+		return new SlotDisplay.Composite(getMatchingItems().map(Ingredient::createDisplayWithRemainder).toList());
 	}
 
 	/**

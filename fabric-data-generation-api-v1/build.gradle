@@ -51,6 +51,14 @@ loom {
 	}
 }
 
+runDatagen {
+	outputs.dir file("src/testmod/generated")
+}
+
+runDatagenClient {
+	outputs.dir file("src/testmod/generated")
+}
+
 test.dependsOn runDatagenClient
 
 tasks.register('datapackZip', Zip) {

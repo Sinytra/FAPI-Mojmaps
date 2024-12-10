@@ -16,12 +16,11 @@
 
 package net.fabricmc.fabric.api.event.client.player;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.hit.HitResult;
-
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.HitResult;
 
 /**
  * This event handler has been deprecated due to not hooking nicely
@@ -61,5 +60,5 @@ public interface ClientPickBlockCallback {
 		}
 	);
 
-	boolean pick(PlayerEntity player, HitResult result, Container container);
+	boolean pick(Player player, HitResult result, Container container);
 }

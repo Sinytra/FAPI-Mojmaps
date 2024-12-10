@@ -20,17 +20,15 @@ import java.util.List;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredient;
 import net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredientSerializer;
+import net.minecraft.core.Holder;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 
 public class DifferenceIngredient implements CustomIngredient {
 	public static final CustomIngredientSerializer<DifferenceIngredient> SERIALIZER = new Serializer();
@@ -49,8 +47,8 @@ public class DifferenceIngredient implements CustomIngredient {
 	}
 
 	@Override
-	public List<RegistryEntry<Item>> getMatchingStacks() {
-		final List<RegistryEntry<Item>> subtractedMatchingStacks = subtracted.getMatchingStacks();
+	public List<Holder<Item>> getMatchingStacks() {
+		final List<Holder<Item>> subtractedMatchingStacks = subtracted.getMatchingStacks();
 		return base.getMatchingStacks().stream()
 				.filter(registryEntry -> !subtractedMatchingStacks.contains(registryEntry))
 				.toList();
@@ -75,21 +73,21 @@ public class DifferenceIngredient implements CustomIngredient {
 	}
 
 	private static class Serializer implements CustomIngredientSerializer<DifferenceIngredient> {
-		private static final Identifier ID = Identifier.of("fabric", "difference");
+		private static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath("fabric", "difference");
 		private static final MapCodec<DifferenceIngredient> CODEC = RecordCodecBuilder.mapCodec(instance ->
 				instance.group(
 						Ingredient.CODEC.fieldOf("base").forGetter(DifferenceIngredient::getBase),
 						Ingredient.CODEC.fieldOf("subtracted").forGetter(DifferenceIngredient::getSubtracted)
 				).apply(instance, DifferenceIngredient::new)
 		);
-		private static final PacketCodec<RegistryByteBuf, DifferenceIngredient> PACKET_CODEC = PacketCodec.tuple(
-				Ingredient.PACKET_CODEC, DifferenceIngredient::getBase,
-				Ingredient.PACKET_CODEC, DifferenceIngredient::getSubtracted,
+		private static final StreamCodec<RegistryFriendlyByteBuf, DifferenceIngredient> PACKET_CODEC = StreamCodec.composite(
+				Ingredient.CONTENTS_STREAM_CODEC, DifferenceIngredient::getBase,
+				Ingredient.CONTENTS_STREAM_CODEC, DifferenceIngredient::getSubtracted,
 				DifferenceIngredient::new
 		);
 
 		@Override
-		public Identifier getIdentifier() {
+		public ResourceLocation getIdentifier() {
 			return ID;
 		}
 
@@ -99,7 +97,7 @@ public class DifferenceIngredient implements CustomIngredient {
 		}
 
 		@Override
-		public PacketCodec<RegistryByteBuf, DifferenceIngredient> getPacketCodec() {
+		public StreamCodec<RegistryFriendlyByteBuf, DifferenceIngredient> getPacketCodec() {
 			return PACKET_CODEC;
 		}
 	}

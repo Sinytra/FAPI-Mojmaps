@@ -16,16 +16,15 @@
 
 package net.fabricmc.fabric.api.renderer.v1.material;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.item.ItemStack;
-
 import net.fabricmc.fabric.api.renderer.v1.Renderer;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.fabricmc.fabric.api.util.TriState;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * Finds standard {@link RenderMaterial} instances used to communicate
@@ -82,9 +81,9 @@ public interface MaterialFinder extends MaterialView {
 	 *
 	 * <p>If set to {@link TriState#DEFAULT}, ambient occlusion will be used if
 	 * {@linkplain BakedModel#useAmbientOcclusion() the model uses ambient occlusion} and the block state has
-	 * {@linkplain BlockState#getLuminance() a luminance} of 0. Set to {@link TriState#TRUE} or {@link TriState#FALSE}
+	 * {@linkplain BlockState#getLightEmission() a luminance} of 0. Set to {@link TriState#TRUE} or {@link TriState#FALSE}
 	 * to override this behavior. {@link TriState#TRUE} will not have an effect if
-	 * {@linkplain MinecraftClient#isAmbientOcclusionEnabled() ambient occlusion is disabled globally}.
+	 * {@linkplain Minecraft#useAmbientOcclusion() ambient occlusion is disabled globally}.
 	 *
 	 * <p>The default value is {@link TriState#DEFAULT}.
 	 *
@@ -96,7 +95,7 @@ public interface MaterialFinder extends MaterialView {
 	 * Controls whether glint should be applied.
 	 *
 	 * <p>If set to {@link TriState#DEFAULT}, glint will be applied in item contexts if
-	 * {@linkplain ItemStack#hasGlint() the item stack has glint}. Set to {@link TriState#TRUE} or
+	 * {@linkplain ItemStack#hasFoil() the item stack has glint}. Set to {@link TriState#TRUE} or
 	 * {@link TriState#FALSE} to override this behavior.
 	 *
 	 * <p>The default value is {@link TriState#DEFAULT}.
@@ -148,7 +147,7 @@ public interface MaterialFinder extends MaterialView {
 	 * @deprecated Use {@link #blendMode(BlendMode)} instead.
 	 */
 	@Deprecated
-	default MaterialFinder blendMode(int spriteIndex, RenderLayer renderLayer) {
+	default MaterialFinder blendMode(int spriteIndex, RenderType renderLayer) {
 		return blendMode(BlendMode.fromRenderLayer(renderLayer));
 	}
 

@@ -16,18 +16,17 @@
 
 package net.fabricmc.fabric.mixin.screen;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.screens.Screen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
-
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.screen.Screen;
 
 @Mixin(Screen.class)
 public interface ScreenAccessor {
 	@Accessor
-	TextRenderer getTextRenderer();
+	Font getFont();
 
 	@Accessor
-	MinecraftClient getClient();
+	Minecraft getMinecraft();
 }

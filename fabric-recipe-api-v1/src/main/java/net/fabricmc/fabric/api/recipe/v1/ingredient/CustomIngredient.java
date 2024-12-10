@@ -19,13 +19,11 @@ package net.fabricmc.fabric.api.recipe.v1.ingredient;
 import java.util.List;
 
 import org.jetbrains.annotations.ApiStatus;
-
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.registry.entry.RegistryEntry;
-
 import net.fabricmc.fabric.impl.recipe.ingredient.CustomIngredientImpl;
+import net.minecraft.core.Holder;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 
 /**
  * Interface that modders can implement to create new behaviors for {@link Ingredient}s.
@@ -71,7 +69,7 @@ public interface CustomIngredient {
 	 *
 	 * <p>Note: no caching needs to be done by the implementation, this is already handled by the ingredient itself.
 	 */
-	List<RegistryEntry<Item>> getMatchingStacks();
+	List<Holder<Item>> getMatchingStacks();
 
 	/**
 	 * Returns whether this ingredient always requires {@linkplain #test direct stack testing}.

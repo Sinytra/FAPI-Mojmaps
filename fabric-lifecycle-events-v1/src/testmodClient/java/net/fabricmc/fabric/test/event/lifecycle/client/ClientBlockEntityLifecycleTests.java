@@ -20,17 +20,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
-
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.registry.Registries;
-import net.minecraft.world.chunk.WorldChunk;
-
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientBlockEntityEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.impl.event.lifecycle.LoadedChunksCache;
 import net.fabricmc.fabric.test.event.lifecycle.ServerLifecycleTests;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.chunk.LevelChunk;
 
 public final class ClientBlockEntityLifecycleTests implements ClientModInitializer {
 	private static final boolean PRINT_CLIENT_BLOCKENTITY_MESSAGES = System.getProperty("fabric-lifecycle-events-testmod.printClientBlockEntityMessages") != null;
@@ -45,7 +43,7 @@ public final class ClientBlockEntityLifecycleTests implements ClientModInitializ
 			this.clientBlockEntities.add(blockEntity);
 
 			if (PRINT_CLIENT_BLOCKENTITY_MESSAGES) {
-				logger.info("[CLIENT]" + " LOADED " + Registries.BLOCK_ENTITY_TYPE.getId(blockEntity.getType()).toString() + " - BlockEntities: " + this.clientBlockEntities.size());
+				logger.info("[CLIENT]" + " LOADED " + BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(blockEntity.getType()).toString() + " - BlockEntities: " + this.clientBlockEntities.size());
 			}
 		});
 
@@ -53,18 +51,18 @@ public final class ClientBlockEntityLifecycleTests implements ClientModInitializ
 			this.clientBlockEntities.remove(blockEntity);
 
 			if (PRINT_CLIENT_BLOCKENTITY_MESSAGES) {
-				logger.info("[CLIENT]" + " UNLOADED " + Registries.BLOCK_ENTITY_TYPE.getId(blockEntity.getType()).toString() + " - BlockEntities: " + this.clientBlockEntities.size());
+				logger.info("[CLIENT]" + " UNLOADED " + BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(blockEntity.getType()).toString() + " - BlockEntities: " + this.clientBlockEntities.size());
 			}
 		});
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
-			if (this.clientTicks++ % 200 == 0 && client.world != null) {
+			if (this.clientTicks++ % 200 == 0 && client.level != null) {
 				int blockEntities = 0;
 
 				if (PRINT_CLIENT_BLOCKENTITY_MESSAGES) {
 					logger.info("[CLIENT] Tracked BlockEntities:" + this.clientBlockEntities.size() + " Ticked at: " + this.clientTicks + "ticks");
 
-					for (WorldChunk chunk : ((LoadedChunksCache) client.world).fabric_getLoadedChunks()) {
+					for (LevelChunk chunk : ((LoadedChunksCache) client.level).fabric_getLoadedChunks()) {
 						blockEntities += chunk.getBlockEntities().size();
 					}
 
@@ -80,7 +78,7 @@ public final class ClientBlockEntityLifecycleTests implements ClientModInitializ
 		});
 
 		ServerLifecycleEvents.SERVER_STOPPED.register(minecraftServer -> {
-			if (!minecraftServer.isDedicated()) { // fixme: Use ClientPlayConnectionEvents#DISCONNECT instead of the server stop callback for testing.
+			if (!minecraftServer.isDedicatedServer()) { // fixme: Use ClientPlayConnectionEvents#DISCONNECT instead of the server stop callback for testing.
 				logger.info("[CLIENT] Disconnected. Tracking: " + this.clientBlockEntities.size() + " blockentities");
 
 				if (this.clientBlockEntities.size() != 0) {

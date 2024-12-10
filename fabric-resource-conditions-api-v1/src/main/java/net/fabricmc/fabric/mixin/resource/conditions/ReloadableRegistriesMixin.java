@@ -21,7 +21,13 @@ import java.util.WeakHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.stream.Stream;
-
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.LayeredRegistryAccess;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.RegistryOps;
+import net.minecraft.server.RegistryLayer;
+import net.minecraft.server.ReloadableServerRegistries;
+import net.minecraft.server.packs.resources.ResourceManager;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -33,32 +39,24 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import net.minecraft.registry.CombinedDynamicRegistries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryOps;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.registry.ReloadableRegistries;
-import net.minecraft.registry.ServerDynamicRegistryType;
-import net.minecraft.resource.ResourceManager;
-
 // Should apply before Loot API.
-@Mixin(value = ReloadableRegistries.class, priority = 900)
+@Mixin(value = ReloadableServerRegistries.class, priority = 900)
 public class ReloadableRegistriesMixin {
 	// The cross-thread nature of the stuff makes this necessary. It is technically possible to query the wrapper from
 	// the ops, but it requires more mixins.
 	// Key refers to value, but value does not refer to key, so WeakHashMap is fine.
 	@Unique
-	private static final WeakHashMap<RegistryOps<?>, RegistryWrapper.WrapperLookup> REGISTRY_LOOKUPS = new WeakHashMap<>();
+	private static final WeakHashMap<RegistryOps<?>, HolderLookup.Provider> REGISTRY_LOOKUPS = new WeakHashMap<>();
 
-	@WrapOperation(method = "reload", at = @At(value = "INVOKE", target = "Lnet/minecraft/registry/RegistryWrapper$WrapperLookup;of(Ljava/util/stream/Stream;)Lnet/minecraft/registry/RegistryWrapper$WrapperLookup;"))
-	private static RegistryWrapper.WrapperLookup storeWrapperLookup(Stream<RegistryWrapper.Impl<?>> wrappers, Operation<RegistryWrapper.WrapperLookup> original, @Share("wrapper") LocalRef<RegistryWrapper.WrapperLookup> share) {
-		RegistryWrapper.WrapperLookup lookup = original.call(wrappers);
+	@WrapOperation(method = "reload", at = @At(value = "INVOKE", target = "Lnet/minecraft/core/HolderLookup$Provider;create(Ljava/util/stream/Stream;)Lnet/minecraft/core/HolderLookup$Provider;"))
+	private static HolderLookup.Provider storeWrapperLookup(Stream<HolderLookup.RegistryLookup<?>> wrappers, Operation<HolderLookup.Provider> original, @Share("wrapper") LocalRef<HolderLookup.Provider> share) {
+		HolderLookup.Provider lookup = original.call(wrappers);
 		share.set(lookup);
 		return lookup;
 	}
 
-	@Inject(method = "reload", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/registry/RegistryWrapper$WrapperLookup;getOps(Lcom/mojang/serialization/DynamicOps;)Lnet/minecraft/registry/RegistryOps;", shift = At.Shift.AFTER))
-	private static void storeWrapperLookup(CombinedDynamicRegistries<ServerDynamicRegistryType> dynamicRegistries, List<Registry.PendingTagLoad<?>> pendingTagLoads, ResourceManager resourceManager, Executor prepareExecutor, CallbackInfoReturnable<CompletableFuture<ReloadableRegistries.ReloadResult>> cir, @Local RegistryOps ops, @Share("wrapper") LocalRef<RegistryWrapper.WrapperLookup> share) {
+	@Inject(method = "reload", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/core/HolderLookup$Provider;createSerializationContext(Lcom/mojang/serialization/DynamicOps;)Lnet/minecraft/resources/RegistryOps;", shift = At.Shift.AFTER))
+	private static void storeWrapperLookup(LayeredRegistryAccess<RegistryLayer> dynamicRegistries, List<Registry.PendingTags<?>> pendingTagLoads, ResourceManager resourceManager, Executor prepareExecutor, CallbackInfoReturnable<CompletableFuture<ReloadableServerRegistries.LoadResult>> cir, @Local RegistryOps ops, @Share("wrapper") LocalRef<HolderLookup.Provider> share) {
 		REGISTRY_LOOKUPS.put(ops, share.get());
 	}
 }

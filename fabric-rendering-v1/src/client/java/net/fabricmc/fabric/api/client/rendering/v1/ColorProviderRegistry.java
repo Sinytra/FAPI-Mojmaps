@@ -17,18 +17,16 @@
 package net.fabricmc.fabric.api.client.rendering.v1;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.block.Block;
-import net.minecraft.client.color.block.BlockColorProvider;
+import net.minecraft.client.color.block.BlockColor;
 import net.minecraft.client.color.item.ItemColorProvider;
-import net.minecraft.item.ItemConvertible;
-
+import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.block.Block;
 import net.fabricmc.fabric.impl.client.rendering.ColorProviderRegistryImpl;
 
 public interface ColorProviderRegistry<T, Provider> {
-	ColorProviderRegistry<ItemConvertible, ItemColorProvider> ITEM = ColorProviderRegistryImpl.ITEM;
+	ColorProviderRegistry<ItemLike, ItemColorProvider> ITEM = ColorProviderRegistryImpl.ITEM;
 
-	ColorProviderRegistry<Block, BlockColorProvider> BLOCK = ColorProviderRegistryImpl.BLOCK;
+	ColorProviderRegistry<Block, BlockColor> BLOCK = ColorProviderRegistryImpl.BLOCK;
 
 	/**
 	 * Register a color provider for one or more objects.

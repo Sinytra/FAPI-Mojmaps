@@ -23,14 +23,12 @@ import com.mojang.serialization.Codec;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.registry.RegistryOps;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.nbt.Tag;
+import net.minecraft.resources.RegistryOps;
+import net.minecraft.resources.ResourceLocation;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentTarget;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 
@@ -38,19 +36,19 @@ public class AttachmentSerializingImpl {
 	private static final Logger LOGGER = LoggerFactory.getLogger("fabric-data-attachment-api-v1");
 
 	@SuppressWarnings("unchecked")
-	public static void serializeAttachmentData(NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup, @Nullable IdentityHashMap<AttachmentType<?>, ?> attachments) {
+	public static void serializeAttachmentData(CompoundTag nbt, HolderLookup.Provider wrapperLookup, @Nullable IdentityHashMap<AttachmentType<?>, ?> attachments) {
 		if (attachments == null || attachments.isEmpty()) {
 			return;
 		}
 
-		var compound = new NbtCompound();
+		var compound = new CompoundTag();
 
 		for (Map.Entry<AttachmentType<?>, ?> entry : attachments.entrySet()) {
 			AttachmentType<?> type = entry.getKey();
 			Codec<Object> codec = (Codec<Object>) type.persistenceCodec();
 
 			if (codec != null) {
-				RegistryOps<NbtElement> registryOps = wrapperLookup.getOps(NbtOps.INSTANCE);
+				RegistryOps<Tag> registryOps = wrapperLookup.createSerializationContext(NbtOps.INSTANCE);
 				codec.encodeStart(registryOps, entry.getValue())
 						.ifError(partial -> {
 							LOGGER.warn("Couldn't serialize attachment " + type.identifier() + ", skipping. Error:");
@@ -64,13 +62,13 @@ public class AttachmentSerializingImpl {
 	}
 
 	@Nullable
-	public static IdentityHashMap<AttachmentType<?>, Object> deserializeAttachmentData(NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup) {
-		if (nbt.contains(AttachmentTarget.NBT_ATTACHMENT_KEY, NbtElement.COMPOUND_TYPE)) {
+	public static IdentityHashMap<AttachmentType<?>, Object> deserializeAttachmentData(CompoundTag nbt, HolderLookup.Provider wrapperLookup) {
+		if (nbt.contains(AttachmentTarget.NBT_ATTACHMENT_KEY, Tag.TAG_COMPOUND)) {
 			var attachments = new IdentityHashMap<AttachmentType<?>, Object>();
-			NbtCompound compound = nbt.getCompound(AttachmentTarget.NBT_ATTACHMENT_KEY);
+			CompoundTag compound = nbt.getCompound(AttachmentTarget.NBT_ATTACHMENT_KEY);
 
-			for (String key : compound.getKeys()) {
-				AttachmentType<?> type = AttachmentRegistryImpl.get(Identifier.of(key));
+			for (String key : compound.getAllKeys()) {
+				AttachmentType<?> type = AttachmentRegistryImpl.get(ResourceLocation.parse(key));
 
 				if (type == null) {
 					LOGGER.warn("Unknown attachment type " + key + " found when deserializing, skipping");
@@ -80,7 +78,7 @@ public class AttachmentSerializingImpl {
 				Codec<?> codec = type.persistenceCodec();
 
 				if (codec != null) {
-					RegistryOps<NbtElement> registryOps = wrapperLookup.getOps(NbtOps.INSTANCE);
+					RegistryOps<Tag> registryOps = wrapperLookup.createSerializationContext(NbtOps.INSTANCE);
 					codec.parse(registryOps, compound.get(key))
 							.ifError(partial -> {
 								LOGGER.warn("Couldn't deserialize attachment " + type.identifier() + ", skipping. Error:");

@@ -24,25 +24,23 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.block.Block;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.RenderLayers;
-import net.minecraft.fluid.Fluid;
-
 import net.fabricmc.fabric.impl.blockrenderlayer.BlockRenderLayerMapImpl;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.material.Fluid;
 
-@Mixin(RenderLayers.class)
+@Mixin(ItemBlockRenderTypes.class)
 public class RenderLayersMixin {
 	@Shadow
 	@Final
-	private static Map<Block, RenderLayer> BLOCKS;
+	private static Map<Block, RenderType> TYPE_BY_BLOCK;
 	@Shadow
 	@Final
-	private static Map<Fluid, RenderLayer> FLUIDS;
+	private static Map<Fluid, RenderType> TYPE_BY_FLUID;
 
 	@Inject(method = "<clinit>*", at = @At("RETURN"))
 	private static void onInitialize(CallbackInfo info) {
-		BlockRenderLayerMapImpl.initialize(BLOCKS::put, FLUIDS::put);
+		BlockRenderLayerMapImpl.initialize(TYPE_BY_BLOCK::put, TYPE_BY_FLUID::put);
 	}
 }

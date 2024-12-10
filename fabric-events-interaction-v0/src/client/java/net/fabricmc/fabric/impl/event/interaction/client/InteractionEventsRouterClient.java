@@ -16,26 +16,25 @@
 
 package net.fabricmc.fabric.impl.event.interaction.client;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.Entity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.BlockView;
-
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.block.BlockPickInteractionAware;
 import net.fabricmc.fabric.api.entity.EntityPickInteractionAware;
 import net.fabricmc.fabric.api.event.client.player.ClientPickBlockGatherCallback;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 
 public class InteractionEventsRouterClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		ClientPickBlockGatherCallback.EVENT.register(((player, result) -> {
 			if (result instanceof BlockHitResult && result.getType() != HitResult.Type.MISS) {
-				BlockView view = player.getEntityWorld();
+				BlockGetter view = player.getCommandSenderWorld();
 				BlockPos pos = ((BlockHitResult) result).getBlockPos();
 				BlockState state = view.getBlockState(pos);
 

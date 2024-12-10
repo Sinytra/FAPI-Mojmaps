@@ -16,31 +16,31 @@
 
 package net.fabricmc.fabric.test.screen;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.gui.widget.PressableWidget;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.AbstractButton;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.RandomSource;
 
-class SoundButton extends PressableWidget {
-	private static final Random RANDOM = Random.create();
+class SoundButton extends AbstractButton {
+	private static final RandomSource RANDOM = RandomSource.create();
 
 	SoundButton(int x, int y, int width, int height) {
-		super(x, y, width, height, Text.of("Sound Button"));
+		super(x, y, width, height, Component.nullToEmpty("Sound Button"));
 	}
 
 	@Override
 	public void onPress() {
-		final SoundEvent event = Registries.SOUND_EVENT.getRandom(RANDOM).map(RegistryEntry::value).orElse(SoundEvents.ENTITY_GENERIC_EXPLODE.value());
-		MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(event, 1.0F, 1.0F));
+		final SoundEvent event = BuiltInRegistries.SOUND_EVENT.getRandom(RANDOM).map(Holder::value).orElse(SoundEvents.GENERIC_EXPLODE.value());
+		Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(event, 1.0F, 1.0F));
 	}
 
 	@Override
-	protected void appendClickableNarrations(NarrationMessageBuilder narrationMessageBuilder) {
+	protected void updateWidgetNarration(NarrationElementOutput narrationMessageBuilder) {
 	}
 }

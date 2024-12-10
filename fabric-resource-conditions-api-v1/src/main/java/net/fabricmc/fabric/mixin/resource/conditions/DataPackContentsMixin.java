@@ -26,30 +26,28 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import net.minecraft.registry.CombinedDynamicRegistries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.ServerDynamicRegistryType;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.resource.featuretoggle.FeatureSet;
-import net.minecraft.server.DataPackContents;
-import net.minecraft.server.command.CommandManager;
-
 import net.fabricmc.fabric.impl.resource.conditions.ResourceConditionsImpl;
+import net.minecraft.commands.Commands;
+import net.minecraft.core.LayeredRegistryAccess;
+import net.minecraft.core.Registry;
+import net.minecraft.server.RegistryLayer;
+import net.minecraft.server.ReloadableServerResources;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.world.flag.FeatureFlagSet;
 
-@Mixin(DataPackContents.class)
+@Mixin(ReloadableServerResources.class)
 public class DataPackContentsMixin {
 	@Inject(
-			method = "reload",
+			method = "loadResources",
 			at = @At("HEAD")
 	)
-	private static void hookReload(ResourceManager manager, CombinedDynamicRegistries<ServerDynamicRegistryType> combinedDynamicRegistries, List<Registry.PendingTagLoad<?>> pendingTagLoads, FeatureSet enabledFeatures, CommandManager.RegistrationEnvironment environment, int functionPermissionLevel, Executor prepareExecutor, Executor applyExecutor, CallbackInfoReturnable<CompletableFuture<DataPackContents>> cir) {
+	private static void hookReload(ResourceManager manager, LayeredRegistryAccess<RegistryLayer> combinedDynamicRegistries, List<Registry.PendingTags<?>> pendingTagLoads, FeatureFlagSet enabledFeatures, Commands.CommandSelection environment, int functionPermissionLevel, Executor prepareExecutor, Executor applyExecutor, CallbackInfoReturnable<CompletableFuture<ReloadableServerResources>> cir) {
 		ResourceConditionsImpl.currentFeatures = enabledFeatures;
 		ResourceConditionsImpl.setTags(pendingTagLoads);
 	}
 
 	@Inject(
-			method = "applyPendingTagLoads",
+			method = "updateStaticRegistryTags",
 			at = @At("TAIL")
 	)
 	private void removeLoadedTags(CallbackInfo ci) {

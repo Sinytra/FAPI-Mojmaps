@@ -21,18 +21,16 @@ import java.util.function.Supplier;
 
 import com.mojang.serialization.Codec;
 import org.jetbrains.annotations.ApiStatus;
-
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.impl.attachment.AttachmentRegistryImpl;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Class used to create and register {@link AttachmentType}s. To quickly create {@link AttachmentType}s, use one of the various
  * {@code createXXX} methods:
  * <ul>
- *     <li>{@link #create(Identifier)}: attachments will be neither persistent nor auto-initialized.</li>
- *     <li>{@link #createDefaulted(Identifier, Supplier)}: attachments will be auto-initialized, but not persistent.</li>
- *     <li>{@link #createPersistent(Identifier, Codec)}: attachments will be persistent, but not auto-initialized.</li>
+ *     <li>{@link #create(ResourceLocation)}: attachments will be neither persistent nor auto-initialized.</li>
+ *     <li>{@link #createDefaulted(ResourceLocation, Supplier)}: attachments will be auto-initialized, but not persistent.</li>
+ *     <li>{@link #createPersistent(ResourceLocation, Codec)}: attachments will be persistent, but not auto-initialized.</li>
  * </ul>
  *
  * <p>For finer control over the attachment type and its properties, use {@link AttachmentRegistry#builder()} to
@@ -50,7 +48,7 @@ public final class AttachmentRegistry {
 	 * @param <A> the type of attached data
 	 * @return the registered {@link AttachmentType} instance
 	 */
-	public static <A> AttachmentType<A> create(Identifier id) {
+	public static <A> AttachmentType<A> create(ResourceLocation id) {
 		Objects.requireNonNull(id, "identifier cannot be null");
 
 		return AttachmentRegistry.<A>builder().buildAndRegister(id);
@@ -65,7 +63,7 @@ public final class AttachmentRegistry {
 	 * @param <A>         the type of attached data
 	 * @return the registered {@link AttachmentType} instance
 	 */
-	public static <A> AttachmentType<A> createDefaulted(Identifier id, Supplier<A> initializer) {
+	public static <A> AttachmentType<A> createDefaulted(ResourceLocation id, Supplier<A> initializer) {
 		Objects.requireNonNull(id, "identifier cannot be null");
 		Objects.requireNonNull(initializer, "initializer cannot be null");
 
@@ -82,7 +80,7 @@ public final class AttachmentRegistry {
 	 * @param <A>   the type of attached data
 	 * @return the registered {@link AttachmentType} instance
 	 */
-	public static <A> AttachmentType<A> createPersistent(Identifier id, Codec<A> codec) {
+	public static <A> AttachmentType<A> createPersistent(ResourceLocation id, Codec<A> codec) {
 		Objects.requireNonNull(id, "identifier cannot be null");
 		Objects.requireNonNull(codec, "codec cannot be null");
 
@@ -145,6 +143,6 @@ public final class AttachmentRegistry {
 		 * @param id the attachment's identifier
 		 * @return the built and registered {@link AttachmentType}
 		 */
-		AttachmentType<A> buildAndRegister(Identifier id);
+		AttachmentType<A> buildAndRegister(ResourceLocation id);
 	}
 }

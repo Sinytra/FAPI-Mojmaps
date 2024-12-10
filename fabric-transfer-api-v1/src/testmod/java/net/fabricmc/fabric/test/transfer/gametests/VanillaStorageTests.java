@@ -17,29 +17,6 @@
 package net.fabricmc.fabric.test.transfer.gametests;
 
 import org.apache.commons.lang3.mutable.MutableInt;
-
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.ComparatorBlock;
-import net.minecraft.block.ComposterBlock;
-import net.minecraft.block.JukeboxBlock;
-import net.minecraft.block.entity.BrewingStandBlockEntity;
-import net.minecraft.block.entity.ChiseledBookshelfBlockEntity;
-import net.minecraft.block.entity.FurnaceBlockEntity;
-import net.minecraft.block.entity.HopperBlockEntity;
-import net.minecraft.block.entity.ShulkerBoxBlockEntity;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.state.property.Properties;
-import net.minecraft.test.GameTest;
-import net.minecraft.test.GameTestException;
-import net.minecraft.test.TestContext;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.World;
-
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
@@ -49,52 +26,73 @@ import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.test.transfer.mixin.AbstractFurnaceBlockEntityAccessor;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestAssertException;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.ComparatorBlock;
+import net.minecraft.world.level.block.ComposterBlock;
+import net.minecraft.world.level.block.JukeboxBlock;
+import net.minecraft.world.level.block.entity.BrewingStandBlockEntity;
+import net.minecraft.world.level.block.entity.ChiseledBookShelfBlockEntity;
+import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
+import net.minecraft.world.level.block.entity.HopperBlockEntity;
+import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 public class VanillaStorageTests {
 	/**
 	 * Regression test for https://github.com/FabricMC/fabric/issues/1972.
 	 * Ensures that furnace cook time is only reset when extraction is actually committed.
 	 */
-	@GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE)
-	public void testFurnaceCookTime(TestContext context) {
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void testFurnaceCookTime(GameTestHelper context) {
 		BlockPos pos = new BlockPos(0, 1, 0);
-		context.setBlockState(pos, Blocks.FURNACE.getDefaultState());
+		context.setBlock(pos, Blocks.FURNACE.defaultBlockState());
 		FurnaceBlockEntity furnace = context.getBlockEntity(pos);
 		AbstractFurnaceBlockEntityAccessor accessor = (AbstractFurnaceBlockEntityAccessor) furnace;
 
 		ItemVariant rawIron = ItemVariant.of(Items.RAW_IRON);
-		furnace.setStack(0, rawIron.toStack(64));
-		furnace.setStack(1, new ItemStack(Items.COAL, 64));
+		furnace.setItem(0, rawIron.toStack(64));
+		furnace.setItem(1, new ItemStack(Items.COAL, 64));
 		InventoryStorage furnaceWrapper = InventoryStorage.of(furnace, null);
 
-		context.runAtTick(5, () -> {
+		context.runAtTickTime(5, () -> {
 			if (accessor.getCookTime() <= 0) {
-				throw new GameTestException("Furnace should have started cooking.");
+				throw new GameTestAssertException("Furnace should have started cooking.");
 			}
 
 			try (Transaction transaction = Transaction.openOuter()) {
 				if (furnaceWrapper.extract(rawIron, 64, transaction) != 64) {
-					throw new GameTestException("Failed to extract 64 raw iron.");
+					throw new GameTestAssertException("Failed to extract 64 raw iron.");
 				}
 			}
 
 			if (accessor.getCookTime() <= 0) {
-				throw new GameTestException("Furnace should still cook after simulation.");
+				throw new GameTestAssertException("Furnace should still cook after simulation.");
 			}
 
 			try (Transaction transaction = Transaction.openOuter()) {
 				if (furnaceWrapper.extract(rawIron, 64, transaction) != 64) {
-					throw new GameTestException("Failed to extract 64 raw iron.");
+					throw new GameTestAssertException("Failed to extract 64 raw iron.");
 				}
 
 				transaction.commit();
 			}
 
 			if (accessor.getCookTime() != 0) {
-				throw new GameTestException("Furnace should have reset cook time after being emptied.");
+				throw new GameTestAssertException("Furnace should have reset cook time after being emptied.");
 			}
 
-			context.complete();
+			context.succeed();
 		});
 	}
 
@@ -104,192 +102,192 @@ public class VanillaStorageTests {
 	 * @param block A block with an Inventory block entity.
 	 * @param variant The variant to try to insert (needs to be supported by the Inventory).
 	 */
-	private static void testComparatorOnInventory(TestContext context, Block block, ItemVariant variant) {
-		World world = context.getWorld();
+	private static void testComparatorOnInventory(GameTestHelper context, Block block, ItemVariant variant) {
+		Level world = context.getLevel();
 
 		BlockPos pos = new BlockPos(0, 2, 0);
-		context.setBlockState(pos, block.getDefaultState());
-		Inventory inventory = context.getBlockEntity(pos);
+		context.setBlock(pos, block.defaultBlockState());
+		Container inventory = context.getBlockEntity(pos);
 		InventoryStorage storage = InventoryStorage.of(inventory, null);
 
 		BlockPos comparatorPos = new BlockPos(1, 2, 0);
 		// support block under the comparator
-		context.setBlockState(comparatorPos.offset(Direction.DOWN), Blocks.GREEN_WOOL.getDefaultState());
+		context.setBlock(comparatorPos.relative(Direction.DOWN), Blocks.GREEN_WOOL.defaultBlockState());
 		// comparator
-		context.setBlockState(comparatorPos, Blocks.COMPARATOR.getDefaultState().with(ComparatorBlock.FACING, Direction.WEST));
+		context.setBlock(comparatorPos, Blocks.COMPARATOR.defaultBlockState().setValue(ComparatorBlock.FACING, Direction.WEST));
 
 		try (Transaction transaction = Transaction.openOuter()) {
-			if (world.getBlockTickScheduler().isQueued(context.getAbsolutePos(comparatorPos), Blocks.COMPARATOR)) {
-				throw new GameTestException("Comparator should not have a tick scheduled.");
+			if (world.getBlockTicks().hasScheduledTick(context.absolutePos(comparatorPos), Blocks.COMPARATOR)) {
+				throw new GameTestAssertException("Comparator should not have a tick scheduled.");
 			}
 
 			storage.insert(variant, 1000000, transaction);
 
 			// uncommitted insert should not schedule an update
-			if (world.getBlockTickScheduler().isQueued(context.getAbsolutePos(comparatorPos), Blocks.COMPARATOR)) {
-				throw new GameTestException("Comparator should not have a tick scheduled.");
+			if (world.getBlockTicks().hasScheduledTick(context.absolutePos(comparatorPos), Blocks.COMPARATOR)) {
+				throw new GameTestAssertException("Comparator should not have a tick scheduled.");
 			}
 
 			transaction.commit();
 
 			// committed insert should schedule an update
-			if (!world.getBlockTickScheduler().isQueued(context.getAbsolutePos(comparatorPos), Blocks.COMPARATOR)) {
-				throw new GameTestException("Comparator should have a tick scheduled.");
+			if (!world.getBlockTicks().hasScheduledTick(context.absolutePos(comparatorPos), Blocks.COMPARATOR)) {
+				throw new GameTestAssertException("Comparator should have a tick scheduled.");
 			}
 		}
 
-		context.complete();
+		context.succeed();
 	}
 
 	/**
 	 * Tests that containers such as chests don't update adjacent comparators until the very end of a committed transaction.
 	 */
-	@GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE)
-	public void testChestComparator(TestContext context) {
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void testChestComparator(GameTestHelper context) {
 		testComparatorOnInventory(context, Blocks.CHEST, ItemVariant.of(Items.DIAMOND));
 	}
 
 	/**
 	 * Same as {@link #testChestComparator} but for chiseled bookshelves, because their implementation is very... strange.
 	 */
-	@GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE)
-	public void testChiseledBookshelfComparator(TestContext context) {
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void testChiseledBookshelfComparator(GameTestHelper context) {
 		testComparatorOnInventory(context, Blocks.CHISELED_BOOKSHELF, ItemVariant.of(Items.BOOK));
 	}
 
 	/**
 	 * Test for chiseled bookshelves, because their implementation is very... strange.
 	 */
-	@GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE)
-	public void testChiseledBookshelf(TestContext context) {
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void testChiseledBookshelf(GameTestHelper context) {
 		ItemVariant book = ItemVariant.of(Items.BOOK);
 
 		BlockPos pos = new BlockPos(0, 1, 0);
-		context.setBlockState(pos, Blocks.CHISELED_BOOKSHELF.getDefaultState());
-		ChiseledBookshelfBlockEntity bookshelf = context.getBlockEntity(pos);
+		context.setBlock(pos, Blocks.CHISELED_BOOKSHELF.defaultBlockState());
+		ChiseledBookShelfBlockEntity bookshelf = context.getBlockEntity(pos);
 		InventoryStorage storage = InventoryStorage.of(bookshelf, null);
 
 		// First, check that we can correctly undo insert operations, because vanilla's setStack doesn't permit it without our patches.
 		try (Transaction transaction = Transaction.openOuter()) {
-			if (storage.insert(book, 2, transaction) != 2) throw new GameTestException("Should have inserted 2 books");
+			if (storage.insert(book, 2, transaction) != 2) throw new GameTestAssertException("Should have inserted 2 books");
 
-			if (bookshelf.getStack(0).getCount() != 1) throw new GameTestException("Bookshelf stack 0 should have size 1");
-			if (!book.matches(bookshelf.getStack(0))) throw new GameTestException("Bookshelf stack 0 should be a book");
-			if (bookshelf.getStack(1).getCount() != 1) throw new GameTestException("Bookshelf stack 1 should have size 1");
-			if (!book.matches(bookshelf.getStack(1))) throw new GameTestException("Bookshelf stack 1 should be a book");
+			if (bookshelf.getItem(0).getCount() != 1) throw new GameTestAssertException("Bookshelf stack 0 should have size 1");
+			if (!book.matches(bookshelf.getItem(0))) throw new GameTestAssertException("Bookshelf stack 0 should be a book");
+			if (bookshelf.getItem(1).getCount() != 1) throw new GameTestAssertException("Bookshelf stack 1 should have size 1");
+			if (!book.matches(bookshelf.getItem(1))) throw new GameTestAssertException("Bookshelf stack 1 should be a book");
 		}
 
-		if (!bookshelf.getStack(0).isEmpty()) throw new GameTestException("Bookshelf stack 0 should be empty again after aborting transaction");
-		if (!bookshelf.getStack(1).isEmpty()) throw new GameTestException("Bookshelf stack 1 should be empty again after aborting transaction");
+		if (!bookshelf.getItem(0).isEmpty()) throw new GameTestAssertException("Bookshelf stack 0 should be empty again after aborting transaction");
+		if (!bookshelf.getItem(1).isEmpty()) throw new GameTestAssertException("Bookshelf stack 1 should be empty again after aborting transaction");
 
 		// Second, check that we correctly update the last modified slot.
 		try (Transaction tx = Transaction.openOuter()) {
-			if (storage.getSlot(1).insert(book, 1, tx) != 1) throw new GameTestException("Should have inserted 1 book");
-			if (bookshelf.getLastInteractedSlot() != 1) throw new GameTestException("Last modified slot should be 1");
+			if (storage.getSlot(1).insert(book, 1, tx) != 1) throw new GameTestAssertException("Should have inserted 1 book");
+			if (bookshelf.getLastInteractedSlot() != 1) throw new GameTestAssertException("Last modified slot should be 1");
 
-			if (storage.getSlot(2).insert(book, 1, tx) != 1) throw new GameTestException("Should have inserted 1 book");
-			if (bookshelf.getLastInteractedSlot() != 2) throw new GameTestException("Last modified slot should be 2");
+			if (storage.getSlot(2).insert(book, 1, tx) != 1) throw new GameTestAssertException("Should have inserted 1 book");
+			if (bookshelf.getLastInteractedSlot() != 2) throw new GameTestAssertException("Last modified slot should be 2");
 
-			if (storage.getSlot(1).extract(book, 1, tx) != 1) throw new GameTestException("Should have extracted 1 book");
-			if (bookshelf.getLastInteractedSlot() != 1) throw new GameTestException("Last modified slot should be 1");
+			if (storage.getSlot(1).extract(book, 1, tx) != 1) throw new GameTestAssertException("Should have extracted 1 book");
+			if (bookshelf.getLastInteractedSlot() != 1) throw new GameTestAssertException("Last modified slot should be 1");
 
 			// Now, create an aborted nested transaction.
 			try (Transaction nested = tx.openNested()) {
-				if (storage.insert(book, 100, nested) != 5) throw new GameTestException("Should have inserted 5 books");
+				if (storage.insert(book, 100, nested) != 5) throw new GameTestAssertException("Should have inserted 5 books");
 				// Now, last modified slot should be 5.
-				if (bookshelf.getLastInteractedSlot() != 5) throw new GameTestException("Last modified slot should be 5");
+				if (bookshelf.getLastInteractedSlot() != 5) throw new GameTestAssertException("Last modified slot should be 5");
 			}
 
 			// And it's back to 1 in theory.
-			if (bookshelf.getLastInteractedSlot() != 1) throw new GameTestException("Last modified slot should be 1");
+			if (bookshelf.getLastInteractedSlot() != 1) throw new GameTestAssertException("Last modified slot should be 1");
 			tx.commit();
 		}
 
-		if (bookshelf.getLastInteractedSlot() != 1) throw new GameTestException("Last modified slot should be 1 after committing transaction");
+		if (bookshelf.getLastInteractedSlot() != 1) throw new GameTestAssertException("Last modified slot should be 1 after committing transaction");
 
 		// Let's also check the state properties. Only slot 2 should be occupied.
-		BlockState state = bookshelf.getCachedState();
+		BlockState state = bookshelf.getBlockState();
 
-		if (state.get(Properties.SLOT_0_OCCUPIED)) throw new GameTestException("Slot 0 should not be occupied");
-		if (state.get(Properties.SLOT_1_OCCUPIED)) throw new GameTestException("Slot 1 should not be occupied");
-		if (!state.get(Properties.SLOT_2_OCCUPIED)) throw new GameTestException("Slot 2 should be occupied");
-		if (state.get(Properties.SLOT_3_OCCUPIED)) throw new GameTestException("Slot 3 should not be occupied");
-		if (state.get(Properties.SLOT_4_OCCUPIED)) throw new GameTestException("Slot 4 should not be occupied");
-		if (state.get(Properties.SLOT_5_OCCUPIED)) throw new GameTestException("Slot 5 should not be occupied");
+		if (state.getValue(BlockStateProperties.CHISELED_BOOKSHELF_SLOT_0_OCCUPIED)) throw new GameTestAssertException("Slot 0 should not be occupied");
+		if (state.getValue(BlockStateProperties.CHISELED_BOOKSHELF_SLOT_1_OCCUPIED)) throw new GameTestAssertException("Slot 1 should not be occupied");
+		if (!state.getValue(BlockStateProperties.CHISELED_BOOKSHELF_SLOT_2_OCCUPIED)) throw new GameTestAssertException("Slot 2 should be occupied");
+		if (state.getValue(BlockStateProperties.CHISELED_BOOKSHELF_SLOT_3_OCCUPIED)) throw new GameTestAssertException("Slot 3 should not be occupied");
+		if (state.getValue(BlockStateProperties.CHISELED_BOOKSHELF_SLOT_4_OCCUPIED)) throw new GameTestAssertException("Slot 4 should not be occupied");
+		if (state.getValue(BlockStateProperties.CHISELED_BOOKSHELF_SLOT_5_OCCUPIED)) throw new GameTestAssertException("Slot 5 should not be occupied");
 
-		context.complete();
+		context.succeed();
 	}
 
 	/**
 	 * Tests that shulker boxes cannot be inserted into other shulker boxes.
 	 */
-	@GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE)
-	public void testShulkerNoInsert(TestContext context) {
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void testShulkerNoInsert(GameTestHelper context) {
 		BlockPos pos = new BlockPos(0, 2, 0);
-		context.setBlockState(pos, Blocks.SHULKER_BOX);
+		context.setBlock(pos, Blocks.SHULKER_BOX);
 		ShulkerBoxBlockEntity shulker = context.getBlockEntity(pos);
 		InventoryStorage storage = InventoryStorage.of(shulker, null);
 
 		if (StorageUtil.simulateInsert(storage, ItemVariant.of(Items.SHULKER_BOX), 1, null) > 0) {
-			context.throwPositionedException("Expected shulker box to be rejected", pos);
+			context.fail("Expected shulker box to be rejected", pos);
 		}
 
-		context.complete();
+		context.succeed();
 	}
 
 	/**
-	 * {@link Inventory#isValid(int, ItemStack)} is supposed to be independent of the stack size.
+	 * {@link Container#canPlaceItem(int, ItemStack)} is supposed to be independent of the stack size.
 	 * However, to limit some stackable inputs to a size of 1, brewing stands and furnaces don't follow this rule in all cases.
 	 * This test ensures that the Transfer API works around this issue for furnaces.
 	 */
-	@GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE)
-	public void testBadFurnaceIsValid(TestContext context) {
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void testBadFurnaceIsValid(GameTestHelper context) {
 		BlockPos pos = new BlockPos(0, 1, 0);
-		context.setBlockState(pos, Blocks.FURNACE.getDefaultState());
+		context.setBlock(pos, Blocks.FURNACE.defaultBlockState());
 		FurnaceBlockEntity furnace = context.getBlockEntity(pos);
 		InventoryStorage furnaceWrapper = InventoryStorage.of(furnace, null);
 
 		try (Transaction tx = Transaction.openOuter()) {
 			if (furnaceWrapper.getSlot(1).insert(ItemVariant.of(Items.BUCKET), 2, tx) != 1) {
-				throw new GameTestException("Exactly 1 bucket should have been inserted");
+				throw new GameTestAssertException("Exactly 1 bucket should have been inserted");
 			}
 		}
 
-		context.complete();
+		context.succeed();
 	}
 
 	/**
-	 * Same as {@link #testBadFurnaceIsValid(TestContext)}, but for brewing stands.
+	 * Same as {@link #testBadFurnaceIsValid(GameTestHelper)}, but for brewing stands.
 	 */
-	@GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE)
-	public void testBadBrewingStandIsValid(TestContext context) {
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void testBadBrewingStandIsValid(GameTestHelper context) {
 		BlockPos pos = new BlockPos(0, 1, 0);
-		context.setBlockState(pos, Blocks.BREWING_STAND.getDefaultState());
+		context.setBlock(pos, Blocks.BREWING_STAND.defaultBlockState());
 		BrewingStandBlockEntity brewingStand = context.getBlockEntity(pos);
 		InventoryStorage brewingStandWrapper = InventoryStorage.of(brewingStand, null);
 
 		try (Transaction tx = Transaction.openOuter()) {
 			for (int bottleSlot = 0; bottleSlot < 3; ++bottleSlot) {
 				if (brewingStandWrapper.getSlot(bottleSlot).insert(ItemVariant.of(Items.GLASS_BOTTLE), 2, tx) != 1) {
-					throw new GameTestException("Exactly 1 glass bottle should have been inserted");
+					throw new GameTestAssertException("Exactly 1 glass bottle should have been inserted");
 				}
 			}
 
 			if (brewingStandWrapper.getSlot(3).insert(ItemVariant.of(Items.REDSTONE), 2, tx) != 2) {
-				throw new GameTestException("Brewing ingredient insertion should not be limited");
+				throw new GameTestAssertException("Brewing ingredient insertion should not be limited");
 			}
 		}
 
-		context.complete();
+		context.succeed();
 	}
 
 	/**
 	 * Regression test for <a href="https://github.com/FabricMC/fabric/issues/2810">double chest wrapper only updating modified halves</a>.
 	 */
-	@GameTest(templateName = "fabric-transfer-api-v1-testmod:double_chest_comparators", skyAccess = true)
-	public void testDoubleChestComparator(TestContext context) {
+	@GameTest(template = "fabric-transfer-api-v1-testmod:double_chest_comparators", skyAccess = true)
+	public void testDoubleChestComparator(GameTestHelper context) {
 		BlockPos chestPos = new BlockPos(2, 2, 2);
-		Storage<ItemVariant> storage = ItemStorage.SIDED.find(context.getWorld(), context.getAbsolutePos(chestPos), Direction.UP);
+		Storage<ItemVariant> storage = ItemStorage.SIDED.find(context.getLevel(), context.absolutePos(chestPos), Direction.UP);
 		context.assertTrue(storage != null, "Storage must not be null");
 
 		// Insert one item
@@ -299,15 +297,15 @@ public class VanillaStorageTests {
 		}
 
 		// Check that the inventory and slotted storages match
-		Inventory inventory = HopperBlockEntity.getInventoryAt(context.getWorld(), context.getAbsolutePos(chestPos));
+		Container inventory = HopperBlockEntity.getContainerAt(context.getLevel(), context.absolutePos(chestPos));
 		context.assertTrue(inventory != null, "Inventory must not be null");
 
 		if (!(storage instanceof SlottedStorage<ItemVariant> slottedStorage)) {
-			throw new GameTestException("Double chest storage must be a SlottedStorage");
+			throw new GameTestAssertException("Double chest storage must be a SlottedStorage");
 		}
 
-		for (int i = 0; i < inventory.size(); ++i) {
-			ItemStack stack = inventory.getStack(i);
+		for (int i = 0; i < inventory.getContainerSize(); ++i) {
+			ItemStack stack = inventory.getItem(i);
 			ItemVariant variant = ItemVariant.of(stack.getItem());
 			context.assertTrue(variant.matches(stack), "Item variant in slot " + i + " must match stack");
 			long expectedCount = stack.getCount();
@@ -318,66 +316,66 @@ public class VanillaStorageTests {
 		// Check that an update is queued for every single comparator
 		MutableInt comparatorCount = new MutableInt();
 
-		context.forEachRelativePos(relativePos -> {
+		context.forEveryBlockInStructure(relativePos -> {
 			if (context.getBlockState(relativePos).getBlock() != Blocks.COMPARATOR) {
 				return;
 			}
 
 			comparatorCount.increment();
 
-			if (!context.getWorld().getBlockTickScheduler().isQueued(context.getAbsolutePos(relativePos), Blocks.COMPARATOR)) {
-				throw new GameTestException("Comparator at " + relativePos + " should have an update scheduled");
+			if (!context.getLevel().getBlockTicks().hasScheduledTick(context.absolutePos(relativePos), Blocks.COMPARATOR)) {
+				throw new GameTestAssertException("Comparator at " + relativePos + " should have an update scheduled");
 			}
 		});
 
 		context.assertTrue(comparatorCount.intValue() == 6, "Expected exactly 6 comparators");
 
-		context.complete();
+		context.succeed();
 	}
 
 	/**
 	 * Regression test for <a href="https://github.com/FabricMC/fabric/issues/3017">composters not always incrementing their level on the first insert</a>.
 	 */
-	@GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE)
-	public void testComposterFirstInsert(TestContext context) {
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void testComposterFirstInsert(GameTestHelper context) {
 		BlockPos pos = new BlockPos(0, 1, 0);
 
 		ItemVariant carrot = ItemVariant.of(Items.CARROT);
 
 		for (int i = 0; i < 200; ++i) { // Run many times as this can be random.
-			context.setBlockState(pos, Blocks.COMPOSTER.getDefaultState());
-			Storage<ItemVariant> storage = ItemStorage.SIDED.find(context.getWorld(), context.getAbsolutePos(pos), Direction.UP);
+			context.setBlock(pos, Blocks.COMPOSTER.defaultBlockState());
+			Storage<ItemVariant> storage = ItemStorage.SIDED.find(context.getLevel(), context.absolutePos(pos), Direction.UP);
 
 			try (Transaction tx = Transaction.openOuter()) {
 				if (storage.insert(carrot, 1, tx) != 1) {
-					context.throwPositionedException("Carrot should have been inserted", pos);
+					context.fail("Carrot should have been inserted", pos);
 				}
 
 				tx.commit();
 			}
 
-			context.checkBlockState(pos, state -> state.get(ComposterBlock.LEVEL) == 1, () -> "Composter should have level 1");
+			context.assertBlockState(pos, state -> state.getValue(ComposterBlock.LEVEL) == 1, () -> "Composter should have level 1");
 		}
 
-		context.complete();
+		context.succeed();
 	}
 
 	/**
 	 * Regression test for <a href="https://github.com/FabricMC/fabric/issues/3485">jukeboxes having their state changed mid-transaction</a>.
 	 */
-	@GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE)
-	public void testJukeboxState(TestContext context) {
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void testJukeboxState(GameTestHelper context) {
 		BlockPos pos = new BlockPos(2, 2, 2);
-		context.setBlockState(pos, Blocks.JUKEBOX.getDefaultState());
-		Storage<ItemVariant> storage = ItemStorage.SIDED.find(context.getWorld(), context.getAbsolutePos(pos), Direction.UP);
+		context.setBlock(pos, Blocks.JUKEBOX.defaultBlockState());
+		Storage<ItemVariant> storage = ItemStorage.SIDED.find(context.getLevel(), context.absolutePos(pos), Direction.UP);
 
 		try (Transaction tx = Transaction.openOuter()) {
 			storage.insert(ItemVariant.of(Items.MUSIC_DISC_11), 1, tx);
-			context.checkBlockState(pos, state -> !state.get(JukeboxBlock.HAS_RECORD), () -> "Jukebox should not have its state changed mid-transaction");
+			context.assertBlockState(pos, state -> !state.getValue(JukeboxBlock.HAS_RECORD), () -> "Jukebox should not have its state changed mid-transaction");
 			tx.commit();
 		}
 
-		context.checkBlockState(pos, state -> state.get(JukeboxBlock.HAS_RECORD), () -> "Jukebox should have its state changed");
-		context.complete();
+		context.assertBlockState(pos, state -> state.getValue(JukeboxBlock.HAS_RECORD), () -> "Jukebox should have its state changed");
+		context.succeed();
 	}
 }

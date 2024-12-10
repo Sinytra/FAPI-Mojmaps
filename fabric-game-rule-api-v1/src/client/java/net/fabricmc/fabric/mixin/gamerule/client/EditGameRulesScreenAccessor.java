@@ -16,16 +16,15 @@
 
 package net.fabricmc.fabric.mixin.gamerule.client;
 
+import net.minecraft.client.gui.screens.worldselection.EditGameRulesScreen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
-import net.minecraft.client.gui.screen.world.EditGameRulesScreen;
-
 @Mixin(EditGameRulesScreen.class)
 public interface EditGameRulesScreenAccessor {
-	@Invoker("markValid")
-	void callMarkValid(EditGameRulesScreen.AbstractRuleWidget ruleWidget);
+	@Invoker("clearInvalid")
+	void callMarkValid(EditGameRulesScreen.RuleEntry ruleWidget);
 
 	@Invoker("markInvalid")
-	void callMarkInvalid(EditGameRulesScreen.AbstractRuleWidget ruleWidget);
+	void callMarkInvalid(EditGameRulesScreen.RuleEntry ruleWidget);
 }

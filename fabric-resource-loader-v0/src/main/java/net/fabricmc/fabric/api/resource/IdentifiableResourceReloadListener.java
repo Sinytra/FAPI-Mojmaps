@@ -18,9 +18,8 @@ package net.fabricmc.fabric.api.resource;
 
 import java.util.Collection;
 import java.util.Collections;
-
-import net.minecraft.resource.ResourceReloader;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.PreparableReloadListener;
 
 /**
  * Interface for "identifiable" resource reload listeners.
@@ -31,18 +30,18 @@ import net.minecraft.util.Identifier;
  *
  * @see ResourceReloadListenerKeys
  */
-public interface IdentifiableResourceReloadListener extends ResourceReloader {
+public interface IdentifiableResourceReloadListener extends PreparableReloadListener {
 	/**
 	 * @return The unique identifier of this listener.
 	 */
-	Identifier getFabricId();
+	ResourceLocation getFabricId();
 
 	/**
 	 * @return The identifiers of listeners this listener expects to have been
 	 * executed before itself. Please keep in mind that this only takes effect
 	 * during the application stage!
 	 */
-	default Collection<Identifier> getFabricDependencies() {
+	default Collection<ResourceLocation> getFabricDependencies() {
 		return Collections.emptyList();
 	}
 }

@@ -17,18 +17,16 @@
 package net.fabricmc.fabric.mixin.rendering.data.client;
 
 import org.spongepowered.asm.mixin.Mixin;
-
-import net.minecraft.client.render.chunk.ChunkRendererRegion;
-import net.minecraft.world.WorldView;
-
 import net.fabricmc.fabric.api.rendering.data.v1.RenderAttachedBlockView;
+import net.minecraft.client.renderer.chunk.RenderChunkRegion;
+import net.minecraft.world.level.LevelReader;
 
 /**
- * Since {@link RenderAttachedBlockView} is only automatically implemented on {@link WorldView} instances and
- * {@link ChunkRendererRegion} does not implement {@link WorldView}, this mixin manually implements
- * {@link RenderAttachedBlockView} on {@link ChunkRendererRegion}. The BlockView API v2 implementation ensures
+ * Since {@link RenderAttachedBlockView} is only automatically implemented on {@link LevelReader} instances and
+ * {@link RenderChunkRegion} does not implement {@link LevelReader}, this mixin manually implements
+ * {@link RenderAttachedBlockView} on {@link RenderChunkRegion}. The BlockView API v2 implementation ensures
  * that all default method implementations of {@link RenderAttachedBlockView} work here automatically.
  */
-@Mixin(ChunkRendererRegion.class)
+@Mixin(RenderChunkRegion.class)
 public abstract class ChunkRendererRegionMixin implements RenderAttachedBlockView {
 }

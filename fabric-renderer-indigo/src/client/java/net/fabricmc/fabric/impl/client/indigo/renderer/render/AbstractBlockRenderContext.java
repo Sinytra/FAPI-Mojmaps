@@ -19,19 +19,17 @@ package net.fabricmc.fabric.impl.client.indigo.renderer.render;
 import static net.fabricmc.fabric.impl.client.indigo.renderer.helper.GeometryHelper.AXIS_ALIGNED_FLAG;
 import static net.fabricmc.fabric.impl.client.indigo.renderer.helper.GeometryHelper.LIGHT_FACE_FLAG;
 
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.json.ModelTransformationMode;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.state.BlockState;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.material.ShadeMode;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
@@ -62,7 +60,7 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 
 	private final BakedModelConsumerImpl vanillaModelConsumer = new BakedModelConsumerImpl();
 
-	private final BlockPos.Mutable lightPos = new BlockPos.Mutable();
+	private final BlockPos.MutableBlockPos lightPos = new BlockPos.MutableBlockPos();
 
 	protected AbstractBlockRenderContext() {
 		aoCalc = createAoCalc(blockInfo);
@@ -70,7 +68,7 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 
 	protected abstract AoCalculator createAoCalc(BlockRenderInfo blockInfo);
 
-	protected abstract VertexConsumer getVertexConsumer(RenderLayer layer);
+	protected abstract VertexConsumer getVertexConsumer(RenderType layer);
 
 	@Override
 	public QuadEmitter getEmitter() {
@@ -134,7 +132,7 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 			if (emissive) {
 				for (int i = 0; i < 4; i++) {
 					quad.color(i, ColorHelper.multiplyRGB(quad.color(i), aoCalc.ao[i]));
-					quad.lightmap(i, LightmapTextureManager.MAX_LIGHT_COORDINATE);
+					quad.lightmap(i, LightTexture.FULL_BRIGHT);
 				}
 			} else {
 				for (int i = 0; i < 4; i++) {
@@ -147,7 +145,7 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 
 			if (emissive) {
 				for (int i = 0; i < 4; i++) {
-					quad.lightmap(i, LightmapTextureManager.MAX_LIGHT_COORDINATE);
+					quad.lightmap(i, LightTexture.FULL_BRIGHT);
 				}
 			} else {
 				final int brightness = flatBrightness(quad, blockInfo.blockState, blockInfo.blockPos);
@@ -177,7 +175,7 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 				final float faceShade;
 
 				if ((quad.geometryFlags() & AXIS_ALIGNED_FLAG) != 0) {
-					faceShade = blockInfo.blockView.getBrightness(quad.lightFace(), hasShade);
+					faceShade = blockInfo.blockView.getShade(quad.lightFace(), hasShade);
 				} else {
 					Vector3f faceNormal = quad.faceNormal();
 					faceShade = normalShade(faceNormal.x, faceNormal.y, faceNormal.z, hasShade);
@@ -204,7 +202,7 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 				}
 			}
 		} else {
-			final float faceShade = blockInfo.blockView.getBrightness(quad.lightFace(), hasShade);
+			final float faceShade = blockInfo.blockView.getShade(quad.lightFace(), hasShade);
 
 			if (faceShade != 1.0f) {
 				for (int i = 0; i < 4; i++) {
@@ -224,26 +222,26 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 		float div = 0;
 
 		if (normalX > 0) {
-			sum += normalX * blockInfo.blockView.getBrightness(Direction.EAST, hasShade);
+			sum += normalX * blockInfo.blockView.getShade(Direction.EAST, hasShade);
 			div += normalX;
 		} else if (normalX < 0) {
-			sum += -normalX * blockInfo.blockView.getBrightness(Direction.WEST, hasShade);
+			sum += -normalX * blockInfo.blockView.getShade(Direction.WEST, hasShade);
 			div -= normalX;
 		}
 
 		if (normalY > 0) {
-			sum += normalY * blockInfo.blockView.getBrightness(Direction.UP, hasShade);
+			sum += normalY * blockInfo.blockView.getShade(Direction.UP, hasShade);
 			div += normalY;
 		} else if (normalY < 0) {
-			sum += -normalY * blockInfo.blockView.getBrightness(Direction.DOWN, hasShade);
+			sum += -normalY * blockInfo.blockView.getShade(Direction.DOWN, hasShade);
 			div -= normalY;
 		}
 
 		if (normalZ > 0) {
-			sum += normalZ * blockInfo.blockView.getBrightness(Direction.SOUTH, hasShade);
+			sum += normalZ * blockInfo.blockView.getShade(Direction.SOUTH, hasShade);
 			div += normalZ;
 		} else if (normalZ < 0) {
-			sum += -normalZ * blockInfo.blockView.getBrightness(Direction.NORTH, hasShade);
+			sum += -normalZ * blockInfo.blockView.getShade(Direction.NORTH, hasShade);
 			div -= normalZ;
 		}
 
@@ -265,13 +263,13 @@ public abstract class AbstractBlockRenderContext extends AbstractRenderContext {
 		} else {
 			final int flags = quad.geometryFlags();
 
-			if ((flags & LIGHT_FACE_FLAG) != 0 || ((flags & AXIS_ALIGNED_FLAG) != 0 && blockState.isFullCube(blockInfo.blockView, pos))) {
+			if ((flags & LIGHT_FACE_FLAG) != 0 || ((flags & AXIS_ALIGNED_FLAG) != 0 && blockState.isCollisionShapeFullBlock(blockInfo.blockView, pos))) {
 				lightPos.move(quad.lightFace());
 			}
 		}
 
 		// Unfortunately cannot use brightness cache here unless we implement one specifically for flat lighting. See #329
-		return WorldRenderer.getLightmapCoordinates(blockInfo.blockView, blockState, lightPos);
+		return LevelRenderer.getLightColor(blockInfo.blockView, blockState, lightPos);
 	}
 
 	/**

@@ -17,10 +17,8 @@
 package net.fabricmc.fabric.mixin.renderer.client;
 
 import org.spongepowered.asm.mixin.Mixin;
-
-import net.minecraft.client.render.model.BakedModel;
-
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
+import net.minecraft.client.resources.model.BakedModel;
 
 /**
  * Avoids instanceof checks and enables consistent code path for all baked models.

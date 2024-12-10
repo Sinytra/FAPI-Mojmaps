@@ -23,28 +23,26 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.registry.CombinedDynamicRegistries;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.registry.ServerDynamicRegistryType;
-import net.minecraft.resource.featuretoggle.FeatureSet;
-import net.minecraft.server.DataPackContents;
-import net.minecraft.server.command.CommandManager;
-
 import net.fabricmc.fabric.api.event.lifecycle.v1.CommonLifecycleEvents;
+import net.minecraft.commands.Commands;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.LayeredRegistryAccess;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.server.RegistryLayer;
+import net.minecraft.server.ReloadableServerResources;
+import net.minecraft.world.flag.FeatureFlagSet;
 
-@Mixin(DataPackContents.class)
+@Mixin(ReloadableServerResources.class)
 public class DataPackContentsMixin {
 	@Unique
-	private DynamicRegistryManager dynamicRegistryManager;
+	private RegistryAccess dynamicRegistryManager;
 
 	@Inject(method = "<init>", at = @At("TAIL"))
-	private void init(CombinedDynamicRegistries<ServerDynamicRegistryType> combinedDynamicRegistries, RegistryWrapper.WrapperLookup wrapperLookup, FeatureSet featureSet, CommandManager.RegistrationEnvironment registrationEnvironment, List list, int i, CallbackInfo ci) {
-		dynamicRegistryManager = combinedDynamicRegistries.getCombinedRegistryManager();
+	private void init(LayeredRegistryAccess<RegistryLayer> combinedDynamicRegistries, HolderLookup.Provider wrapperLookup, FeatureFlagSet featureSet, Commands.CommandSelection registrationEnvironment, List list, int i, CallbackInfo ci) {
+		dynamicRegistryManager = combinedDynamicRegistries.compositeAccess();
 	}
 
-	@Inject(method = "applyPendingTagLoads", at = @At("TAIL"))
+	@Inject(method = "updateStaticRegistryTags", at = @At("TAIL"))
 	private void hookRefresh(CallbackInfo ci) {
 		CommonLifecycleEvents.TAGS_LOADED.invoker().onTagsLoaded(dynamicRegistryManager, false);
 	}

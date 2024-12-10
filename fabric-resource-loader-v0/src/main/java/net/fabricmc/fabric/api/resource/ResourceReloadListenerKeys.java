@@ -16,7 +16,7 @@
 
 package net.fabricmc.fabric.api.resource;
 
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * This class contains default keys for various Minecraft resource reload listeners.
@@ -25,16 +25,16 @@ import net.minecraft.util.Identifier;
  */
 public final class ResourceReloadListenerKeys {
 	// client
-	public static final Identifier SOUNDS = Identifier.ofVanilla("sounds");
-	public static final Identifier FONTS = Identifier.ofVanilla("fonts");
-	public static final Identifier MODELS = Identifier.ofVanilla("models");
-	public static final Identifier LANGUAGES = Identifier.ofVanilla("languages");
-	public static final Identifier TEXTURES = Identifier.ofVanilla("textures");
+	public static final ResourceLocation SOUNDS = ResourceLocation.withDefaultNamespace("sounds");
+	public static final ResourceLocation FONTS = ResourceLocation.withDefaultNamespace("fonts");
+	public static final ResourceLocation MODELS = ResourceLocation.withDefaultNamespace("models");
+	public static final ResourceLocation LANGUAGES = ResourceLocation.withDefaultNamespace("languages");
+	public static final ResourceLocation TEXTURES = ResourceLocation.withDefaultNamespace("textures");
 
 	// server
-	public static final Identifier RECIPES = Identifier.ofVanilla("recipes");
-	public static final Identifier ADVANCEMENTS = Identifier.ofVanilla("advancements");
-	public static final Identifier FUNCTIONS = Identifier.ofVanilla("functions");
+	public static final ResourceLocation RECIPES = ResourceLocation.withDefaultNamespace("recipes");
+	public static final ResourceLocation ADVANCEMENTS = ResourceLocation.withDefaultNamespace("advancements");
+	public static final ResourceLocation FUNCTIONS = ResourceLocation.withDefaultNamespace("functions");
 
 	private ResourceReloadListenerKeys() { }
 }

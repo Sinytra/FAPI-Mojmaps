@@ -16,22 +16,22 @@
 
 package net.fabricmc.fabric.api.block;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.WorldView;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 
 /**
  * Convenience interface for blocks that want more stack picking context than what
- * {@link Block#getPickStack(WorldView, BlockPos, BlockState)} provides.
+ * {@link Block#getCloneItemStack(LevelReader, BlockPos, BlockState)} provides.
  *
  * <p>The hit result is guaranteed to be a {@link BlockHitResult} that did not miss.
  */
 public interface BlockPickInteractionAware {
-	ItemStack getPickedStack(BlockState state, BlockView view, BlockPos pos, PlayerEntity player, HitResult result);
+	ItemStack getPickedStack(BlockState state, BlockGetter view, BlockPos pos, Player player, HitResult result);
 }

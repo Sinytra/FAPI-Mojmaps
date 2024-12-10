@@ -17,15 +17,13 @@
 package net.fabricmc.fabric.impl.client.indigo.renderer;
 
 import java.util.HashMap;
-
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.renderer.v1.Renderer;
 import net.fabricmc.fabric.api.renderer.v1.material.MaterialFinder;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MeshBuilder;
 import net.fabricmc.fabric.impl.client.indigo.renderer.material.MaterialFinderImpl;
 import net.fabricmc.fabric.impl.client.indigo.renderer.mesh.MeshBuilderImpl;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * The Fabric default renderer implementation. Supports all
@@ -40,7 +38,7 @@ public class IndigoRenderer implements Renderer {
 		INSTANCE.registerMaterial(RenderMaterial.MATERIAL_STANDARD, MATERIAL_STANDARD);
 	}
 
-	private final HashMap<Identifier, RenderMaterial> materialMap = new HashMap<>();
+	private final HashMap<ResourceLocation, RenderMaterial> materialMap = new HashMap<>();
 
 	private IndigoRenderer() { }
 
@@ -55,12 +53,12 @@ public class IndigoRenderer implements Renderer {
 	}
 
 	@Override
-	public RenderMaterial materialById(Identifier id) {
+	public RenderMaterial materialById(ResourceLocation id) {
 		return materialMap.get(id);
 	}
 
 	@Override
-	public boolean registerMaterial(Identifier id, RenderMaterial material) {
+	public boolean registerMaterial(ResourceLocation id, RenderMaterial material) {
 		if (materialMap.containsKey(id)) return false;
 
 		// cast to prevent acceptance of impostor implementations

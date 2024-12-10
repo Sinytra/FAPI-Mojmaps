@@ -22,31 +22,29 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import net.minecraft.entity.Entity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.world.World;
-
 import net.fabricmc.fabric.impl.attachment.AttachmentTargetImpl;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
 
 @Mixin(Entity.class)
 abstract class EntityMixin implements AttachmentTargetImpl {
 	@Shadow
-	public abstract World getWorld();
+	public abstract Level level();
 
 	@Inject(
 			at = @At(value = "INVOKE", target = "net/minecraft/entity/Entity.readCustomDataFromNbt(Lnet/minecraft/nbt/NbtCompound;)V"),
-			method = "readNbt"
+			method = "load"
 	)
-	private void readEntityAttachments(NbtCompound nbt, CallbackInfo cir) {
-		this.fabric_readAttachmentsFromNbt(nbt, getWorld().getRegistryManager());
+	private void readEntityAttachments(CompoundTag nbt, CallbackInfo cir) {
+		this.fabric_readAttachmentsFromNbt(nbt, level().registryAccess());
 	}
 
 	@Inject(
 			at = @At(value = "INVOKE", target = "net/minecraft/entity/Entity.writeCustomDataToNbt(Lnet/minecraft/nbt/NbtCompound;)V"),
-			method = "writeNbt"
+			method = "saveWithoutId"
 	)
-	private void writeEntityAttachments(NbtCompound nbt, CallbackInfoReturnable<NbtCompound> cir) {
-		this.fabric_writeAttachmentsToNbt(nbt, getWorld().getRegistryManager());
+	private void writeEntityAttachments(CompoundTag nbt, CallbackInfoReturnable<CompoundTag> cir) {
+		this.fabric_writeAttachmentsToNbt(nbt, level().registryAccess());
 	}
 }

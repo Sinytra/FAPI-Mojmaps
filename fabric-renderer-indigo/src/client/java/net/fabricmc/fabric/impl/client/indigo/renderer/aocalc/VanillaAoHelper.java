@@ -17,20 +17,19 @@
 package net.fabricmc.fabric.impl.client.indigo.renderer.aocalc;
 
 import java.util.BitSet;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.block.BlockModelRenderer;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.BlockRenderView;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.block.ModelBlockRenderer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 
 public final class VanillaAoHelper {
 	// Renderer method we call isn't declared as static, but uses no
 	// instance data and is called from multiple threads in vanilla also.
-	private static final BlockModelRenderer BLOCK_RENDERER = MinecraftClient.getInstance().getBlockRenderManager().getModelRenderer();
+	private static final ModelBlockRenderer BLOCK_RENDERER = Minecraft.getInstance().getBlockRenderer().getModelRenderer();
 
-	public static void getQuadDimensions(BlockRenderView blockRenderView, BlockState blockState, BlockPos pos, int[] vertexData, Direction face, float[] aoData, BitSet controlBits) {
-		BLOCK_RENDERER.getQuadDimensions(blockRenderView, blockState, pos, vertexData, face, aoData, controlBits);
+	public static void getQuadDimensions(BlockAndTintGetter blockRenderView, BlockState blockState, BlockPos pos, int[] vertexData, Direction face, float[] aoData, BitSet controlBits) {
+		BLOCK_RENDERER.calculateShape(blockRenderView, blockState, pos, vertexData, face, aoData, controlBits);
 	}
 }

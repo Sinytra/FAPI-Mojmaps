@@ -16,11 +16,10 @@
 
 package net.fabricmc.fabric.mixin.client.indigo.renderer;
 
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
-
-import net.minecraft.client.render.item.ItemRenderer;
-import net.minecraft.item.ItemStack;
 
 @Mixin(ItemRenderer.class)
 public interface ItemRendererAccessor {

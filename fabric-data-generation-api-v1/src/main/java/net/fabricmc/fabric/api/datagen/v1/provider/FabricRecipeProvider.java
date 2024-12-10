@@ -27,23 +27,21 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.advancement.Advancement;
-import net.minecraft.advancement.AdvancementEntry;
-import net.minecraft.data.DataOutput;
+import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
-import net.minecraft.data.DataWriter;
+import net.minecraft.data.PackOutput;
 import net.minecraft.data.server.recipe.CraftingRecipeJsonBuilder;
 import net.minecraft.data.server.recipe.RecipeExporter;
 import net.minecraft.data.server.recipe.RecipeGenerator;
 import net.minecraft.data.server.recipe.ShapedRecipeJsonBuilder;
 import net.minecraft.data.server.recipe.ShapelessRecipeJsonBuilder;
-import net.minecraft.recipe.Recipe;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.RegistryOps;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.resources.RegistryOps;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.crafting.Recipe;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.resource.conditions.v1.ResourceCondition;
@@ -56,9 +54,9 @@ import net.fabricmc.fabric.impl.datagen.FabricDataGenHelper;
  */
 public abstract class FabricRecipeProvider extends RecipeGenerator.RecipeProvider {
 	protected final FabricDataOutput output;
-	private final CompletableFuture<RegistryWrapper.WrapperLookup> registriesFuture;
+	private final CompletableFuture<HolderLookup.Provider> registriesFuture;
 
-	public FabricRecipeProvider(FabricDataOutput output, CompletableFuture<RegistryWrapper.WrapperLookup> registriesFuture) {
+	public FabricRecipeProvider(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> registriesFuture) {
 		super(output, registriesFuture);
 		this.output = output;
 		this.registriesFuture = registriesFuture;
@@ -68,7 +66,7 @@ public abstract class FabricRecipeProvider extends RecipeGenerator.RecipeProvide
 	 * Implement this method and then use the range of methods in {@link RecipeGenerator} or from one of the recipe json factories such as {@link ShapedRecipeJsonBuilder} or {@link ShapelessRecipeJsonBuilder}.
 	 */
 	@Override
-	protected abstract RecipeGenerator getRecipeGenerator(RegistryWrapper.WrapperLookup registryLookup, RecipeExporter exporter);
+	protected abstract RecipeGenerator getRecipeGenerator(HolderLookup.Provider registryLookup, RecipeExporter exporter);
 
 	/**
 	 * Return a new exporter that applies the specified conditions to any recipe json provider it receives.
@@ -77,7 +75,7 @@ public abstract class FabricRecipeProvider extends RecipeGenerator.RecipeProvide
 		Preconditions.checkArgument(conditions.length > 0, "Must add at least one condition.");
 		return new RecipeExporter() {
 			@Override
-			public void accept(Identifier identifier, Recipe<?> recipe, @Nullable AdvancementEntry advancementEntry) {
+			public void accept(ResourceLocation identifier, Recipe<?> recipe, @Nullable AdvancementHolder advancementEntry) {
 				FabricDataGenHelper.addConditions(recipe, conditions);
 				exporter.accept(identifier, recipe, advancementEntry);
 			}
@@ -94,40 +92,40 @@ public abstract class FabricRecipeProvider extends RecipeGenerator.RecipeProvide
 	}
 
 	@Override
-	public CompletableFuture<?> run(DataWriter writer) {
+	public CompletableFuture<?> run(CachedOutput writer) {
 		return registriesFuture.thenCompose((wrapperLookup -> {
-			Set<Identifier> generatedRecipes = Sets.newHashSet();
+			Set<ResourceLocation> generatedRecipes = Sets.newHashSet();
 			List<CompletableFuture<?>> list = new ArrayList<>();
 			RecipeGenerator recipeGenerator = getRecipeGenerator(wrapperLookup, new RecipeExporter() {
 				@Override
-				public void accept(Identifier recipeId, Recipe<?> recipe, @Nullable AdvancementEntry advancement) {
-					Identifier identifier = getRecipeIdentifier(recipeId);
+				public void accept(ResourceLocation recipeId, Recipe<?> recipe, @Nullable AdvancementHolder advancement) {
+					ResourceLocation identifier = getRecipeIdentifier(recipeId);
 
 					if (!generatedRecipes.add(identifier)) {
 						throw new IllegalStateException("Duplicate recipe " + identifier);
 					}
 
-					RegistryOps<JsonElement> registryOps = wrapperLookup.getOps(JsonOps.INSTANCE);
+					RegistryOps<JsonElement> registryOps = wrapperLookup.createSerializationContext(JsonOps.INSTANCE);
 					JsonObject recipeJson = Recipe.CODEC.encodeStart(registryOps, recipe).getOrThrow(IllegalStateException::new).getAsJsonObject();
 					ResourceCondition[] conditions = FabricDataGenHelper.consumeConditions(recipe);
 					FabricDataGenHelper.addConditions(recipeJson, conditions);
 
-					final DataOutput.PathResolver recipesPathResolver = output.getResolver(RegistryKeys.RECIPE);
-					final DataOutput.PathResolver advancementsPathResolver = output.getResolver(RegistryKeys.ADVANCEMENT);
+					final PackOutput.PathProvider recipesPathResolver = output.createRegistryElementsPathProvider(Registries.RECIPE);
+					final PackOutput.PathProvider advancementsPathResolver = output.createRegistryElementsPathProvider(Registries.ADVANCEMENT);
 
-					list.add(DataProvider.writeToPath(writer, recipeJson, recipesPathResolver.resolveJson(identifier)));
+					list.add(DataProvider.saveStable(writer, recipeJson, recipesPathResolver.json(identifier)));
 
 					if (advancement != null) {
 						JsonObject advancementJson = Advancement.CODEC.encodeStart(registryOps, advancement.value()).getOrThrow(IllegalStateException::new).getAsJsonObject();
 						FabricDataGenHelper.addConditions(advancementJson, conditions);
-						list.add(DataProvider.writeToPath(writer, advancementJson, advancementsPathResolver.resolveJson(getRecipeIdentifier(advancement.id()))));
+						list.add(DataProvider.saveStable(writer, advancementJson, advancementsPathResolver.json(getRecipeIdentifier(advancement.id()))));
 					}
 				}
 
 				@Override
 				public Advancement.Builder getAdvancementBuilder() {
 					//noinspection removal
-					return Advancement.Builder.createUntelemetered().parent(CraftingRecipeJsonBuilder.ROOT);
+					return Advancement.Builder.recipeAdvancement().parent(CraftingRecipeJsonBuilder.ROOT);
 				}
 
 				@Override
@@ -142,7 +140,7 @@ public abstract class FabricRecipeProvider extends RecipeGenerator.RecipeProvide
 	/**
 	 * Override this method to change the recipe identifier. The default implementation normalizes the namespace to the mod ID.
 	 */
-	protected Identifier getRecipeIdentifier(Identifier identifier) {
-		return Identifier.of(output.getModId(), identifier.getPath());
+	protected ResourceLocation getRecipeIdentifier(ResourceLocation identifier) {
+		return ResourceLocation.fromNamespaceAndPath(output.getModId(), identifier.getPath());
 	}
 }

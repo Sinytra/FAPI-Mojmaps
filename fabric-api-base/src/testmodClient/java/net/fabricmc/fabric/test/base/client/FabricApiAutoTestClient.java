@@ -37,19 +37,17 @@ import java.nio.file.Path;
 
 import com.mojang.authlib.GameProfile;
 import org.spongepowered.asm.mixin.MixinEnvironment;
-
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.AccessibilityOnboardingScreen;
-import net.minecraft.client.gui.screen.ConfirmScreen;
-import net.minecraft.client.gui.screen.ReconfiguringScreen;
-import net.minecraft.client.gui.screen.TitleScreen;
-import net.minecraft.client.gui.screen.multiplayer.MultiplayerScreen;
-import net.minecraft.client.gui.screen.world.CreateWorldScreen;
-import net.minecraft.client.gui.screen.world.SelectWorldScreen;
-import net.minecraft.client.option.Perspective;
-
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.CameraType;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.AccessibilityOnboardingScreen;
+import net.minecraft.client.gui.screens.ConfirmScreen;
+import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
+import net.minecraft.client.gui.screens.multiplayer.ServerReconfigScreen;
+import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
+import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 
 public class FabricApiAutoTestClient implements ClientModInitializer {
 	@Override
@@ -117,9 +115,9 @@ public class FabricApiAutoTestClient implements ClientModInitializer {
 
 		{
 			// See if the player render events are working.
-			setPerspective(Perspective.THIRD_PERSON_BACK);
+			setPerspective(CameraType.THIRD_PERSON_BACK);
 			takeScreenshot("in_game_overworld_third_person");
-			setPerspective(Perspective.FIRST_PERSON);
+			setPerspective(CameraType.FIRST_PERSON);
 		}
 
 		{
@@ -139,7 +137,7 @@ public class FabricApiAutoTestClient implements ClientModInitializer {
 			connectToServer(server);
 			waitForWorldTicks(5);
 
-			final GameProfile profile = submitAndWait(MinecraftClient::getGameProfile);
+			final GameProfile profile = submitAndWait(Minecraft::getGameProfile);
 			server.runCommand("op " + profile.getName());
 			server.runCommand("gamemode creative " + profile.getName());
 
@@ -148,7 +146,7 @@ public class FabricApiAutoTestClient implements ClientModInitializer {
 
 			{ // Test that we can enter and exit configuration
 				server.runCommand("debugconfig config " + profile.getName());
-				waitForScreen(ReconfiguringScreen.class);
+				waitForScreen(ServerReconfigScreen.class);
 				takeScreenshot("server_config");
 				server.runCommand("debugconfig unconfig " + profile.getId());
 				waitForWorldTicks(1);
@@ -158,7 +156,7 @@ public class FabricApiAutoTestClient implements ClientModInitializer {
 			takeScreenshot("server_game_menu");
 			clickScreenButton("menu.disconnect");
 
-			waitForScreen(MultiplayerScreen.class);
+			waitForScreen(JoinMultiplayerScreen.class);
 			clickScreenButton("gui.back");
 		}
 

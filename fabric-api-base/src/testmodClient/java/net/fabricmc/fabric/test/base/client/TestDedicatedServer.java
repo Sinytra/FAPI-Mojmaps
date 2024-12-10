@@ -30,14 +30,14 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import net.minecraft.server.Main;
-import net.minecraft.server.dedicated.MinecraftDedicatedServer;
+import net.minecraft.server.dedicated.DedicatedServer;
 
 public class TestDedicatedServer implements Closeable {
-	public static final AtomicReference<MinecraftDedicatedServer> DEDICATED_SERVER_REF = new AtomicReference<>();
+	public static final AtomicReference<DedicatedServer> DEDICATED_SERVER_REF = new AtomicReference<>();
 	private static final Duration START_TIMEOUT = Duration.ofMinutes(5);
 
 	final ExecutorService executor = Executors.newSingleThreadExecutor();
-	MinecraftDedicatedServer server;
+	DedicatedServer server;
 
 	public TestDedicatedServer() {
 		assert DEDICATED_SERVER_REF.get() == null : "A dedicated server is already running";
@@ -47,12 +47,12 @@ public class TestDedicatedServer implements Closeable {
 	}
 
 	public String getConnectionAddress() {
-		return "localhost:" + server.getServerPort();
+		return "localhost:" + server.getPort();
 	}
 
 	public void runCommand(String command) {
 		submitAndWait(server -> {
-			server.enqueueCommand(command, server.getCommandSource());
+			server.handleConsoleInput(command, server.createCommandSourceStack());
 			return null;
 		});
 	}
@@ -62,11 +62,11 @@ public class TestDedicatedServer implements Closeable {
 		Main.main(new String[]{});
 	}
 
-	private <T> CompletableFuture<T> submit(Function<MinecraftDedicatedServer, T> function) {
+	private <T> CompletableFuture<T> submit(Function<DedicatedServer, T> function) {
 		return server.submit(() -> function.apply(server));
 	}
 
-	private <T> T submitAndWait(Function<MinecraftDedicatedServer, T> function) {
+	private <T> T submitAndWait(Function<DedicatedServer, T> function) {
 		return submit(function).join();
 	}
 
@@ -100,7 +100,7 @@ public class TestDedicatedServer implements Closeable {
 
 	@Override
 	public void close() {
-		server.stop(true);
+		server.halt(true);
 		executor.close();
 	}
 }

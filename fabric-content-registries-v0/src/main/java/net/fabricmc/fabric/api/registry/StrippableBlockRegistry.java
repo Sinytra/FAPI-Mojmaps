@@ -21,12 +21,10 @@ import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import net.minecraft.block.Block;
-import net.minecraft.state.property.Properties;
-
 import net.fabricmc.fabric.impl.content.registry.util.ImmutableCollectionUtils;
 import net.fabricmc.fabric.mixin.content.registry.AxeItemAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 /**
  * A registry for axe stripping interactions. A vanilla example is turning logs to stripped logs.
@@ -40,11 +38,11 @@ public final class StrippableBlockRegistry {
 	/**
 	 * Registers a stripping interaction.
 	 *
-	 * <p>Both blocks must have the {@link Properties#AXIS axis} property.
+	 * <p>Both blocks must have the {@link BlockStateProperties#AXIS axis} property.
 	 *
 	 * @param input    the input block that can be stripped
 	 * @param stripped the stripped result block
-	 * @throws IllegalArgumentException if the input or the output doesn't have the {@link Properties#AXIS axis} property
+	 * @throws IllegalArgumentException if the input or the output doesn't have the {@link BlockStateProperties#AXIS axis} property
 	 */
 	public static void register(Block input, Block stripped) {
 		requireNonNullAndAxisProperty(input, "input block");
@@ -60,7 +58,7 @@ public final class StrippableBlockRegistry {
 	private static void requireNonNullAndAxisProperty(Block block, String name) {
 		Objects.requireNonNull(block, name + " cannot be null");
 
-		if (!block.getStateManager().getProperties().contains(Properties.AXIS)) {
+		if (!block.getStateDefinition().getProperties().contains(BlockStateProperties.AXIS)) {
 			throw new IllegalArgumentException(name + " must have the 'axis' property");
 		}
 	}

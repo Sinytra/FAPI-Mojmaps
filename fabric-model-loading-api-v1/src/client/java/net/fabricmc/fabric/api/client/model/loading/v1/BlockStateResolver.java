@@ -16,11 +16,10 @@
 
 package net.fabricmc.fabric.api.client.model.loading.v1;
 
+import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.ApiStatus;
-
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.model.UnbakedModel;
 
 /**
  * Block state resolvers are responsible for mapping each {@link BlockState} of a block to an {@link UnbakedModel}.

@@ -25,18 +25,16 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 
 import com.google.common.collect.Sets;
-
-import net.minecraft.block.Block;
-import net.minecraft.data.DataWriter;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.data.CachedOutput;
 import net.minecraft.data.server.loottable.BlockLootTableGenerator;
-import net.minecraft.loot.LootTable;
-import net.minecraft.loot.context.LootContextTypes;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.resource.featuretoggle.FeatureFlags;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.flag.FeatureFlags;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.impl.datagen.loot.FabricLootTableProviderImpl;
@@ -48,11 +46,11 @@ import net.fabricmc.fabric.impl.datagen.loot.FabricLootTableProviderImpl;
  */
 public abstract class FabricBlockLootTableProvider extends BlockLootTableGenerator implements FabricLootTableProvider {
 	private final FabricDataOutput output;
-	private final Set<Identifier> excludedFromStrictValidation = new HashSet<>();
-	private final CompletableFuture<RegistryWrapper.WrapperLookup> registryLookupFuture;
+	private final Set<ResourceLocation> excludedFromStrictValidation = new HashSet<>();
+	private final CompletableFuture<HolderLookup.Provider> registryLookupFuture;
 
-	protected FabricBlockLootTableProvider(FabricDataOutput dataOutput, CompletableFuture<RegistryWrapper.WrapperLookup> registryLookup) {
-		super(Collections.emptySet(), FeatureFlags.FEATURE_MANAGER.getFeatureSet(), registryLookup.join());
+	protected FabricBlockLootTableProvider(FabricDataOutput dataOutput, CompletableFuture<HolderLookup.Provider> registryLookup) {
+		super(Collections.emptySet(), FeatureFlags.REGISTRY.allFlags(), registryLookup.join());
 		this.output = dataOutput;
 		this.registryLookupFuture = registryLookup;
 	}
@@ -69,27 +67,27 @@ public abstract class FabricBlockLootTableProvider extends BlockLootTableGenerat
 	 * Disable strict validation for the passed block.
 	 */
 	public void excludeFromStrictValidation(Block block) {
-		excludedFromStrictValidation.add(Registries.BLOCK.getId(block));
+		excludedFromStrictValidation.add(BuiltInRegistries.BLOCK.getKey(block));
 	}
 
 	@Override
-	public void accept(BiConsumer<RegistryKey<LootTable>, LootTable.Builder> biConsumer) {
+	public void accept(BiConsumer<ResourceKey<LootTable>, LootTable.Builder> biConsumer) {
 		generate();
 
-		for (Map.Entry<RegistryKey<LootTable>, LootTable.Builder> entry : lootTables.entrySet()) {
-			RegistryKey<LootTable> registryKey = entry.getKey();
+		for (Map.Entry<ResourceKey<LootTable>, LootTable.Builder> entry : lootTables.entrySet()) {
+			ResourceKey<LootTable> registryKey = entry.getKey();
 
 			biConsumer.accept(registryKey, entry.getValue());
 		}
 
 		if (output.isStrictValidationEnabled()) {
-			Set<Identifier> missing = Sets.newHashSet();
+			Set<ResourceLocation> missing = Sets.newHashSet();
 
-			for (Identifier blockId : Registries.BLOCK.getIds()) {
+			for (ResourceLocation blockId : BuiltInRegistries.BLOCK.keySet()) {
 				if (blockId.getNamespace().equals(output.getModId())) {
-					Optional<RegistryKey<LootTable>> blockLootTableId = Registries.BLOCK.get(blockId).getLootTableKey();
+					Optional<ResourceKey<LootTable>> blockLootTableId = BuiltInRegistries.BLOCK.getValue(blockId).getLootTable();
 
-					if (blockLootTableId.isPresent() && blockLootTableId.get().getValue().getNamespace().equals(output.getModId())) {
+					if (blockLootTableId.isPresent() && blockLootTableId.get().location().getNamespace().equals(output.getModId())) {
 						if (!lootTables.containsKey(blockLootTableId.get())) {
 							missing.add(blockId);
 						}
@@ -106,8 +104,8 @@ public abstract class FabricBlockLootTableProvider extends BlockLootTableGenerat
 	}
 
 	@Override
-	public CompletableFuture<?> run(DataWriter writer) {
-		return FabricLootTableProviderImpl.run(writer, this, LootContextTypes.BLOCK, output, registryLookupFuture);
+	public CompletableFuture<?> run(CachedOutput writer) {
+		return FabricLootTableProviderImpl.run(writer, this, LootContextParamSets.BLOCK, output, registryLookupFuture);
 	}
 
 	@Override

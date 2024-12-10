@@ -16,27 +16,25 @@
 
 package net.fabricmc.fabric.impl.client.indigo.renderer.render;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.MatrixUtil;
 import java.util.function.Supplier;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.block.BlockState;
 import net.minecraft.client.color.item.ItemColors;
-import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.RenderLayers;
-import net.minecraft.client.render.TexturedRenderLayers;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.item.ItemRenderer;
-import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.json.ModelTransformationMode;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MatrixUtil;
-import net.minecraft.util.math.random.Random;
-
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.Sheets;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
 import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
@@ -55,8 +53,8 @@ public class ItemRenderContext extends AbstractRenderContext {
 	private static final long ITEM_RANDOM_SEED = 42L;
 
 	private final ItemColors colorMap;
-	private final Random random = Random.create();
-	private final Supplier<Random> randomSupplier = () -> {
+	private final RandomSource random = RandomSource.create();
+	private final Supplier<RandomSource> randomSupplier = () -> {
 		random.setSeed(ITEM_RANDOM_SEED);
 		return random;
 	};
@@ -77,15 +75,15 @@ public class ItemRenderContext extends AbstractRenderContext {
 
 	private ItemStack itemStack;
 	private ModelTransformationMode transformMode;
-	private MatrixStack matrixStack;
-	private VertexConsumerProvider vertexConsumerProvider;
+	private PoseStack matrixStack;
+	private MultiBufferSource vertexConsumerProvider;
 	private int lightmap;
 
 	private boolean isDefaultTranslucent;
 	private boolean isDefaultGlint;
 	private boolean isGlintDynamicDisplay;
 
-	private MatrixStack.Entry dynamicDisplayGlintEntry;
+	private PoseStack.Pose dynamicDisplayGlintEntry;
 	private VertexConsumer translucentVertexConsumer;
 	private VertexConsumer cutoutVertexConsumer;
 	private VertexConsumer translucentGlintVertexConsumer;
@@ -116,7 +114,7 @@ public class ItemRenderContext extends AbstractRenderContext {
 		return vanillaModelConsumer;
 	}
 
-	public void renderModel(ItemStack itemStack, ModelTransformationMode transformMode, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int lightmap, int overlay, BakedModel model) {
+	public void renderModel(ItemStack itemStack, ModelTransformationMode transformMode, PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, int lightmap, int overlay, BakedModel model) {
 		this.itemStack = itemStack;
 		this.transformMode = transformMode;
 		this.matrixStack = matrixStack;
@@ -125,8 +123,8 @@ public class ItemRenderContext extends AbstractRenderContext {
 		this.overlay = overlay;
 		computeOutputInfo();
 
-		matrix = matrixStack.peek().getPositionMatrix();
-		normalMatrix = matrixStack.peek().getNormalMatrix();
+		matrix = matrixStack.last().pose();
+		normalMatrix = matrixStack.last().normal();
 
 		model.emitItemQuads(itemStack, randomSupplier, this);
 
@@ -142,8 +140,8 @@ public class ItemRenderContext extends AbstractRenderContext {
 	}
 
 	private void computeOutputInfo() {
-		isDefaultTranslucent = RenderLayers.getItemLayer(itemStack) == TexturedRenderLayers.getItemEntityTranslucentCull();
-		isDefaultGlint = itemStack.hasGlint();
+		isDefaultTranslucent = ItemBlockRenderTypes.getRenderType(itemStack) == Sheets.translucentItemSheet();
+		isDefaultGlint = itemStack.hasFoil();
 		isGlintDynamicDisplay = ItemRendererAccessor.fabric_callUsesDynamicDisplay(itemStack);
 	}
 
@@ -175,7 +173,7 @@ public class ItemRenderContext extends AbstractRenderContext {
 	private void shadeQuad(MutableQuadViewImpl quad, boolean emissive) {
 		if (emissive) {
 			for (int i = 0; i < 4; i++) {
-				quad.lightmap(i, LightmapTextureManager.MAX_LIGHT_COORDINATE);
+				quad.lightmap(i, LightTexture.FULL_BRIGHT);
 			}
 		} else {
 			final int lightmap = this.lightmap;
@@ -210,13 +208,13 @@ public class ItemRenderContext extends AbstractRenderContext {
 		if (translucent) {
 			if (glint) {
 				if (translucentGlintVertexConsumer == null) {
-					translucentGlintVertexConsumer = createVertexConsumer(TexturedRenderLayers.getItemEntityTranslucentCull(), true);
+					translucentGlintVertexConsumer = createVertexConsumer(Sheets.translucentItemSheet(), true);
 				}
 
 				return translucentGlintVertexConsumer;
 			} else {
 				if (translucentVertexConsumer == null) {
-					translucentVertexConsumer = createVertexConsumer(TexturedRenderLayers.getItemEntityTranslucentCull(), false);
+					translucentVertexConsumer = createVertexConsumer(Sheets.translucentItemSheet(), false);
 				}
 
 				return translucentVertexConsumer;
@@ -224,13 +222,13 @@ public class ItemRenderContext extends AbstractRenderContext {
 		} else {
 			if (glint) {
 				if (cutoutGlintVertexConsumer == null) {
-					cutoutGlintVertexConsumer = createVertexConsumer(TexturedRenderLayers.getEntityCutout(), true);
+					cutoutGlintVertexConsumer = createVertexConsumer(Sheets.cutoutBlockSheet(), true);
 				}
 
 				return cutoutGlintVertexConsumer;
 			} else {
 				if (cutoutVertexConsumer == null) {
-					cutoutVertexConsumer = createVertexConsumer(TexturedRenderLayers.getEntityCutout(), false);
+					cutoutVertexConsumer = createVertexConsumer(Sheets.cutoutBlockSheet(), false);
 				}
 
 				return cutoutVertexConsumer;
@@ -238,22 +236,22 @@ public class ItemRenderContext extends AbstractRenderContext {
 		}
 	}
 
-	private VertexConsumer createVertexConsumer(RenderLayer layer, boolean glint) {
+	private VertexConsumer createVertexConsumer(RenderType layer, boolean glint) {
 		if (isGlintDynamicDisplay && glint) {
 			if (dynamicDisplayGlintEntry == null) {
-				dynamicDisplayGlintEntry = matrixStack.peek().copy();
+				dynamicDisplayGlintEntry = matrixStack.last().copy();
 
 				if (transformMode == ModelTransformationMode.GUI) {
-					MatrixUtil.scale(dynamicDisplayGlintEntry.getPositionMatrix(), 0.5F);
+					MatrixUtil.mulComponentWise(dynamicDisplayGlintEntry.pose(), 0.5F);
 				} else if (transformMode.isFirstPerson()) {
-					MatrixUtil.scale(dynamicDisplayGlintEntry.getPositionMatrix(), 0.75F);
+					MatrixUtil.mulComponentWise(dynamicDisplayGlintEntry.pose(), 0.75F);
 				}
 			}
 
-			return ItemRenderer.getDynamicDisplayGlintConsumer(vertexConsumerProvider, layer, dynamicDisplayGlintEntry);
+			return ItemRenderer.getCompassFoilBuffer(vertexConsumerProvider, layer, dynamicDisplayGlintEntry);
 		}
 
-		return ItemRenderer.getItemGlintConsumer(vertexConsumerProvider, layer, true, glint);
+		return ItemRenderer.getFoilBuffer(vertexConsumerProvider, layer, true, glint);
 	}
 
 	private class BakedModelConsumerImpl implements BakedModelConsumer {

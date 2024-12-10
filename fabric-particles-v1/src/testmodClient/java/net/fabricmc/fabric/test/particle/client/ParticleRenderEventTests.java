@@ -16,13 +16,12 @@
 
 package net.fabricmc.fabric.test.particle.client;
 
-import net.minecraft.registry.tag.FluidTags;
-
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleRenderEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.fabricmc.fabric.test.particle.ParticleTestSetup;
 import net.fabricmc.fabric.test.particle.ParticleTintTestBlock;
+import net.minecraft.tags.FluidTags;
 
 public final class ParticleRenderEventTests implements ClientModInitializer {
 	@Override
@@ -36,10 +35,10 @@ public final class ParticleRenderEventTests implements ClientModInitializer {
 		}, ParticleTestSetup.ALWAYS_TINTED, ParticleTestSetup.TINTED_OVER_WATER, ParticleTestSetup.NEVER_TINTED);
 
 		ParticleRenderEvents.ALLOW_BLOCK_DUST_TINT.register((state, world, pos) -> {
-			if (state.isOf(ParticleTestSetup.NEVER_TINTED)) {
+			if (state.is(ParticleTestSetup.NEVER_TINTED)) {
 				return false;
-			} else if (state.isOf(ParticleTestSetup.TINTED_OVER_WATER)) {
-				return world.getFluidState(pos.down()).isIn(FluidTags.WATER);
+			} else if (state.is(ParticleTestSetup.TINTED_OVER_WATER)) {
+				return world.getFluidState(pos.below()).is(FluidTags.WATER);
 			}
 
 			return true;

@@ -27,16 +27,14 @@ import com.google.common.collect.Maps;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
-
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
-import net.minecraft.data.DataWriter;
-import net.minecraft.loot.LootTable;
 import net.minecraft.loot.context.LootContextType;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.RegistryOps;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.resources.RegistryOps;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.storage.loot.LootTable;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricBlockLootTableProvider;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricLootTableProvider;
@@ -49,13 +47,13 @@ public final class FabricLootTableProviderImpl {
 	 * Shared run logic for {@link FabricBlockLootTableProvider} and {@link SimpleFabricLootTableProvider}.
 	 */
 	public static CompletableFuture<?> run(
-			DataWriter writer,
+			CachedOutput writer,
 			FabricLootTableProvider provider,
 			LootContextType lootContextType,
 			FabricDataOutput fabricDataOutput,
-			CompletableFuture<RegistryWrapper.WrapperLookup> registryLookup) {
-		HashMap<Identifier, LootTable> builders = Maps.newHashMap();
-		HashMap<Identifier, ResourceCondition[]> conditionMap = new HashMap<>();
+			CompletableFuture<HolderLookup.Provider> registryLookup) {
+		HashMap<ResourceLocation, LootTable> builders = Maps.newHashMap();
+		HashMap<ResourceLocation, ResourceCondition[]> conditionMap = new HashMap<>();
 
 		return registryLookup.thenCompose(lookup -> {
 			provider.accept((registryKey, builder) -> {
@@ -67,21 +65,21 @@ public final class FabricLootTableProviderImpl {
 				}
 			});
 
-			RegistryOps<JsonElement> ops = lookup.getOps(JsonOps.INSTANCE);
+			RegistryOps<JsonElement> ops = lookup.createSerializationContext(JsonOps.INSTANCE);
 			final List<CompletableFuture<?>> futures = new ArrayList<>();
 
-			for (Map.Entry<Identifier, LootTable> entry : builders.entrySet()) {
-				JsonObject tableJson = (JsonObject) LootTable.CODEC.encodeStart(ops, entry.getValue()).getOrThrow(IllegalStateException::new);
+			for (Map.Entry<ResourceLocation, LootTable> entry : builders.entrySet()) {
+				JsonObject tableJson = (JsonObject) LootTable.DIRECT_CODEC.encodeStart(ops, entry.getValue()).getOrThrow(IllegalStateException::new);
 				FabricDataGenHelper.addConditions(tableJson, conditionMap.remove(entry.getKey()));
-				futures.add(DataProvider.writeToPath(writer, tableJson, getOutputPath(fabricDataOutput, entry.getKey())));
+				futures.add(DataProvider.saveStable(writer, tableJson, getOutputPath(fabricDataOutput, entry.getKey())));
 			}
 
 			return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new));
 		});
 	}
 
-	private static Path getOutputPath(FabricDataOutput dataOutput, Identifier lootTableId) {
-		return dataOutput.getResolver(RegistryKeys.LOOT_TABLE).resolveJson(lootTableId);
+	private static Path getOutputPath(FabricDataOutput dataOutput, ResourceLocation lootTableId) {
+		return dataOutput.createRegistryElementsPathProvider(Registries.LOOT_TABLE).json(lootTableId);
 	}
 
 	private FabricLootTableProviderImpl() {

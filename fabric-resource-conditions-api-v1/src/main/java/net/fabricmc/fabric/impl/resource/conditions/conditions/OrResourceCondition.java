@@ -21,13 +21,11 @@ import java.util.List;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.registry.RegistryOps;
-
 import net.fabricmc.fabric.api.resource.conditions.v1.ResourceCondition;
 import net.fabricmc.fabric.api.resource.conditions.v1.ResourceConditionType;
 import net.fabricmc.fabric.impl.resource.conditions.DefaultResourceConditionTypes;
 import net.fabricmc.fabric.impl.resource.conditions.ResourceConditionsImpl;
+import net.minecraft.resources.RegistryOps;
 
 public record OrResourceCondition(List<ResourceCondition> conditions) implements ResourceCondition {
 	public static final MapCodec<OrResourceCondition> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
@@ -40,7 +38,7 @@ public record OrResourceCondition(List<ResourceCondition> conditions) implements
 	}
 
 	@Override
-	public boolean test(@Nullable RegistryOps.RegistryInfoGetter registryInfo) {
+	public boolean test(@Nullable RegistryOps.RegistryInfoLookup registryInfo) {
 		return ResourceConditionsImpl.conditionsMet(this.conditions(), registryInfo, false);
 	}
 }

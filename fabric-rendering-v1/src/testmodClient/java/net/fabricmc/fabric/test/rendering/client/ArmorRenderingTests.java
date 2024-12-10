@@ -16,31 +16,30 @@
 
 package net.fabricmc.fabric.test.rendering.client;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.entity.model.BipedEntityModel;
-import net.minecraft.client.render.entity.model.EntityModelLayers;
-import net.minecraft.client.render.entity.state.BipedEntityRenderState;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.item.Items;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.ArmorRenderer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.model.geom.ModelLayers;
+import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.Items;
 
 public class ArmorRenderingTests implements ClientModInitializer {
-	private BipedEntityModel<BipedEntityRenderState> armorModel;
-	private final Identifier texture = Identifier.ofVanilla("textures/block/dirt.png");
+	private HumanoidModel<HumanoidRenderState> armorModel;
+	private final ResourceLocation texture = ResourceLocation.withDefaultNamespace("textures/block/dirt.png");
 
 	// Renders a biped model with dirt texture, replacing diamond helmet and diamond chest plate rendering
 	@Override
 	public void onInitializeClient() {
 		ArmorRenderer.register((matrices, vertexConsumers, stack, renderState, slot, light, model) -> {
 			if (armorModel == null) {
-				armorModel = new BipedEntityModel<>(MinecraftClient.getInstance().getEntityModelLoader().getModelPart(EntityModelLayers.PLAYER_OUTER_ARMOR));
+				armorModel = new HumanoidModel<>(Minecraft.getInstance().getEntityModelLoader().getModelPart(ModelLayers.PLAYER_OUTER_ARMOR));
 			}
 
-			armorModel.setAngles(renderState);
-			armorModel.setVisible(false);
+			armorModel.setupAnim(renderState);
+			armorModel.setAllVisible(false);
 			armorModel.body.visible = slot == EquipmentSlot.CHEST;
 			armorModel.leftArm.visible = slot == EquipmentSlot.CHEST;
 			armorModel.rightArm.visible = slot == EquipmentSlot.CHEST;

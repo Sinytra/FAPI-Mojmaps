@@ -25,17 +25,15 @@ import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-
 import net.fabricmc.fabric.api.item.v1.CustomDamageHandler;
 import net.fabricmc.fabric.api.item.v1.FabricItemStack;
 import net.fabricmc.fabric.impl.item.ItemExtensions;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
 @Mixin(ItemStack.class)
 public abstract class ItemStackMixin implements FabricItemStack {
@@ -43,10 +41,10 @@ public abstract class ItemStackMixin implements FabricItemStack {
 	public abstract Item getItem();
 
 	@Shadow
-	public abstract void decrement(int amount);
+	public abstract void shrink(int amount);
 
-	@WrapOperation(method = "damage(ILnet/minecraft/entity/LivingEntity;Lnet/minecraft/entity/EquipmentSlot;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/ItemStack;damage(ILnet/minecraft/server/world/ServerWorld;Lnet/minecraft/server/network/ServerPlayerEntity;Ljava/util/function/Consumer;)V"))
-	private void hookDamage(ItemStack instance, int amount, ServerWorld serverWorld, ServerPlayerEntity serverPlayerEntity, Consumer<Item> consumer, Operation<Void> original, @Local(argsOnly = true) LivingEntity entity, @Local(argsOnly = true) EquipmentSlot slot) {
+	@WrapOperation(method = "hurtAndBreak(ILnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/EquipmentSlot;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;hurtAndBreak(ILnet/minecraft/server/level/ServerLevel;Lnet/minecraft/server/level/ServerPlayer;Ljava/util/function/Consumer;)V"))
+	private void hookDamage(ItemStack instance, int amount, ServerLevel serverWorld, ServerPlayer serverPlayerEntity, Consumer<Item> consumer, Operation<Void> original, @Local(argsOnly = true) LivingEntity entity, @Local(argsOnly = true) EquipmentSlot slot) {
 		CustomDamageHandler handler = ((ItemExtensions) getItem()).fabric_getCustomDamageHandler();
 
 		/*
@@ -57,12 +55,12 @@ public abstract class ItemStackMixin implements FabricItemStack {
 			we preserve the pre-24w21a behavior of not calling in creative mode.
 		*/
 
-		if (handler != null && !entity.isInCreativeMode()) {
+		if (handler != null && !entity.hasInfiniteMaterials()) {
 			// Track whether an item has been broken by custom handler
 			MutableBoolean mut = new MutableBoolean(false);
 			amount = handler.damage((ItemStack) (Object) this, amount, entity, slot, () -> {
 				mut.setTrue();
-				this.decrement(1);
+				this.shrink(1);
 				consumer.accept(this.getItem());
 			});
 

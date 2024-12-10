@@ -21,17 +21,15 @@ import java.util.function.Function;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
-
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.Baker;
-import net.minecraft.client.render.model.ModelBakeSettings;
-import net.minecraft.client.render.model.UnbakedModel;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.util.ModelIdentifier;
-import net.minecraft.client.util.SpriteIdentifier;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.event.Event;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.Material;
+import net.minecraft.client.resources.model.ModelBaker;
+import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.client.resources.model.ModelState;
+import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Contains interfaces for the events that can be used to modify models at different points in the loading and baking
@@ -57,20 +55,20 @@ public final class ModelModifier {
 	/**
 	 * Recommended phase to use when overriding models, e.g. replacing a model with another model.
 	 */
-	public static final Identifier OVERRIDE_PHASE = Identifier.of("fabric", "override");
+	public static final ResourceLocation OVERRIDE_PHASE = ResourceLocation.fromNamespaceAndPath("fabric", "override");
 	/**
 	 * Recommended phase to use for transformations that need to happen before wrapping, but after model overrides.
 	 */
-	public static final Identifier DEFAULT_PHASE = Event.DEFAULT_PHASE;
+	public static final ResourceLocation DEFAULT_PHASE = Event.DEFAULT_PHASE;
 	/**
 	 * Recommended phase to use when wrapping models.
 	 */
-	public static final Identifier WRAP_PHASE = Identifier.of("fabric", "wrap");
+	public static final ResourceLocation WRAP_PHASE = ResourceLocation.fromNamespaceAndPath("fabric", "wrap");
 	/**
 	 * Recommended phase to use when wrapping models with transformations that want to happen last,
 	 * e.g. for connected textures or other similar visual effects that should be the final processing step.
 	 */
-	public static final Identifier WRAP_LAST_PHASE = Identifier.of("fabric", "wrap_last");
+	public static final ResourceLocation WRAP_LAST_PHASE = ResourceLocation.fromNamespaceAndPath("fabric", "wrap_last");
 
 	@FunctionalInterface
 	public interface OnLoad {
@@ -93,21 +91,21 @@ public final class ModelModifier {
 			/**
 			 * Models with a resource ID are loaded directly from JSON or a {@link ModelModifier}.
 			 *
-			 * @return the identifier of the given model as an {@link Identifier}, or null if {@link #topLevelId()} is
+			 * @return the identifier of the given model as an {@link ResourceLocation}, or null if {@link #topLevelId()} is
 			 * not null
 			 */
 			@UnknownNullability("#topLevelId() != null")
-			Identifier resourceId();
+			ResourceLocation resourceId();
 
 			/**
 			 * Models with a top-level ID are loaded from blockstate files, {@link BlockStateResolver}s, or by copying
 			 * a previously loaded model.
 			 *
-			 * @return the identifier of the given model as a {@link ModelIdentifier}, or null if {@link #resourceId()}
+			 * @return the identifier of the given model as a {@link ModelResourceLocation}, or null if {@link #resourceId()}
 			 * is not null
 			 */
 			@UnknownNullability("#resourceId() != null")
-			ModelIdentifier topLevelId();
+			ModelResourceLocation topLevelId();
 		}
 	}
 
@@ -131,38 +129,38 @@ public final class ModelModifier {
 			/**
 			 * Models with a resource ID are loaded directly from JSON or a {@link ModelModifier}.
 			 *
-			 * @return the identifier of the given model as an {@link Identifier}, or null if {@link #topLevelId()} is
+			 * @return the identifier of the given model as an {@link ResourceLocation}, or null if {@link #topLevelId()} is
 			 * not null
 			 */
 			@UnknownNullability("#topLevelId() != null")
-			Identifier resourceId();
+			ResourceLocation resourceId();
 
 			/**
 			 * Models with a top-level ID are loaded from blockstate files, {@link BlockStateResolver}s, or by copying
 			 * a previously loaded model.
 			 *
-			 * @return the identifier of the given model as a {@link ModelIdentifier}, or null if {@link #resourceId()}
+			 * @return the identifier of the given model as a {@link ModelResourceLocation}, or null if {@link #resourceId()}
 			 * is not null
 			 */
 			@UnknownNullability("#resourceId() != null")
-			ModelIdentifier topLevelId();
+			ModelResourceLocation topLevelId();
 
 			/**
 			 * The function that can be used to retrieve sprites.
 			 */
-			Function<SpriteIdentifier, Sprite> textureGetter();
+			Function<Material, TextureAtlasSprite> textureGetter();
 
 			/**
 			 * The settings this model is being baked with.
 			 */
-			ModelBakeSettings settings();
+			ModelState settings();
 
 			/**
 			 * The baker being used to bake this model.
-			 * It can be used to {@linkplain Baker#getModel get unbaked models} and
-			 * {@linkplain Baker#bake bake models}.
+			 * It can be used to {@linkplain ModelBaker#getModel get unbaked models} and
+			 * {@linkplain ModelBaker#bake bake models}.
 			 */
-			Baker baker();
+			ModelBaker baker();
 		}
 	}
 
@@ -173,7 +171,7 @@ public final class ModelModifier {
 		 * it is cached.
 		 *
 		 * <p>Note that the passed baked model may be null and that this handler may return a null baked model, since
-		 * {@link UnbakedModel#bake} and {@link Baker#bake} may also return null baked models. Null baked models are
+		 * {@link UnbakedModel#bakeWithTopModelValues} and {@link ModelBaker#bake} may also return null baked models. Null baked models are
 		 * automatically mapped to the missing model during model retrieval.
 		 *
 		 * <p>For further information, see the docs of {@link ModelLoadingPlugin.Context#modifyModelAfterBake()}.
@@ -194,21 +192,21 @@ public final class ModelModifier {
 			/**
 			 * Models with a resource ID are loaded directly from JSON or a {@link ModelModifier}.
 			 *
-			 * @return the identifier of the given model as an {@link Identifier}, or null if {@link #topLevelId()} is
+			 * @return the identifier of the given model as an {@link ResourceLocation}, or null if {@link #topLevelId()} is
 			 * not null
 			 */
 			@UnknownNullability("#topLevelId() != null")
-			Identifier resourceId();
+			ResourceLocation resourceId();
 
 			/**
 			 * Models with a top-level ID are loaded from blockstate files, {@link BlockStateResolver}s, or by copying
 			 * a previously loaded model.
 			 *
-			 * @return the identifier of the given model as a {@link ModelIdentifier}, or null if {@link #resourceId()}
+			 * @return the identifier of the given model as a {@link ModelResourceLocation}, or null if {@link #resourceId()}
 			 * is not null
 			 */
 			@UnknownNullability("#resourceId() != null")
-			ModelIdentifier topLevelId();
+			ModelResourceLocation topLevelId();
 
 			/**
 			 * The unbaked model that is being baked.
@@ -218,19 +216,19 @@ public final class ModelModifier {
 			/**
 			 * The function that can be used to retrieve sprites.
 			 */
-			Function<SpriteIdentifier, Sprite> textureGetter();
+			Function<Material, TextureAtlasSprite> textureGetter();
 
 			/**
 			 * The settings this model is being baked with.
 			 */
-			ModelBakeSettings settings();
+			ModelState settings();
 
 			/**
 			 * The baker being used to bake this model.
-			 * It can be used to {@linkplain Baker#getModel get unbaked models} and
-			 * {@linkplain Baker#bake bake models}.
+			 * It can be used to {@linkplain ModelBaker#getModel get unbaked models} and
+			 * {@linkplain ModelBaker#bake bake models}.
 			 */
-			Baker baker();
+			ModelBaker baker();
 		}
 	}
 

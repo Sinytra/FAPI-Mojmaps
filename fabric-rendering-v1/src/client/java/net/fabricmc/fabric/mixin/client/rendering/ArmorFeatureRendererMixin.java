@@ -21,40 +21,38 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.feature.ArmorFeatureRenderer;
-import net.minecraft.client.render.entity.feature.FeatureRenderer;
-import net.minecraft.client.render.entity.feature.FeatureRendererContext;
-import net.minecraft.client.render.entity.model.BipedEntityModel;
-import net.minecraft.client.render.entity.state.BipedEntityRenderState;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.item.ItemStack;
-
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.fabricmc.fabric.api.client.rendering.v1.ArmorRenderer;
 import net.fabricmc.fabric.impl.client.rendering.ArmorRendererRegistryImpl;
+import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.RenderLayerParent;
+import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
+import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.ItemStack;
 
-@Mixin(ArmorFeatureRenderer.class)
-public abstract class ArmorFeatureRendererMixin<S extends BipedEntityRenderState, M extends BipedEntityModel<S>, A extends BipedEntityModel<S>> extends FeatureRenderer<S, M> {
+@Mixin(HumanoidArmorLayer.class)
+public abstract class ArmorFeatureRendererMixin<S extends HumanoidRenderState, M extends HumanoidModel<S>, A extends HumanoidModel<S>> extends RenderLayer<S, M> {
 	@Unique
-	private BipedEntityRenderState bipedRenderState;
+	private HumanoidRenderState bipedRenderState;
 
-	public ArmorFeatureRendererMixin(FeatureRendererContext<S, M> featureRendererContext) {
+	public ArmorFeatureRendererMixin(RenderLayerParent<S, M> featureRendererContext) {
 		super(featureRendererContext);
 	}
 
-	@Inject(method = "render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;ILnet/minecraft/client/render/entity/state/BipedEntityRenderState;FF)V", at = @At("HEAD"))
-	private void render(MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i, S bipedEntityRenderState, float f, float g, CallbackInfo ci) {
+	@Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/client/renderer/entity/state/HumanoidRenderState;FF)V", at = @At("HEAD"))
+	private void render(PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, int i, S bipedEntityRenderState, float f, float g, CallbackInfo ci) {
 		this.bipedRenderState = bipedEntityRenderState;
 	}
 
-	@Inject(method = "renderArmor", at = @At("HEAD"), cancellable = true)
-	private void renderArmor(MatrixStack matrices, VertexConsumerProvider vertexConsumers, S state, ItemStack stack, EquipmentSlot armorSlot, int light, A armorModel, CallbackInfo ci) {
+	@Inject(method = "renderArmorPiece", at = @At("HEAD"), cancellable = true)
+	private void renderArmor(PoseStack matrices, MultiBufferSource vertexConsumers, S state, ItemStack stack, EquipmentSlot armorSlot, int light, A armorModel, CallbackInfo ci) {
 		ArmorRenderer renderer = ArmorRendererRegistryImpl.get(stack.getItem());
 
 		if (renderer != null) {
-			renderer.render(matrices, vertexConsumers, stack, bipedRenderState, armorSlot, light, (BipedEntityModel<BipedEntityRenderState>) getContextModel());
+			renderer.render(matrices, vertexConsumers, stack, bipedRenderState, armorSlot, light, (HumanoidModel<HumanoidRenderState>) getParentModel());
 			ci.cancel();
 		}
 	}

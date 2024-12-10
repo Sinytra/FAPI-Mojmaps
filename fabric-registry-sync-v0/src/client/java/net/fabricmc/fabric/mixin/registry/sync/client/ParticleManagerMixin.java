@@ -23,23 +23,21 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.client.particle.ParticleFactory;
-import net.minecraft.client.particle.ParticleManager;
-import net.minecraft.client.texture.TextureManager;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.registry.Registries;
-
 import net.fabricmc.fabric.impl.registry.sync.trackers.Int2ObjectMapTracker;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.particle.ParticleEngine;
+import net.minecraft.client.particle.ParticleProvider;
+import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.core.registries.BuiltInRegistries;
 
-@Mixin(ParticleManager.class)
+@Mixin(ParticleEngine.class)
 public class ParticleManagerMixin {
 	@Final
 	@Shadow
-	private Int2ObjectMap<ParticleFactory<?>> factories;
+	private Int2ObjectMap<ParticleProvider<?>> providers;
 
 	@Inject(method = "<init>", at = @At("RETURN"))
-	public void onInit(ClientWorld world, TextureManager textureManager, CallbackInfo info) {
-		Int2ObjectMapTracker.register(Registries.PARTICLE_TYPE, "ParticleManager.factories", factories);
+	public void onInit(ClientLevel world, TextureManager textureManager, CallbackInfo info) {
+		Int2ObjectMapTracker.register(BuiltInRegistries.PARTICLE_TYPE, "ParticleManager.factories", providers);
 	}
 }

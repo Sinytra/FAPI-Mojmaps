@@ -18,13 +18,11 @@ package net.fabricmc.fabric.impl.client.rendering;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import net.minecraft.client.render.entity.model.EntityModelLayer;
-
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
+import net.minecraft.client.model.geom.ModelLayerLocation;
 
 public final class EntityModelLayerImpl {
-	public static final Map<EntityModelLayer, EntityModelLayerRegistry.TexturedModelDataProvider> PROVIDERS = new HashMap<>();
+	public static final Map<ModelLayerLocation, EntityModelLayerRegistry.TexturedModelDataProvider> PROVIDERS = new HashMap<>();
 
 	private EntityModelLayerImpl() {
 	}

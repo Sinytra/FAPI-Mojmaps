@@ -21,26 +21,24 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import net.minecraft.entity.Entity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.world.TeleportTarget;
-import net.minecraft.world.World;
-
 import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.portal.TeleportTransition;
 
 @Mixin(Entity.class)
 abstract class EntityMixin {
 	@Shadow
-	private World world;
+	private Level level;
 
-	@Inject(method = "teleportTo", at = @At("RETURN"))
-	private void afterWorldChanged(TeleportTarget target, CallbackInfoReturnable<Entity> cir) {
+	@Inject(method = "teleport", at = @At("RETURN"))
+	private void afterWorldChanged(TeleportTransition target, CallbackInfoReturnable<Entity> cir) {
 		// Ret will only have an entity if the teleport worked (entity not removed, teleportTarget was valid, entity was successfully created)
 		Entity ret = cir.getReturnValue();
 
 		if (ret != null) {
-			ServerEntityWorldChangeEvents.AFTER_ENTITY_CHANGE_WORLD.invoker().afterChangeWorld((Entity) (Object) this, ret, (ServerWorld) this.world, (ServerWorld) ret.getWorld());
+			ServerEntityWorldChangeEvents.AFTER_ENTITY_CHANGE_WORLD.invoker().afterChangeWorld((Entity) (Object) this, ret, (ServerLevel) this.level, (ServerLevel) ret.level());
 		}
 	}
 }

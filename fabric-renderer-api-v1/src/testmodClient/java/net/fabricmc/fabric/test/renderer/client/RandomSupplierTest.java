@@ -20,22 +20,20 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.render.model.MultipartBakedModel;
-import net.minecraft.client.render.model.WeightedBakedModel;
 import net.minecraft.client.render.model.json.ModelOverrideList;
-import net.minecraft.client.render.model.json.ModelTransformation;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.util.collection.DataPool;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.BlockRenderView;
-
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.MultiPartBakedModel;
+import net.minecraft.client.resources.model.WeightedBakedModel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.util.random.SimpleWeightedRandomList;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 
@@ -53,34 +51,34 @@ public class RandomSupplierTest implements ClientModInitializer {
 		WeightedBakedModel weightedAgain = createWeightedBakedModel();
 
 		long startingSeed = 42;
-		Random random = Random.create();
+		RandomSource random = RandomSource.create();
 
 		random.setSeed(startingSeed);
-		weightedAgain.getQuads(Blocks.STONE.getDefaultState(), null, random);
+		weightedAgain.getQuads(Blocks.STONE.defaultBlockState(), null, random);
 
 		random.setSeed(startingSeed);
-		weightedAgain.getQuads(Blocks.STONE.getDefaultState(), null, random);
+		weightedAgain.getQuads(Blocks.STONE.defaultBlockState(), null, random);
 
-		Supplier<Random> randomSupplier = () -> {
+		Supplier<RandomSource> randomSupplier = () -> {
 			random.setSeed(startingSeed);
 			return random;
 		};
-		weightedAgain.emitBlockQuads(null, Blocks.STONE.getDefaultState(), BlockPos.ORIGIN, randomSupplier, null);
+		weightedAgain.emitBlockQuads(null, Blocks.STONE.defaultBlockState(), BlockPos.ZERO, randomSupplier, null);
 	}
 
 	private static WeightedBakedModel createWeightedBakedModel() {
 		var checkingModel = new RandomCheckingBakedModel();
 
-		DataPool.Builder<BakedModel> weightedBuilder = DataPool.builder();
+		SimpleWeightedRandomList.Builder<BakedModel> weightedBuilder = SimpleWeightedRandomList.builder();
 		weightedBuilder.add(checkingModel, 1);
 		weightedBuilder.add(checkingModel, 2);
 
 		var weighted = new WeightedBakedModel(weightedBuilder.build());
-		var multipart = new MultipartBakedModel(List.of(
-				new MultipartBakedModel.class_10204(state -> true, weighted),
-				new MultipartBakedModel.class_10204(state -> true, weighted)));
+		var multipart = new MultiPartBakedModel(List.of(
+				new MultiPartBakedModel.class_10204(state -> true, weighted),
+				new MultiPartBakedModel.class_10204(state -> true, weighted)));
 
-		DataPool.Builder<BakedModel> weightedAgainBuilder = DataPool.builder();
+		SimpleWeightedRandomList.Builder<BakedModel> weightedAgainBuilder = SimpleWeightedRandomList.builder();
 		weightedAgainBuilder.add(multipart, 1);
 		weightedAgainBuilder.add(multipart, 2);
 
@@ -89,7 +87,7 @@ public class RandomSupplierTest implements ClientModInitializer {
 
 	private static class RandomCheckingBakedModel implements BakedModel {
 		@Override
-		public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, Random random) {
+		public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, RandomSource random) {
 			long value = random.nextLong();
 
 			if (hasPreviousRandom) {
@@ -105,7 +103,7 @@ public class RandomSupplierTest implements ClientModInitializer {
 		}
 
 		@Override
-		public void emitBlockQuads(BlockRenderView blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context) {
+		public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context) {
 			getQuads(state, null, randomSupplier.get());
 		}
 
@@ -115,12 +113,12 @@ public class RandomSupplierTest implements ClientModInitializer {
 		}
 
 		@Override
-		public boolean hasDepth() {
+		public boolean isGui3d() {
 			return false;
 		}
 
 		@Override
-		public boolean isSideLit() {
+		public boolean usesBlockLight() {
 			return false;
 		}
 
@@ -130,12 +128,12 @@ public class RandomSupplierTest implements ClientModInitializer {
 		}
 
 		@Override
-		public Sprite getParticleSprite() {
+		public TextureAtlasSprite getParticleIcon() {
 			return null;
 		}
 
 		@Override
-		public ModelTransformation getTransformation() {
+		public ItemTransforms getTransforms() {
 			return null;
 		}
 

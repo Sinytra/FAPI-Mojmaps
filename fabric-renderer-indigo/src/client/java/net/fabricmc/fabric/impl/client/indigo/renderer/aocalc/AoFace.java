@@ -17,17 +17,16 @@
 package net.fabricmc.fabric.impl.client.indigo.renderer.aocalc;
 
 import static net.fabricmc.fabric.impl.client.indigo.renderer.aocalc.AoVertexClampFunction.CLAMP_FUNC;
-import static net.minecraft.util.math.Direction.DOWN;
-import static net.minecraft.util.math.Direction.EAST;
-import static net.minecraft.util.math.Direction.NORTH;
-import static net.minecraft.util.math.Direction.SOUTH;
-import static net.minecraft.util.math.Direction.UP;
-import static net.minecraft.util.math.Direction.WEST;
-
-import net.minecraft.util.Util;
-import net.minecraft.util.math.Direction;
+import static net.minecraft.core.Direction.DOWN;
+import static net.minecraft.core.Direction.EAST;
+import static net.minecraft.core.Direction.NORTH;
+import static net.minecraft.core.Direction.SOUTH;
+import static net.minecraft.core.Direction.UP;
+import static net.minecraft.core.Direction.WEST;
 
 import net.fabricmc.fabric.impl.client.indigo.renderer.mesh.QuadViewImpl;
+import net.minecraft.Util;
+import net.minecraft.core.Direction;
 
 /**
  * Adapted from vanilla BlockModelRenderer.AoCalculator.
@@ -93,16 +92,16 @@ enum AoFace {
 	}
 
 	private static final AoFace[] values = Util.make(new AoFace[6], (neighborData) -> {
-		neighborData[DOWN.getId()] = AOF_DOWN;
-		neighborData[UP.getId()] = AOF_UP;
-		neighborData[NORTH.getId()] = AOF_NORTH;
-		neighborData[SOUTH.getId()] = AOF_SOUTH;
-		neighborData[WEST.getId()] = AOF_WEST;
-		neighborData[EAST.getId()] = AOF_EAST;
+		neighborData[DOWN.get3DDataValue()] = AOF_DOWN;
+		neighborData[UP.get3DDataValue()] = AOF_UP;
+		neighborData[NORTH.get3DDataValue()] = AOF_NORTH;
+		neighborData[SOUTH.get3DDataValue()] = AOF_SOUTH;
+		neighborData[WEST.get3DDataValue()] = AOF_WEST;
+		neighborData[EAST.get3DDataValue()] = AOF_EAST;
 	});
 
 	public static AoFace get(Direction direction) {
-		return values[direction.getId()];
+		return values[direction.get3DDataValue()];
 	}
 
 	/**

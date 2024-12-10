@@ -21,28 +21,26 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryWrapper;
-
 import net.fabricmc.fabric.impl.attachment.AttachmentTargetImpl;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 @Mixin(BlockEntity.class)
 abstract class BlockEntityMixin implements AttachmentTargetImpl {
 	@Inject(
-			method = "read",
+			method = "loadWithComponents",
 			at = @At("RETURN")
 	)
-	private void readBlockEntityAttachments(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup, CallbackInfo ci) {
+	private void readBlockEntityAttachments(CompoundTag nbt, HolderLookup.Provider registryLookup, CallbackInfo ci) {
 		this.fabric_readAttachmentsFromNbt(nbt, registryLookup);
 	}
 
 	@Inject(
-			method = "createNbt",
+			method = "saveWithoutMetadata",
 			at = @At("RETURN")
 	)
-	private void writeBlockEntityAttachments(RegistryWrapper.WrapperLookup wrapperLookup, CallbackInfoReturnable<NbtCompound> cir) {
+	private void writeBlockEntityAttachments(HolderLookup.Provider wrapperLookup, CallbackInfoReturnable<CompoundTag> cir) {
 		this.fabric_writeAttachmentsToNbt(cir.getReturnValue(), wrapperLookup);
 	}
 }

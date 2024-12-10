@@ -21,20 +21,18 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.client.render.model.json.ModelOverrideList;
-import net.minecraft.client.render.model.json.ModelTransformation;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.tag.BiomeTags;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.BlockRenderView;
-
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.tags.BiomeTags;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 import net.fabricmc.fabric.api.blockview.v2.FabricBlockView;
 import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
@@ -54,8 +52,8 @@ public class RiverstoneBakedModel implements BakedModel {
 	}
 
 	@Override
-	public void emitBlockQuads(BlockRenderView blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context) {
-		if (((FabricBlockView) blockView).hasBiomes() && ((FabricBlockView) blockView).getBiomeFabric(pos).isIn(BiomeTags.IS_RIVER)) {
+	public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context) {
+		if (((FabricBlockView) blockView).hasBiomes() && ((FabricBlockView) blockView).getBiomeFabric(pos).is(BiomeTags.IS_RIVER)) {
 			riverModel.emitBlockQuads(blockView, state, pos, randomSupplier, context);
 		} else {
 			regularModel.emitBlockQuads(blockView, state, pos, randomSupplier, context);
@@ -63,12 +61,12 @@ public class RiverstoneBakedModel implements BakedModel {
 	}
 
 	@Override
-	public void emitItemQuads(ItemStack stack, Supplier<Random> randomSupplier, RenderContext context) {
+	public void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context) {
 		regularModel.emitItemQuads(stack, randomSupplier, context);
 	}
 
 	@Override
-	public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, Random random) {
+	public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, RandomSource random) {
 		return Collections.emptyList();
 	}
 
@@ -78,12 +76,12 @@ public class RiverstoneBakedModel implements BakedModel {
 	}
 
 	@Override
-	public boolean hasDepth() {
+	public boolean isGui3d() {
 		return false;
 	}
 
 	@Override
-	public boolean isSideLit() {
+	public boolean usesBlockLight() {
 		return true;
 	}
 
@@ -93,12 +91,12 @@ public class RiverstoneBakedModel implements BakedModel {
 	}
 
 	@Override
-	public Sprite getParticleSprite() {
-		return regularModel.getParticleSprite();
+	public TextureAtlasSprite getParticleIcon() {
+		return regularModel.getParticleIcon();
 	}
 
 	@Override
-	public ModelTransformation getTransformation() {
+	public ItemTransforms getTransforms() {
 		return ModelHelper.MODEL_TRANSFORM_BLOCK;
 	}
 

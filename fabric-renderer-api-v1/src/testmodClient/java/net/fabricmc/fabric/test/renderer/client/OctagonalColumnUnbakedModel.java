@@ -19,17 +19,6 @@ package net.fabricmc.fabric.test.renderer.client;
 import java.util.function.Function;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.Baker;
-import net.minecraft.client.render.model.ModelBakeSettings;
-import net.minecraft.client.render.model.UnbakedModel;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.texture.SpriteAtlasTexture;
-import net.minecraft.client.util.SpriteIdentifier;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Direction;
-
 import net.fabricmc.fabric.api.renderer.v1.Renderer;
 import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
 import net.fabricmc.fabric.api.renderer.v1.material.MaterialFinder;
@@ -39,9 +28,18 @@ import net.fabricmc.fabric.api.renderer.v1.mesh.MeshBuilder;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.util.TriState;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.Material;
+import net.minecraft.client.resources.model.ModelBaker;
+import net.minecraft.client.resources.model.ModelState;
+import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 
 public class OctagonalColumnUnbakedModel implements UnbakedModel {
-	private static final SpriteIdentifier WHITE_CONCRETE_SPRITE_ID = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.ofVanilla("block/white_concrete"));
+	private static final Material WHITE_CONCRETE_SPRITE_ID = new Material(TextureAtlas.LOCATION_BLOCKS, ResourceLocation.withDefaultNamespace("block/white_concrete"));
 
 	// (B - A) is the side length of a regular octagon that fits in a unit square.
 	// The line from A to B is centered on the line from 0 to 1.
@@ -55,17 +53,17 @@ public class OctagonalColumnUnbakedModel implements UnbakedModel {
 	}
 
 	@Override
-	public void resolve(Resolver resolver) {
+	public void resolveDependencies(Resolver resolver) {
 	}
 
 	@Override
 	@Nullable
-	public BakedModel bake(Baker baker, Function<SpriteIdentifier, Sprite> textureGetter, ModelBakeSettings rotationContainer) {
+	public BakedModel bake(ModelBaker baker, Function<Material, TextureAtlasSprite> textureGetter, ModelState rotationContainer) {
 		if (!RendererAccess.INSTANCE.hasRenderer()) {
 			return null;
 		}
 
-		Sprite whiteConcreteSprite = textureGetter.apply(WHITE_CONCRETE_SPRITE_ID);
+		TextureAtlasSprite whiteConcreteSprite = textureGetter.apply(WHITE_CONCRETE_SPRITE_ID);
 
 		Renderer renderer = RendererAccess.INSTANCE.getRenderer();
 		MaterialFinder finder = renderer.materialFinder();
@@ -237,7 +235,7 @@ public class OctagonalColumnUnbakedModel implements UnbakedModel {
 		return new SingleMeshBakedModel(builder.build(), whiteConcreteSprite);
 	}
 
-	private static void cornerSprite(QuadEmitter emitter, Sprite sprite) {
+	private static void cornerSprite(QuadEmitter emitter, TextureAtlasSprite sprite) {
 		// Assign uvs for a corner face in such a way that the texture is not stretched, using coordinates in [0, 1].
 		emitter.uv(0, A, 0);
 		emitter.uv(1, A, 1);

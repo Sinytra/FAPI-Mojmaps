@@ -23,23 +23,21 @@ import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.RootCommandNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.command.argument.ItemStackArgument;
-import net.minecraft.command.argument.ItemStackArgumentType;
-import net.minecraft.text.Text;
-
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.commands.arguments.item.ItemArgument;
+import net.minecraft.commands.arguments.item.ItemInput;
+import net.minecraft.network.chat.Component;
 
 public final class ClientCommandTest implements ClientModInitializer {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ClientCommandTest.class);
-	private static final DynamicCommandExceptionType IS_NULL = new DynamicCommandExceptionType(x -> Text.literal("The " + x + " is null"));
-	private static final SimpleCommandExceptionType UNEXECUTABLE_EXECUTED = new SimpleCommandExceptionType(Text.literal("Executed an unexecutable command!"));
+	private static final DynamicCommandExceptionType IS_NULL = new DynamicCommandExceptionType(x -> Component.literal("The " + x + " is null"));
+	private static final SimpleCommandExceptionType UNEXECUTABLE_EXECUTED = new SimpleCommandExceptionType(Component.literal("Executed an unexecutable command!"));
 
 	private boolean wasTested = false;
 
@@ -47,7 +45,7 @@ public final class ClientCommandTest implements ClientModInitializer {
 	public void onInitializeClient() {
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
 			dispatcher.register(ClientCommandManager.literal("test_client_command").executes(context -> {
-				context.getSource().sendFeedback(Text.literal("This is a client command!"));
+				context.getSource().sendFeedback(Component.literal("This is a client command!"));
 
 				if (context.getSource().getClient() == null) {
 					throw IS_NULL.create("client");
@@ -70,7 +68,7 @@ public final class ClientCommandTest implements ClientModInitializer {
 						double number = DoubleArgumentType.getDouble(context, "number");
 
 						// Test error formatting
-						context.getSource().sendError(Text.literal("Your number is " + number));
+						context.getSource().sendError(Component.literal("Your number is " + number));
 
 						return 0;
 					})
@@ -83,9 +81,9 @@ public final class ClientCommandTest implements ClientModInitializer {
 
 			// Command with argument using CommandRegistryAccess
 			dispatcher.register(ClientCommandManager.literal("test_client_command_with_registry_using_arg").then(
-					ClientCommandManager.argument("item", ItemStackArgumentType.itemStack(registryAccess)).executes(context -> {
-						final ItemStackArgument item = ItemStackArgumentType.getItemStackArgument(context, "item");
-						context.getSource().sendFeedback(item.createStack(1, false).toHoverableText());
+					ClientCommandManager.argument("item", ItemArgument.item(registryAccess)).executes(context -> {
+						final ItemInput item = ItemArgument.getItem(context, "item");
+						context.getSource().sendFeedback(item.createItemStack(1, false).getDisplayName());
 
 						return 0;
 					})
@@ -126,8 +124,8 @@ public final class ClientCommandTest implements ClientModInitializer {
 				return;
 			}
 
-			MinecraftClient client = MinecraftClient.getInstance();
-			ClientCommandSource commandSource = client.getNetworkHandler().getCommandSource();
+			Minecraft client = Minecraft.getInstance();
+			ClientSuggestionProvider commandSource = client.getConnection().getSuggestionsProvider();
 
 			RootCommandNode<FabricClientCommandSource> rootNode = ClientCommandManager.getActiveDispatcher().getRoot();
 			CommandNode<FabricClientCommandSource> hiddenClientCommand = rootNode.getChild("hidden_client_command");

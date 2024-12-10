@@ -20,28 +20,26 @@ import java.util.HashMap;
 import java.util.Objects;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemConvertible;
-import net.minecraft.registry.Registries;
-
 import net.fabricmc.fabric.api.client.rendering.v1.ArmorRenderer;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.ItemLike;
 
 public class ArmorRendererRegistryImpl {
 	private static final HashMap<Item, ArmorRenderer> RENDERERS = new HashMap<>();
 
-	public static void register(ArmorRenderer renderer, ItemConvertible... items) {
+	public static void register(ArmorRenderer renderer, ItemLike... items) {
 		Objects.requireNonNull(renderer, "renderer is null");
 
 		if (items.length == 0) {
 			throw new IllegalArgumentException("Armor renderer registered for no item");
 		}
 
-		for (ItemConvertible item : items) {
+		for (ItemLike item : items) {
 			Objects.requireNonNull(item.asItem(), "armor item is null");
 
 			if (RENDERERS.putIfAbsent(item.asItem(), renderer) != null) {
-				throw new IllegalArgumentException("Custom armor renderer already exists for " + Registries.ITEM.getId(item.asItem()));
+				throw new IllegalArgumentException("Custom armor renderer already exists for " + BuiltInRegistries.ITEM.getKey(item.asItem()));
 			}
 		}
 	}

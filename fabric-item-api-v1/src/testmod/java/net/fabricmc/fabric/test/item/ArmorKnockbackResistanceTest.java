@@ -17,46 +17,44 @@
 package net.fabricmc.fabric.test.item;
 
 import java.util.Map;
-
-import net.minecraft.item.ArmorItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.equipment.ArmorMaterial;
-import net.minecraft.item.equipment.EquipmentType;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.tag.ItemTags;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.api.ModInitializer;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.equipment.ArmorMaterial;
+import net.minecraft.world.item.equipment.ArmorType;
 
 public class ArmorKnockbackResistanceTest implements ModInitializer {
 	private static final ArmorMaterial WOOD_ARMOR = createTestArmorMaterial();
 
 	@Override
 	public void onInitialize() {
-		RegistryKey<Item> registryKey = RegistryKey.of(RegistryKeys.ITEM, Identifier.of("fabric-item-api-v1-testmod", "wooden_boots"));
-		Registry.register(Registries.ITEM, registryKey, new ArmorItem(WOOD_ARMOR, EquipmentType.BOOTS, new Item.Settings().registryKey(registryKey)));
+		ResourceKey<Item> registryKey = ResourceKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("fabric-item-api-v1-testmod", "wooden_boots"));
+		Registry.register(BuiltInRegistries.ITEM, registryKey, new ArmorItem(WOOD_ARMOR, ArmorType.BOOTS, new Item.Properties().setId(registryKey)));
 	}
 
 	private static ArmorMaterial createTestArmorMaterial() {
 		return new ArmorMaterial(
 			0,
 			Map.of(
-				EquipmentType.BOOTS, 1,
-				EquipmentType.LEGGINGS, 2,
-				EquipmentType.CHESTPLATE, 3,
-				EquipmentType.HELMET, 1,
-				EquipmentType.BODY, 3
+				ArmorType.BOOTS, 1,
+				ArmorType.LEGGINGS, 2,
+				ArmorType.CHESTPLATE, 3,
+				ArmorType.HELMET, 1,
+				ArmorType.BODY, 3
 			),
 			1,
-			SoundEvents.ITEM_ARMOR_EQUIP_LEATHER,
+			SoundEvents.ARMOR_EQUIP_LEATHER,
 			0,
 			0.5F,
 			ItemTags.REPAIRS_LEATHER_ARMOR,
-			Identifier.of("fabric-item-api-v1-testmod", "wood")
+			ResourceLocation.fromNamespaceAndPath("fabric-item-api-v1-testmod", "wood")
 		);
 	}
 }

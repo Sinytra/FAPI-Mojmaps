@@ -16,25 +16,23 @@
 
 package net.fabricmc.fabric.impl.client.indigo.renderer.render;
 
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import java.util.function.Function;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.OverlayTexture;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.chunk.ChunkRendererRegion;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.crash.CrashException;
-import net.minecraft.util.crash.CrashReport;
-import net.minecraft.util.crash.CrashReportSection;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.Random;
-
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.fabricmc.fabric.impl.client.indigo.renderer.aocalc.AoCalculator;
+import net.minecraft.CrashReport;
+import net.minecraft.CrashReportCategory;
+import net.minecraft.ReportedException;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.chunk.RenderChunkRegion;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Implementation of {@link RenderContext} used during terrain rendering.
@@ -47,8 +45,8 @@ public class TerrainRenderContext extends AbstractBlockRenderContext {
 	private final ChunkRenderInfo chunkInfo = new ChunkRenderInfo();
 
 	public TerrainRenderContext() {
-		overlay = OverlayTexture.DEFAULT_UV;
-		blockInfo.random = Random.create();
+		overlay = OverlayTexture.NO_OVERLAY;
+		blockInfo.random = RandomSource.create();
 	}
 
 	@Override
@@ -67,11 +65,11 @@ public class TerrainRenderContext extends AbstractBlockRenderContext {
 	}
 
 	@Override
-	protected VertexConsumer getVertexConsumer(RenderLayer layer) {
+	protected VertexConsumer getVertexConsumer(RenderType layer) {
 		return chunkInfo.getBuffer(layer);
 	}
 
-	public void prepare(ChunkRendererRegion blockView, Function<RenderLayer, BufferBuilder> bufferFunc) {
+	public void prepare(RenderChunkRegion blockView, Function<RenderType, BufferBuilder> bufferFunc) {
 		chunkInfo.prepare(blockView, bufferFunc);
 		blockInfo.prepareForWorld(blockView, true);
 	}
@@ -82,13 +80,13 @@ public class TerrainRenderContext extends AbstractBlockRenderContext {
 	}
 
 	/** Called from chunk renderer hook. */
-	public void tessellateBlock(BlockState blockState, BlockPos blockPos, final BakedModel model, MatrixStack matrixStack) {
+	public void tessellateBlock(BlockState blockState, BlockPos blockPos, final BakedModel model, PoseStack matrixStack) {
 		try {
-			Vec3d offset = blockState.getModelOffset(blockPos);
+			Vec3 offset = blockState.getOffset(blockPos);
 			matrixStack.translate(offset.x, offset.y, offset.z);
 
-			this.matrix = matrixStack.peek().getPositionMatrix();
-			this.normalMatrix = matrixStack.peek().getNormalMatrix();
+			this.matrix = matrixStack.last().pose();
+			this.normalMatrix = matrixStack.last().normal();
 
 			blockInfo.recomputeSeed = true;
 
@@ -96,10 +94,10 @@ public class TerrainRenderContext extends AbstractBlockRenderContext {
 			blockInfo.prepareForBlock(blockState, blockPos, model.useAmbientOcclusion());
 			model.emitBlockQuads(blockInfo.blockView, blockInfo.blockState, blockInfo.blockPos, blockInfo.randomSupplier, this);
 		} catch (Throwable throwable) {
-			CrashReport crashReport = CrashReport.create(throwable, "Tessellating block in world - Indigo Renderer");
-			CrashReportSection crashReportSection = crashReport.addElement("Block being tessellated");
-			CrashReportSection.addBlockInfo(crashReportSection, chunkInfo.blockView, blockPos, blockState);
-			throw new CrashException(crashReport);
+			CrashReport crashReport = CrashReport.forThrowable(throwable, "Tessellating block in world - Indigo Renderer");
+			CrashReportCategory crashReportSection = crashReport.addCategory("Block being tessellated");
+			CrashReportCategory.populateBlockDetails(crashReportSection, chunkInfo.blockView, blockPos, blockState);
+			throw new ReportedException(crashReport);
 		}
 	}
 }

@@ -17,21 +17,19 @@
 package net.fabricmc.fabric.impl.tag.convention.datagen.generators;
 
 import java.util.concurrent.CompletableFuture;
-
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.registry.tag.FluidTags;
-
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalFluidTags;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.tags.FluidTags;
 
 public final class FluidTagGenerator extends FabricTagProvider.FluidTagProvider {
-	public FluidTagGenerator(FabricDataOutput output, CompletableFuture<RegistryWrapper.WrapperLookup> completableFuture) {
+	public FluidTagGenerator(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> completableFuture) {
 		super(output, completableFuture);
 	}
 
 	@Override
-	protected void configure(RegistryWrapper.WrapperLookup registries) {
+	protected void configure(HolderLookup.Provider registries) {
 		getOrCreateTagBuilder(ConventionalFluidTags.WATER)
 				.addOptionalTag(FluidTags.WATER);
 		getOrCreateTagBuilder(ConventionalFluidTags.LAVA)

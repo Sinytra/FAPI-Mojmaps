@@ -27,19 +27,17 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import net.minecraft.resource.ResourceFinder;
-import net.minecraft.resource.ResourcePackManager;
+import net.minecraft.core.BlockPos;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.gametest.framework.GameTestRegistry;
+import net.minecraft.gametest.framework.GameTestServer;
+import net.minecraft.gametest.framework.GlobalTestReporter;
+import net.minecraft.gametest.framework.TestCommand;
+import net.minecraft.gametest.framework.TestFunction;
+import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.TestCommand;
-import net.minecraft.test.TestContext;
-import net.minecraft.test.TestFailureLogger;
-import net.minecraft.test.TestFunction;
-import net.minecraft.test.TestFunctions;
-import net.minecraft.test.TestServer;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.level.storage.LevelStorage;
-
+import net.minecraft.server.packs.repository.PackRepository;
+import net.minecraft.world.level.storage.LevelStorageSource;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.fabricmc.loader.api.FabricLoader;
@@ -60,29 +58,29 @@ public final class FabricGameTestHelper {
 
 	private static final String GAMETEST_STRUCTURE_PATH = "gametest/structure";
 
-	public static final ResourceFinder GAMETEST_STRUCTURE_FINDER = new ResourceFinder(GAMETEST_STRUCTURE_PATH, ".snbt");
+	public static final FileToIdConverter GAMETEST_STRUCTURE_FINDER = new FileToIdConverter(GAMETEST_STRUCTURE_PATH, ".snbt");
 
 	private FabricGameTestHelper() {
 	}
 
-	public static void runHeadlessServer(LevelStorage.Session session, ResourcePackManager resourcePackManager) {
+	public static void runHeadlessServer(LevelStorageSource.LevelStorageAccess session, PackRepository resourcePackManager) {
 		String reportPath = System.getProperty("fabric-api.gametest.report-file");
 
 		if (reportPath != null) {
 			try {
-				TestFailureLogger.setCompletionListener(new SavingXmlReportingTestCompletionListener(new File(reportPath)));
+				GlobalTestReporter.replaceWith(new SavingXmlReportingTestCompletionListener(new File(reportPath)));
 			} catch (ParserConfigurationException e) {
 				throw new RuntimeException(e);
 			}
 		}
 
 		LOGGER.info("Starting test server");
-		MinecraftServer server = TestServer.startServer(thread -> {
-			return TestServer.create(thread, session, resourcePackManager, getTestFunctions(), BlockPos.ORIGIN);
+		MinecraftServer server = GameTestServer.spin(thread -> {
+			return GameTestServer.create(thread, session, resourcePackManager, getTestFunctions(), BlockPos.ZERO);
 		});
 	}
 
-	public static Consumer<TestContext> getTestMethodInvoker(Method method) {
+	public static Consumer<GameTestHelper> getTestMethodInvoker(Method method) {
 		return testContext -> {
 			Class<?> testClass = method.getDeclaringClass();
 
@@ -110,7 +108,7 @@ public final class FabricGameTestHelper {
 		};
 	}
 
-	public static void invokeTestMethod(TestContext testContext, Method method, Object testObject) {
+	public static void invokeTestMethod(GameTestHelper testContext, Method method, Object testObject) {
 		try {
 			method.invoke(testObject, testContext);
 		} catch (IllegalAccessException e) {
@@ -127,6 +125,6 @@ public final class FabricGameTestHelper {
 	}
 
 	private static Collection<TestFunction> getTestFunctions() {
-		return TestFunctions.getTestFunctions();
+		return GameTestRegistry.getAllTestFunctions();
 	}
 }

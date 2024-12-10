@@ -19,28 +19,26 @@ package net.fabricmc.fabric.test.renderer.client;
 import java.util.function.Function;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.Baker;
-import net.minecraft.client.render.model.ModelBakeSettings;
-import net.minecraft.client.render.model.UnbakedModel;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.texture.SpriteAtlasTexture;
-import net.minecraft.client.util.SpriteIdentifier;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Direction;
-
 import net.fabricmc.fabric.api.renderer.v1.Renderer;
 import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MeshBuilder;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.Material;
+import net.minecraft.client.resources.model.ModelBaker;
+import net.minecraft.client.resources.model.ModelState;
+import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 
 public class FrameUnbakedModel implements UnbakedModel {
-	private static final SpriteIdentifier OBSIDIAN_SPRITE_ID = new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE, Identifier.ofVanilla("block/obsidian"));
+	private static final Material OBSIDIAN_SPRITE_ID = new Material(TextureAtlas.LOCATION_BLOCKS, ResourceLocation.withDefaultNamespace("block/obsidian"));
 
 	@Override
-	public void resolve(Resolver resolver) {
+	public void resolveDependencies(Resolver resolver) {
 	}
 
 	/*
@@ -49,14 +47,14 @@ public class FrameUnbakedModel implements UnbakedModel {
 	 */
 	@Nullable
 	@Override
-	public BakedModel bake(Baker baker, Function<SpriteIdentifier, Sprite> textureGetter, ModelBakeSettings rotationContainer) {
+	public BakedModel bake(ModelBaker baker, Function<Material, TextureAtlasSprite> textureGetter, ModelState rotationContainer) {
 		// The renderer API may not have an implementation, so we should check if it exists.
 		if (!RendererAccess.INSTANCE.hasRenderer()) {
 			// No renderer implementation is present.
 			return null;
 		}
 
-		Sprite obsidianSprite = textureGetter.apply(OBSIDIAN_SPRITE_ID);
+		TextureAtlasSprite obsidianSprite = textureGetter.apply(OBSIDIAN_SPRITE_ID);
 
 		Renderer renderer = RendererAccess.INSTANCE.getRenderer();
 		MeshBuilder builder = renderer.meshBuilder();

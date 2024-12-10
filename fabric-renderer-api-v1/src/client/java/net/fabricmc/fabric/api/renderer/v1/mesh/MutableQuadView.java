@@ -21,15 +21,13 @@ import org.joml.Vector2f;
 import org.joml.Vector2fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
-
-import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec2f;
-
 import net.fabricmc.fabric.api.renderer.v1.Renderer;
 import net.fabricmc.fabric.api.renderer.v1.material.MaterialFinder;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.Direction;
+import net.minecraft.world.phys.Vec2;
 
 /**
  * A mutable {@link QuadView} instance. The base interface for
@@ -43,32 +41,32 @@ import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 public interface MutableQuadView extends QuadView {
 	/**
 	 * Causes texture to appear with no rotation.
-	 * Pass in bakeFlags parameter to {@link #spriteBake(Sprite, int)}.
+	 * Pass in bakeFlags parameter to {@link #spriteBake(TextureAtlasSprite, int)}.
 	 */
 	int BAKE_ROTATE_NONE = 0;
 
 	/**
 	 * Causes texture to appear rotated 90 deg. clockwise relative to nominal face.
-	 * Pass in bakeFlags parameter to {@link #spriteBake(Sprite, int)}.
+	 * Pass in bakeFlags parameter to {@link #spriteBake(TextureAtlasSprite, int)}.
 	 */
 	int BAKE_ROTATE_90 = 1;
 
 	/**
 	 * Causes texture to appear rotated 180 deg. relative to nominal face.
-	 * Pass in bakeFlags parameter to {@link #spriteBake(Sprite, int)}.
+	 * Pass in bakeFlags parameter to {@link #spriteBake(TextureAtlasSprite, int)}.
 	 */
 	int BAKE_ROTATE_180 = 2;
 
 	/**
 	 * Causes texture to appear rotated 270 deg. clockwise relative to nominal face.
-	 * Pass in bakeFlags parameter to {@link #spriteBake(Sprite, int)}.
+	 * Pass in bakeFlags parameter to {@link #spriteBake(TextureAtlasSprite, int)}.
 	 */
 	int BAKE_ROTATE_270 = 3;
 
 	/**
 	 * When enabled, texture coordinate are assigned based on vertex position.
 	 * Any existing UV coordinates will be replaced.
-	 * Pass in bakeFlags parameter to {@link #spriteBake(Sprite, int)}.
+	 * Pass in bakeFlags parameter to {@link #spriteBake(TextureAtlasSprite, int)}.
 	 *
 	 * <p>UV lock always derives texture coordinates based on nominal face, even
 	 * when the quad is not co-planar with that face, and the result is
@@ -82,7 +80,7 @@ public interface MutableQuadView extends QuadView {
 	 * flipped as part of baking. Can be useful for some randomization
 	 * and texture mapping scenarios. Results are different from what
 	 * can be obtained via rotation and both can be applied.
-	 * Pass in bakeFlags parameter to {@link #spriteBake(Sprite, int)}.
+	 * Pass in bakeFlags parameter to {@link #spriteBake(TextureAtlasSprite, int)}.
 	 */
 	int BAKE_FLIP_U = 8;
 
@@ -96,7 +94,7 @@ public interface MutableQuadView extends QuadView {
 	 * with conventional Minecraft model format. This is scaled to 0-1 during
 	 * baking before interpolation. Model loaders that already have 0-1 coordinates
 	 * can avoid wasteful multiplication/division by passing 0-1 coordinates directly.
-	 * Pass in bakeFlags parameter to {@link #spriteBake(Sprite, int)}.
+	 * Pass in bakeFlags parameter to {@link #spriteBake(TextureAtlasSprite, int)}.
 	 */
 	int BAKE_NORMALIZED = 32;
 
@@ -169,7 +167,7 @@ public interface MutableQuadView extends QuadView {
 	 * Can handle UV locking, rotation, interpolation, etc. Control this behavior
 	 * by passing additive combinations of the BAKE_ flags defined in this interface.
 	 */
-	MutableQuadView spriteBake(Sprite sprite, int bakeFlags);
+	MutableQuadView spriteBake(TextureAtlasSprite sprite, int bakeFlags);
 
 	/**
 	 * Accept vanilla lightmap values.  Input values will override lightmap values
@@ -230,7 +228,7 @@ public interface MutableQuadView extends QuadView {
 	 * <p>When called with a non-null value, also sets {@link #nominalFace(Direction)}
 	 * to the same value.
 	 *
-	 * <p>This is different from the value reported by {@link BakedQuad#getFace()}. That value
+	 * <p>This is different from the value reported by {@link BakedQuad#getDirection()}. That value
 	 * is computed based on face geometry and must be non-null in vanilla quads.
 	 * That computed value is returned by {@link #lightFace()}.
 	 */
@@ -279,7 +277,7 @@ public interface MutableQuadView extends QuadView {
 
 	/**
 	 * Enables bulk vertex data transfer using the standard Minecraft vertex formats.
-	 * Only the {@link BakedQuad#getVertexData() quad vertex data} is copied.
+	 * Only the {@link BakedQuad#getVertices() quad vertex data} is copied.
 	 * This method should be performant whenever caller's vertex representation makes it feasible.
 	 *
 	 * <p>Use {@link #fromVanilla(BakedQuad, RenderMaterial, Direction) the other overload} which has better encapsulation
@@ -293,7 +291,7 @@ public interface MutableQuadView extends QuadView {
 	 * Enables bulk vertex data transfer using the standard Minecraft quad format.
 	 *
 	 * <p>The material applied to this quad view might be slightly different from the {@code material} parameter regarding diffuse shading.
-	 * If either the baked quad {@link BakedQuad#hasShade() does not have shade} or the material {@link MaterialFinder#disableDiffuse(boolean) does not have shade},
+	 * If either the baked quad {@link BakedQuad#isShade() does not have shade} or the material {@link MaterialFinder#disableDiffuse(boolean) does not have shade},
 	 * diffuse shading will be disabled for this quad view.
 	 * This is reflected in the quad view's {@link #material()}, but the {@code material} parameter is unchanged (it is immutable anyway).
 	 *
@@ -333,15 +331,15 @@ public interface MutableQuadView extends QuadView {
 	 * @deprecated Use {@link #uv(int, Vector2f)} instead.
 	 */
 	@Deprecated
-	default MutableQuadView sprite(int vertexIndex, int spriteIndex, Vec2f uv) {
+	default MutableQuadView sprite(int vertexIndex, int spriteIndex, Vec2 uv) {
 		return uv(vertexIndex, uv.x, uv.y);
 	}
 
 	/**
-	 * @deprecated Use {@link #spriteBake(Sprite, int)} instead.
+	 * @deprecated Use {@link #spriteBake(TextureAtlasSprite, int)} instead.
 	 */
 	@Deprecated
-	default MutableQuadView spriteBake(int spriteIndex, Sprite sprite, int bakeFlags) {
+	default MutableQuadView spriteBake(int spriteIndex, TextureAtlasSprite sprite, int bakeFlags) {
 		return spriteBake(sprite, bakeFlags);
 	}
 

@@ -17,14 +17,12 @@
 package net.fabricmc.fabric.test.object.builder;
 
 import java.util.Objects;
-
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.world.PersistentState;
-
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.saveddata.SavedData;
 
 public class PersistentStateManagerTest implements ModInitializer {
 	private boolean ranTests = false;
@@ -40,14 +38,14 @@ public class PersistentStateManagerTest implements ModInitializer {
 		});
 	}
 
-	private static class TestState extends PersistentState {
+	private static class TestState extends SavedData {
 		/**
 		 * We are testing that null can be passed as the dataFixType.
 		 */
-		private static final PersistentState.Type<TestState> TYPE = new Type<>(TestState::new, TestState::fromTag, null);
+		private static final SavedData.Factory<TestState> TYPE = new Factory<>(TestState::new, TestState::fromTag, null);
 
-		public static TestState getOrCreate(ServerWorld world) {
-			return world.getPersistentStateManager().getOrCreate(TestState.TYPE, ObjectBuilderTestConstants.id("test_state").toString().replace(":", "_"));
+		public static TestState getOrCreate(ServerLevel world) {
+			return world.getDataStorage().computeIfAbsent(TestState.TYPE, ObjectBuilderTestConstants.id("test_state").toString().replace(":", "_"));
 		}
 
 		private String value = "";
@@ -65,16 +63,16 @@ public class PersistentStateManagerTest implements ModInitializer {
 
 		public void setValue(String value) {
 			this.value = value;
-			markDirty();
+			setDirty();
 		}
 
 		@Override
-		public NbtCompound writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup) {
+		public CompoundTag save(CompoundTag nbt, HolderLookup.Provider wrapperLookup) {
 			nbt.putString("value", value);
 			return nbt;
 		}
 
-		private static TestState fromTag(NbtCompound tag, RegistryWrapper.WrapperLookup wrapperLookup) {
+		private static TestState fromTag(CompoundTag tag, HolderLookup.Provider wrapperLookup) {
 			return new TestState(tag.getString("value"));
 		}
 	}

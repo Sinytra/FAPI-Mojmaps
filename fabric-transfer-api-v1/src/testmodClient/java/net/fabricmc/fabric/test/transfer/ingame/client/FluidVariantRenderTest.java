@@ -19,28 +19,26 @@ package net.fabricmc.fabric.test.transfer.ingame.client;
 import java.util.List;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import org.joml.Matrix4f;
-
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gl.ShaderProgramKeys;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.BufferRenderer;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.client.render.VertexFormats;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.texture.SpriteAtlasTexture;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.text.Text;
-
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.CoreShaders;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.material.Fluids;
 
 /**
  * Renders the water sprite in the top left of the screen, to make sure that it correctly depends on the position.
@@ -51,17 +49,17 @@ public class FluidVariantRenderTest implements ClientModInitializer {
 		FluidVariantAttributes.enableColoredVanillaFluidNames();
 
 		HudRenderCallback.EVENT.register((drawContext, tickDelta) -> {
-			PlayerEntity player = MinecraftClient.getInstance().player;
+			Player player = Minecraft.getInstance().player;
 			if (player == null) return;
 
-			if (MinecraftClient.getInstance().inGameHud.getDebugHud().shouldShowDebugHud()) return;
+			if (Minecraft.getInstance().gui.getDebugOverlay().showDebugScreen()) return;
 
 			int renderY = 0;
 			List<FluidVariant> variants = List.of(FluidVariant.of(Fluids.WATER), FluidVariant.of(Fluids.LAVA));
 
 			for (FluidVariant variant : variants) {
-				Sprite[] sprites = FluidVariantRendering.getSprites(variant);
-				int color = FluidVariantRendering.getColor(variant, player.getWorld(), player.getBlockPos());
+				TextureAtlasSprite[] sprites = FluidVariantRendering.getSprites(variant);
+				int color = FluidVariantRendering.getColor(variant, player.level(), player.blockPosition());
 
 				if (sprites != null) {
 					drawFluidInGui(drawContext, sprites[0], color, 0, renderY);
@@ -70,46 +68,46 @@ public class FluidVariantRenderTest implements ClientModInitializer {
 					renderY += 16;
 				}
 
-				List<Text> tooltip = FluidVariantRendering.getTooltip(variant);
-				TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
+				List<Component> tooltip = FluidVariantRendering.getTooltip(variant);
+				Font textRenderer = Minecraft.getInstance().font;
 
 				renderY += 2;
 
-				for (Text line : tooltip) {
+				for (Component line : tooltip) {
 					renderY += 10;
-					drawContext.drawTooltip(textRenderer, line, -8, renderY);
+					drawContext.renderTooltip(textRenderer, line, -8, renderY);
 				}
 			}
 		});
 	}
 
-	private static void drawFluidInGui(DrawContext drawContext, Sprite sprite, int color, int i, int j) {
+	private static void drawFluidInGui(GuiGraphics drawContext, TextureAtlasSprite sprite, int color, int i, int j) {
 		if (sprite == null) return;
 
-		RenderSystem.setShaderTexture(0, SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE);
+		RenderSystem.setShaderTexture(0, TextureAtlas.LOCATION_BLOCKS);
 
 		float r = ((color >> 16) & 255) / 255f;
 		float g = ((color >> 8) & 255) / 255f;
 		float b = (color & 255) / 255f;
 		RenderSystem.disableDepthTest();
 
-		RenderSystem.setShader(ShaderProgramKeys.POSITION_TEX_COLOR);
-		BufferBuilder bufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
+		RenderSystem.setShader(CoreShaders.POSITION_TEX_COLOR);
+		BufferBuilder bufferBuilder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
 		float x0 = (float) i;
 		float y0 = (float) j;
 		float x1 = x0 + 16;
 		float y1 = y0 + 16;
 		float z = 0.5f;
-		float u0 = sprite.getMinU();
-		float v0 = sprite.getMinV();
-		float u1 = sprite.getMaxU();
-		float v1 = sprite.getMaxV();
-		Matrix4f model = drawContext.getMatrices().peek().getPositionMatrix();
-		bufferBuilder.vertex(model, x0, y1, z).color(r, g, b, 1).texture(u0, v1);
-		bufferBuilder.vertex(model, x1, y1, z).color(r, g, b, 1).texture(u1, v1);
-		bufferBuilder.vertex(model, x1, y0, z).color(r, g, b, 1).texture(u1, v0);
-		bufferBuilder.vertex(model, x0, y0, z).color(r, g, b, 1).texture(u0, v0);
-		BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
+		float u0 = sprite.getU0();
+		float v0 = sprite.getV0();
+		float u1 = sprite.getU1();
+		float v1 = sprite.getV1();
+		Matrix4f model = drawContext.pose().last().pose();
+		bufferBuilder.addVertex(model, x0, y1, z).setColor(r, g, b, 1).setUv(u0, v1);
+		bufferBuilder.addVertex(model, x1, y1, z).setColor(r, g, b, 1).setUv(u1, v1);
+		bufferBuilder.addVertex(model, x1, y0, z).setColor(r, g, b, 1).setUv(u1, v0);
+		bufferBuilder.addVertex(model, x0, y0, z).setColor(r, g, b, 1).setUv(u0, v0);
+		BufferUploader.drawWithShader(bufferBuilder.buildOrThrow());
 
 		RenderSystem.enableDepthTest();
 	}

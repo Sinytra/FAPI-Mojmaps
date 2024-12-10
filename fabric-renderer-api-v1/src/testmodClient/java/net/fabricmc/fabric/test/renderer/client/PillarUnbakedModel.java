@@ -21,30 +21,27 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.Baker;
-import net.minecraft.client.render.model.ModelBakeSettings;
-import net.minecraft.client.render.model.UnbakedModel;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.util.SpriteIdentifier;
-import net.minecraft.screen.PlayerScreenHandler;
-
 import net.fabricmc.fabric.test.renderer.RendererTest;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.Material;
+import net.minecraft.client.resources.model.ModelBaker;
+import net.minecraft.client.resources.model.ModelState;
+import net.minecraft.client.resources.model.UnbakedModel;
 
 public class PillarUnbakedModel implements UnbakedModel {
-	private static final List<SpriteIdentifier> SPRITES = Stream.of("alone", "bottom", "middle", "top")
-			.map(suffix -> new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, RendererTest.id("block/pillar_" + suffix)))
+	private static final List<Material> SPRITES = Stream.of("alone", "bottom", "middle", "top")
+			.map(suffix -> new Material(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, RendererTest.id("block/pillar_" + suffix)))
 			.toList();
 
 	@Override
-	public void resolve(Resolver resolver) {
+	public void resolveDependencies(Resolver resolver) {
 	}
 
 	@Nullable
 	@Override
-	public BakedModel bake(Baker baker, Function<SpriteIdentifier, Sprite> textureGetter, ModelBakeSettings rotationContainer) {
-		Sprite[] sprites = new Sprite[SPRITES.size()];
+	public BakedModel bake(ModelBaker baker, Function<Material, TextureAtlasSprite> textureGetter, ModelState rotationContainer) {
+		TextureAtlasSprite[] sprites = new TextureAtlasSprite[SPRITES.size()];
 
 		for (int i = 0; i < sprites.length; ++i) {
 			sprites[i] = textureGetter.apply(SPRITES.get(i));

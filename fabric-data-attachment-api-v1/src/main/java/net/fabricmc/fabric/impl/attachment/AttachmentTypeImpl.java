@@ -20,13 +20,11 @@ import java.util.function.Supplier;
 
 import com.mojang.serialization.Codec;
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
+import net.minecraft.resources.ResourceLocation;
 
 public record AttachmentTypeImpl<A>(
-		Identifier identifier,
+		ResourceLocation identifier,
 		@Nullable Supplier<A> initializer,
 		@Nullable Codec<A> persistenceCodec,
 		boolean copyOnDeath

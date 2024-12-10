@@ -17,12 +17,10 @@
 package net.fabricmc.fabric.impl.datagen.loot;
 
 import java.util.Collections;
-
-import net.minecraft.block.Block;
 import net.minecraft.data.server.loottable.BlockLootTableGenerator;
-import net.minecraft.loot.LootTable;
-import net.minecraft.resource.featuretoggle.FeatureFlags;
-
+import net.minecraft.world.flag.FeatureFlags;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.storage.loot.LootTable;
 import net.fabricmc.fabric.api.resource.conditions.v1.ResourceCondition;
 import net.fabricmc.fabric.impl.datagen.FabricDataGenHelper;
 import net.fabricmc.fabric.mixin.datagen.loot.BlockLootTableGeneratorAccessor;
@@ -32,7 +30,7 @@ public class ConditionBlockLootTableGenerator extends BlockLootTableGenerator {
 	private final ResourceCondition[] conditions;
 
 	public ConditionBlockLootTableGenerator(BlockLootTableGenerator parent, ResourceCondition[] conditions) {
-		super(Collections.emptySet(), FeatureFlags.FEATURE_MANAGER.getFeatureSet(), ((BlockLootTableGeneratorAccessor) parent).getRegistries());
+		super(Collections.emptySet(), FeatureFlags.REGISTRY.allFlags(), ((BlockLootTableGeneratorAccessor) parent).getRegistries());
 
 		this.parent = parent;
 		this.conditions = conditions;

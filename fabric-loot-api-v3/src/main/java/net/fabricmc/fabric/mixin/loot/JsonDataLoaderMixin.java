@@ -26,20 +26,18 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.loot.LootDataType;
-import net.minecraft.resource.JsonDataLoader;
-import net.minecraft.resource.Resource;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.impl.loot.LootUtil;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import net.minecraft.world.level.storage.loot.LootDataType;
 
-@Mixin(JsonDataLoader.class)
+@Mixin(SimpleJsonResourceReloadListener.class)
 public class JsonDataLoaderMixin {
-	@Inject(method = "load", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/resource/ResourceFinder;toResourceId(Lnet/minecraft/util/Identifier;)Lnet/minecraft/util/Identifier;", shift = At.Shift.AFTER))
-	private static <T> void fillSourceMap(ResourceManager manager, String dataType, DynamicOps<JsonElement> dynamicOps, Codec<T> codec, Map<Identifier, T> results, CallbackInfo ci, @Local Map.Entry<Identifier, Resource> entry, @Local(ordinal = 1) Identifier id) {
-		if (!LootDataType.LOOT_TABLES.registryKey().getValue().getPath().equals(dataType)) return;
+	@Inject(method = "scanDirectory", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/resources/FileToIdConverter;fileToId(Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/resources/ResourceLocation;", shift = At.Shift.AFTER))
+	private static <T> void fillSourceMap(ResourceManager manager, String dataType, DynamicOps<JsonElement> dynamicOps, Codec<T> codec, Map<ResourceLocation, T> results, CallbackInfo ci, @Local Map.Entry<ResourceLocation, Resource> entry, @Local(ordinal = 1) ResourceLocation id) {
+		if (!LootDataType.TABLE.registryKey().location().getPath().equals(dataType)) return;
 
 		LootUtil.SOURCES.get().put(id, LootUtil.determineSource(entry.getValue()));
 	}

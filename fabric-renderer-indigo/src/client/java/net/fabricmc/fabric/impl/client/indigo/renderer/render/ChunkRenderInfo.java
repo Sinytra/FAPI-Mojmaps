@@ -17,20 +17,17 @@
 package net.fabricmc.fabric.impl.client.indigo.renderer.render;
 
 import java.util.function.Function;
-
+import com.mojang.blaze3d.vertex.BufferBuilder;
 import it.unimi.dsi.fastutil.longs.Long2FloatOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.client.render.chunk.ChunkRendererRegion;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.BlockRenderView;
-
 import net.fabricmc.fabric.impl.client.indigo.renderer.aocalc.AoCalculator;
 import net.fabricmc.fabric.impl.client.indigo.renderer.aocalc.AoLuminanceFix;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.chunk.RenderChunkRegion;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * Holds, manages and provides access to the chunk-related state
@@ -65,8 +62,8 @@ public class ChunkRenderInfo {
 	private final Long2IntOpenHashMap brightnessCache;
 	private final Long2FloatOpenHashMap aoLevelCache;
 
-	private Function<RenderLayer, BufferBuilder> bufferFunc;
-	BlockRenderView blockView;
+	private Function<RenderType, BufferBuilder> bufferFunc;
+	BlockAndTintGetter blockView;
 
 	ChunkRenderInfo() {
 		brightnessCache = new Long2IntOpenHashMap();
@@ -75,7 +72,7 @@ public class ChunkRenderInfo {
 		aoLevelCache.defaultReturnValue(Float.MAX_VALUE);
 	}
 
-	void prepare(ChunkRendererRegion blockView, Function<RenderLayer, BufferBuilder> bufferFunc) {
+	void prepare(RenderChunkRegion blockView, Function<RenderType, BufferBuilder> bufferFunc) {
 		this.blockView = blockView;
 		this.bufferFunc = bufferFunc;
 
@@ -88,12 +85,12 @@ public class ChunkRenderInfo {
 		bufferFunc = null;
 	}
 
-	BufferBuilder getBuffer(RenderLayer layer) {
+	BufferBuilder getBuffer(RenderType layer) {
 		return bufferFunc.apply(layer);
 	}
 
 	/**
-	 * Cached values for {@link WorldRenderer#getLightmapCoordinates(BlockRenderView, BlockState, BlockPos)}.
+	 * Cached values for {@link LevelRenderer#getLightColor(BlockAndTintGetter, BlockState, BlockPos)}.
 	 * See also the comments for {@link #brightnessCache}.
 	 */
 	int cachedBrightness(BlockPos pos, BlockState state) {

@@ -20,15 +20,13 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.json.ModelTransformationMode;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.BlockRenderView;
-
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
@@ -138,7 +136,7 @@ public interface RenderContext {
 	}
 
 	/**
-	 * @deprecated Use {@link FabricBakedModel#emitBlockQuads(BlockRenderView, BlockState, BlockPos, Supplier, RenderContext) emitBlockQuads}
+	 * @deprecated Use {@link FabricBakedModel#emitBlockQuads(BlockAndTintGetter, BlockState, BlockPos, Supplier, RenderContext) emitBlockQuads}
 	 * or {@link FabricBakedModel#emitItemQuads(ItemStack, Supplier, RenderContext) emitItemQuads} on the baked model
 	 * that you want to consume instead.
 	 */
@@ -146,7 +144,7 @@ public interface RenderContext {
 	BakedModelConsumer bakedModelConsumer();
 
 	/**
-	 * @deprecated Use {@link FabricBakedModel#emitBlockQuads(BlockRenderView, BlockState, BlockPos, Supplier, RenderContext) emitBlockQuads}
+	 * @deprecated Use {@link FabricBakedModel#emitBlockQuads(BlockAndTintGetter, BlockState, BlockPos, Supplier, RenderContext) emitBlockQuads}
 	 * or {@link FabricBakedModel#emitItemQuads(ItemStack, Supplier, RenderContext) emitItemQuads} on the baked model
 	 * that you want to consume instead.
 	 */

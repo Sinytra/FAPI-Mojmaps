@@ -16,15 +16,14 @@
 
 package net.fabricmc.fabric.api.client.keybinding;
 
-import net.minecraft.client.option.KeyBinding;
-
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.impl.client.keybinding.KeyBindingRegistryImpl;
+import net.minecraft.client.KeyMapping;
 
 /**
  * Interface for registering key bindings.
  *
- * @see KeyBinding
+ * @see KeyMapping
  * @deprecated Please migrate to v1. Please use {@link KeyBindingHelper} instead.
  */
 @Deprecated

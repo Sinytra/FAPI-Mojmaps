@@ -16,11 +16,10 @@
 
 package net.fabricmc.fabric.api.client.rendering.v1;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderTickCounter;
-
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.gui.GuiGraphics;
 
 public interface HudRenderCallback {
 	Event<HudRenderCallback> EVENT = EventFactory.createArrayBacked(HudRenderCallback.class, (listeners) -> (matrixStack, delta) -> {
@@ -32,8 +31,8 @@ public interface HudRenderCallback {
 	/**
 	 * Called after rendering the whole hud, which is displayed in game, in a world.
 	 *
-	 * @param drawContext the {@link DrawContext} instance
-	 * @param tickCounter the {@link RenderTickCounter} instance
+	 * @param drawContext the {@link GuiGraphics} instance
+	 * @param tickCounter the {@link DeltaTracker} instance
 	 */
-	void onHudRender(DrawContext drawContext, RenderTickCounter tickCounter);
+	void onHudRender(GuiGraphics drawContext, DeltaTracker tickCounter);
 }

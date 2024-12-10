@@ -17,53 +17,51 @@
 package net.fabricmc.fabric.test.item.gametest;
 
 import java.util.List;
-
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.recipe.IngredientPlacement;
-import net.minecraft.recipe.Recipe;
-import net.minecraft.recipe.RecipeSerializer;
-import net.minecraft.recipe.RecipeType;
-import net.minecraft.recipe.input.CraftingRecipeInput;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.test.GameTest;
-import net.minecraft.test.GameTestException;
-import net.minecraft.test.TestContext;
-import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.world.World;
-
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.fabricmc.fabric.test.item.CustomDamageTest;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.NonNullList;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestAssertException;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.CraftingInput;
+import net.minecraft.world.item.crafting.PlacementInfo;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
 
 public class RecipeGameTest implements FabricGameTest {
-	@GameTest(templateName = EMPTY_STRUCTURE)
-	public void vanillaRemainderTest(TestContext context) {
-		Recipe<CraftingRecipeInput> testRecipe = createTestingRecipeInstance();
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void vanillaRemainderTest(GameTestHelper context) {
+		Recipe<CraftingInput> testRecipe = createTestingRecipeInstance();
 
-		CraftingRecipeInput inventory = CraftingRecipeInput.create(1, 2, List.of(
+		CraftingInput inventory = CraftingInput.of(1, 2, List.of(
 				new ItemStack(Items.WATER_BUCKET),
 				new ItemStack(Items.DIAMOND)));
 
-		DefaultedList<ItemStack> remainderList = testRecipe.getRemainder(inventory);
+		NonNullList<ItemStack> remainderList = testRecipe.getRemainder(inventory);
 
 		assertStackList(remainderList, "Testing vanilla recipe remainder.",
 				new ItemStack(Items.BUCKET),
 				ItemStack.EMPTY);
 
-		context.complete();
+		context.succeed();
 	}
 
-	@GameTest(templateName = EMPTY_STRUCTURE)
-	public void fabricRemainderTest(TestContext context) {
-		Recipe<CraftingRecipeInput> testRecipe = createTestingRecipeInstance();
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void fabricRemainderTest(GameTestHelper context) {
+		Recipe<CraftingInput> testRecipe = createTestingRecipeInstance();
 
-		CraftingRecipeInput inventory = CraftingRecipeInput.create(1, 4, List.of(
+		CraftingInput inventory = CraftingInput.of(1, 4, List.of(
 				new ItemStack(CustomDamageTest.WEIRD_PICK),
 				withDamage(new ItemStack(CustomDamageTest.WEIRD_PICK), 10),
 				withDamage(new ItemStack(CustomDamageTest.WEIRD_PICK), 31),
 				new ItemStack(Items.DIAMOND)));
 
-		DefaultedList<ItemStack> remainderList = testRecipe.getRemainder(inventory);
+		NonNullList<ItemStack> remainderList = testRecipe.getRemainder(inventory);
 
 		assertStackList(remainderList, "Testing fabric recipe remainder.",
 				withDamage(new ItemStack(CustomDamageTest.WEIRD_PICK), 1),
@@ -71,18 +69,18 @@ public class RecipeGameTest implements FabricGameTest {
 				ItemStack.EMPTY,
 				ItemStack.EMPTY);
 
-		context.complete();
+		context.succeed();
 	}
 
-	private Recipe<CraftingRecipeInput> createTestingRecipeInstance() {
+	private Recipe<CraftingInput> createTestingRecipeInstance() {
 		return new Recipe<>() {
 			@Override
-			public boolean matches(CraftingRecipeInput recipeInput, World world) {
+			public boolean matches(CraftingInput recipeInput, Level world) {
 				return true;
 			}
 
 			@Override
-			public ItemStack craft(CraftingRecipeInput recipeInput, RegistryWrapper.WrapperLookup wrapperLookup) {
+			public ItemStack assemble(CraftingInput recipeInput, HolderLookup.Provider wrapperLookup) {
 				return null;
 			}
 
@@ -92,7 +90,7 @@ public class RecipeGameTest implements FabricGameTest {
 			}
 
 			@Override
-			public ItemStack getResult(RegistryWrapper.WrapperLookup wrapperLookup) {
+			public ItemStack getResult(HolderLookup.Provider wrapperLookup) {
 				return null;
 			}
 
@@ -107,13 +105,13 @@ public class RecipeGameTest implements FabricGameTest {
 			}
 
 			@Override
-			public IngredientPlacement getIngredientPlacement() {
-				return IngredientPlacement.NONE;
+			public PlacementInfo placementInfo() {
+				return PlacementInfo.NOT_PLACEABLE;
 			}
 		};
 	}
 
-	private void assertStackList(DefaultedList<ItemStack> stackList, String extraErrorInfo, ItemStack... stacks) {
+	private void assertStackList(NonNullList<ItemStack> stackList, String extraErrorInfo, ItemStack... stacks) {
 		for (int i = 0; i < stackList.size(); i++) {
 			ItemStack currentStack = stackList.get(i);
 			ItemStack expectedStack = stacks[i];
@@ -127,21 +125,21 @@ public class RecipeGameTest implements FabricGameTest {
 			return;
 		}
 
-		if (!currentStack.isOf(expectedStack.getItem())) {
-			throw new GameTestException("Item stacks dont match. " + extraErrorInfo);
+		if (!currentStack.is(expectedStack.getItem())) {
+			throw new GameTestAssertException("Item stacks dont match. " + extraErrorInfo);
 		}
 
 		if (currentStack.getCount() != expectedStack.getCount()) {
-			throw new GameTestException("Size doesnt match. " + extraErrorInfo);
+			throw new GameTestAssertException("Size doesnt match. " + extraErrorInfo);
 		}
 
-		if (!ItemStack.areItemsAndComponentsEqual(currentStack, expectedStack)) {
-			throw new GameTestException("Stack doesnt match. " + extraErrorInfo);
+		if (!ItemStack.isSameItemSameComponents(currentStack, expectedStack)) {
+			throw new GameTestAssertException("Stack doesnt match. " + extraErrorInfo);
 		}
 	}
 
 	static ItemStack withDamage(ItemStack stack, int damage) {
-		stack.setDamage(damage);
+		stack.setDamageValue(damage);
 		return stack;
 	}
 }

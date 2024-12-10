@@ -20,18 +20,16 @@ import com.llamalad7.mixinextras.sugar.Local;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
-
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.conversion.EntityConversionContext;
-import net.minecraft.entity.mob.MobEntity;
-
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.minecraft.world.entity.ConversionParams;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
 
-@Mixin(MobEntity.class)
+@Mixin(Mob.class)
 public class MobEntityMixin {
-	@ModifyArg(method = "convertTo", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/world/ServerWorld;spawnEntityAndPassengers(Lnet/minecraft/entity/Entity;)V"))
-	private Entity afterEntityConverted(Entity converted, @Local(argsOnly = true) EntityConversionContext conversionContext) {
-		ServerLivingEntityEvents.MOB_CONVERSION.invoker().onConversion((MobEntity) (Object) this, (MobEntity) converted, conversionContext);
+	@ModifyArg(method = "convertTo", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;spawnEntityAndPassengers(Lnet/minecraft/world/entity/Entity;)V"))
+	private Entity afterEntityConverted(Entity converted, @Local(argsOnly = true) ConversionParams conversionContext) {
+		ServerLivingEntityEvents.MOB_CONVERSION.invoker().onConversion((Mob) (Object) this, (Mob) converted, conversionContext);
 		return converted;
 	}
 }

@@ -17,11 +17,9 @@
 package net.fabricmc.fabric.mixin.item;
 
 import org.spongepowered.asm.mixin.Mixin;
-
-import net.minecraft.item.Item;
-
 import net.fabricmc.fabric.api.item.v1.FabricItem;
+import net.minecraft.world.item.Item;
 
-@Mixin(Item.Settings.class)
+@Mixin(Item.Properties.class)
 public class ItemSettingsMixin implements FabricItem.Settings {
 }

@@ -24,62 +24,60 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.HeightLimitView;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.ProtoChunk;
-import net.minecraft.world.chunk.SerializedChunk;
-import net.minecraft.world.poi.PointOfInterestStorage;
-import net.minecraft.world.storage.StorageKey;
-
 import net.fabricmc.fabric.api.attachment.v1.AttachmentTarget;
 import net.fabricmc.fabric.impl.attachment.AttachmentTargetImpl;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.ai.village.poi.PoiManager;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.LevelHeightAccessor;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ProtoChunk;
+import net.minecraft.world.level.chunk.storage.RegionStorageInfo;
+import net.minecraft.world.level.chunk.storage.SerializableChunkData;
 
-@Mixin(SerializedChunk.class)
+@Mixin(SerializableChunkData.class)
 abstract class SerializedChunkMixin {
 	// Adding a mutable record field like this is likely a bad idea, but I cannot see a better way.
 	@Unique
 	@Nullable
-	private NbtCompound attachmentNbtData;
+	private CompoundTag attachmentNbtData;
 
-	@Inject(method = "fromNbt", at = @At("RETURN"))
-	private static void storeAttachmentNbtData(HeightLimitView heightLimitView, DynamicRegistryManager dynamicRegistryManager, NbtCompound nbt, CallbackInfoReturnable<SerializedChunk> cir, @Share("attachmentDataNbt") LocalRef<NbtCompound> attachmentDataNbt) {
-		final SerializedChunk serializer = cir.getReturnValue();
+	@Inject(method = "parse", at = @At("RETURN"))
+	private static void storeAttachmentNbtData(LevelHeightAccessor heightLimitView, RegistryAccess dynamicRegistryManager, CompoundTag nbt, CallbackInfoReturnable<SerializableChunkData> cir, @Share("attachmentDataNbt") LocalRef<CompoundTag> attachmentDataNbt) {
+		final SerializableChunkData serializer = cir.getReturnValue();
 
 		if (serializer == null) {
 			return;
 		}
 
-		if (nbt.contains(AttachmentTarget.NBT_ATTACHMENT_KEY, NbtElement.COMPOUND_TYPE)) {
+		if (nbt.contains(AttachmentTarget.NBT_ATTACHMENT_KEY, Tag.TAG_COMPOUND)) {
 			((SerializedChunkMixin) (Object) serializer).attachmentNbtData = nbt.getCompound(AttachmentTarget.NBT_ATTACHMENT_KEY);
 		}
 	}
 
-	@Inject(method = "convert", at = @At("RETURN"))
-	private void setAttachmentDataInChunk(ServerWorld serverWorld, PointOfInterestStorage pointOfInterestStorage, StorageKey storageKey, ChunkPos chunkPos, CallbackInfoReturnable<ProtoChunk> cir) {
+	@Inject(method = "read", at = @At("RETURN"))
+	private void setAttachmentDataInChunk(ServerLevel serverWorld, PoiManager pointOfInterestStorage, RegionStorageInfo storageKey, ChunkPos chunkPos, CallbackInfoReturnable<ProtoChunk> cir) {
 		ProtoChunk chunk = cir.getReturnValue();
 
 		if (chunk != null && attachmentNbtData != null) {
-			var nbt = new NbtCompound();
+			var nbt = new CompoundTag();
 			nbt.put(AttachmentTarget.NBT_ATTACHMENT_KEY, attachmentNbtData);
-			((AttachmentTargetImpl) chunk).fabric_readAttachmentsFromNbt(nbt, serverWorld.getRegistryManager());
+			((AttachmentTargetImpl) chunk).fabric_readAttachmentsFromNbt(nbt, serverWorld.registryAccess());
 		}
 	}
 
-	@Inject(method = "fromChunk", at = @At("RETURN"))
-	private static void storeAttachmentNbtData(ServerWorld world, Chunk chunk, CallbackInfoReturnable<SerializedChunk> cir) {
-		var nbt = new NbtCompound();
-		((AttachmentTargetImpl) chunk).fabric_writeAttachmentsToNbt(nbt, world.getRegistryManager());
+	@Inject(method = "copyOf", at = @At("RETURN"))
+	private static void storeAttachmentNbtData(ServerLevel world, ChunkAccess chunk, CallbackInfoReturnable<SerializableChunkData> cir) {
+		var nbt = new CompoundTag();
+		((AttachmentTargetImpl) chunk).fabric_writeAttachmentsToNbt(nbt, world.registryAccess());
 		((SerializedChunkMixin) (Object) cir.getReturnValue()).attachmentNbtData = nbt.getCompound(AttachmentTarget.NBT_ATTACHMENT_KEY);
 	}
 
-	@Inject(method = "serialize", at = @At("RETURN"))
-	private void writeChunkAttachments(CallbackInfoReturnable<NbtCompound> cir) {
+	@Inject(method = "write", at = @At("RETURN"))
+	private void writeChunkAttachments(CallbackInfoReturnable<CompoundTag> cir) {
 		if (attachmentNbtData != null) {
 			cir.getReturnValue().put(AttachmentTarget.NBT_ATTACHMENT_KEY, attachmentNbtData);
 		}

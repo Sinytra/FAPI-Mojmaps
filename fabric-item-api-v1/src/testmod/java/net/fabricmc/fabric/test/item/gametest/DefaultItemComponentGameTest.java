@@ -17,60 +17,58 @@
 package net.fabricmc.fabric.test.item.gametest;
 
 import java.util.function.Consumer;
-
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.FireworksComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.test.GameTest;
-import net.minecraft.test.GameTestException;
-import net.minecraft.test.TestContext;
-import net.minecraft.text.Text;
-
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestAssertException;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.Fireworks;
 
 public class DefaultItemComponentGameTest implements FabricGameTest {
-	@GameTest(templateName = EMPTY_STRUCTURE)
-	public void modify(TestContext context) {
-		Consumer<Text> checkText = text -> {
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void modify(GameTestHelper context) {
+		Consumer<Component> checkText = text -> {
 			if (text == null) {
-				throw new GameTestException("Item name component not found on gold ingot");
+				throw new GameTestAssertException("Item name component not found on gold ingot");
 			}
 
 			if (!"Fool's Gold".equals(text.getString())) {
-				throw new GameTestException("Item name component on gold ingot is not set");
+				throw new GameTestAssertException("Item name component on gold ingot is not set");
 			}
 		};
 
-		Text text = Items.GOLD_INGOT.getComponents().get(DataComponentTypes.ITEM_NAME);
+		Component text = Items.GOLD_INGOT.components().get(DataComponents.ITEM_NAME);
 		checkText.accept(text);
 
-		text = new ItemStack(Items.GOLD_INGOT).getComponents().get(DataComponentTypes.ITEM_NAME);
+		text = new ItemStack(Items.GOLD_INGOT).getComponents().get(DataComponents.ITEM_NAME);
 		checkText.accept(text);
 
-		boolean isBeefFood = Items.BEEF.getComponents().contains(DataComponentTypes.FOOD);
+		boolean isBeefFood = Items.BEEF.components().has(DataComponents.FOOD);
 
 		if (isBeefFood) {
-			throw new GameTestException("Food component not removed from beef");
+			throw new GameTestAssertException("Food component not removed from beef");
 		}
 
-		context.complete();
+		context.succeed();
 	}
 
-	@GameTest(templateName = EMPTY_STRUCTURE)
-	public void afterModify(TestContext context) {
-		FireworksComponent fireworksComponent = Items.GOLD_NUGGET.getComponents().get(DataComponentTypes.FIREWORKS);
+	@GameTest(template = EMPTY_STRUCTURE)
+	public void afterModify(GameTestHelper context) {
+		Fireworks fireworksComponent = Items.GOLD_NUGGET.components().get(DataComponents.FIREWORKS);
 
 		if (fireworksComponent == null) {
-			throw new GameTestException("Fireworks component not found on gold nugget");
+			throw new GameTestAssertException("Fireworks component not found on gold nugget");
 		}
 
-		Boolean enchantGlint = Items.GOLD_NUGGET.getComponents().get(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE);
+		Boolean enchantGlint = Items.GOLD_NUGGET.components().get(DataComponents.ENCHANTMENT_GLINT_OVERRIDE);
 
 		if (enchantGlint != Boolean.TRUE) {
-			throw new GameTestException("Enchantment glint override not set on gold nugget");
+			throw new GameTestAssertException("Enchantment glint override not set on gold nugget");
 		}
 
-		context.complete();
+		context.succeed();
 	}
 }

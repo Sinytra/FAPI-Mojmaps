@@ -24,23 +24,21 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
-
-import net.minecraft.item.Items;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.registry.RegistryOps;
-import net.minecraft.test.GameTest;
-import net.minecraft.test.GameTestException;
-import net.minecraft.test.TestContext;
-
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.fabricmc.fabric.api.recipe.v1.ingredient.DefaultCustomIngredients;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestAssertException;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.RegistryOps;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
 
 public class SerializationTests {
 	/**
 	 * Check that trying to use a custom ingredient inside an array ingredient fails.
 	 */
-	@GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE)
-	public void testArrayDeserialization(TestContext context) {
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void testArrayDeserialization(GameTestHelper context) {
 		String ingredientJson = """
 [
 	{
@@ -59,25 +57,25 @@ public class SerializationTests {
 
 		try {
 			Ingredient.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow(JsonParseException::new);
-			throw new GameTestException("Using a custom ingredient inside an array ingredient should have failed.");
+			throw new GameTestAssertException("Using a custom ingredient inside an array ingredient should have failed.");
 		} catch (JsonParseException e) {
-			context.complete();
+			context.succeed();
 		}
 	}
 
 	/**
 	 * Check that we can serialise and deserialize a custom ingredient.
 	 */
-	@GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE)
-	public void testCustomIngredientSerialization(TestContext context) {
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void testCustomIngredientSerialization(GameTestHelper context) {
 		for (boolean allowEmpty : List.of(false, true)) {
 			String ingredientJson = """
 					{"ingredients":["minecraft:stone"],"fabric:type":"fabric:all"}
 					""".trim();
 
-			RegistryOps<JsonElement> registryOps = context.getWorld().getRegistryManager().getOps(JsonOps.INSTANCE);
+			RegistryOps<JsonElement> registryOps = context.getLevel().registryAccess().createSerializationContext(JsonOps.INSTANCE);
 			Ingredient ingredient = DefaultCustomIngredients.all(
-					Ingredient.ofItems(Items.STONE)
+					Ingredient.of(Items.STONE)
 			);
 			Codec<Ingredient> ingredientCodec = Ingredient.CODEC;
 			JsonObject json = ingredientCodec.encodeStart(registryOps, ingredient).getOrThrow(IllegalStateException::new).getAsJsonObject();
@@ -88,6 +86,6 @@ public class SerializationTests {
 			context.assertTrue(deserialized.getCustomIngredient().getSerializer() == ingredient.getCustomIngredient().getSerializer(), "Serializer did not match");
 		}
 
-		context.complete();
+		context.succeed();
 	}
 }

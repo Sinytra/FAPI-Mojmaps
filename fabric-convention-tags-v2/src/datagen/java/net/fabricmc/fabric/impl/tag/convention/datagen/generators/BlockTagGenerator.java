@@ -18,17 +18,15 @@ package net.fabricmc.fabric.impl.tag.convention.datagen.generators;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalBlockTags;
 import net.fabricmc.fabric.api.tag.convention.v2.TagUtil;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 
 public final class BlockTagGenerator extends FabricTagProvider.BlockTagProvider {
 	static List<Block> VILLAGER_JOB_SITE_BLOCKS = List.of(
@@ -50,12 +48,12 @@ public final class BlockTagGenerator extends FabricTagProvider.BlockTagProvider 
 			Blocks.STONECUTTER
 	);
 
-	public BlockTagGenerator(FabricDataOutput output, CompletableFuture<RegistryWrapper.WrapperLookup> registriesFuture) {
+	public BlockTagGenerator(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> registriesFuture) {
 		super(output, registriesFuture);
 	}
 
 	@Override
-	protected void configure(RegistryWrapper.WrapperLookup registries) {
+	protected void configure(HolderLookup.Provider registries) {
 		getOrCreateTagBuilder(ConventionalBlockTags.STONES)
 				.add(Blocks.STONE)
 				.add(Blocks.ANDESITE)
@@ -512,19 +510,19 @@ public final class BlockTagGenerator extends FabricTagProvider.BlockTagProvider 
 		// Backwards compat with pre-1.21 tags. Done after so optional tag is last for better readability.
 		// TODO: Remove backwards compat tag entries in 1.22
 
-		getOrCreateTagBuilder(ConventionalBlockTags.RELOCATION_NOT_SUPPORTED).addOptionalTag(Identifier.of(TagUtil.C_TAG_NAMESPACE, "movement_restricted"));
-		getOrCreateTagBuilder(ConventionalBlockTags.QUARTZ_ORES).addOptionalTag(Identifier.of(TagUtil.C_TAG_NAMESPACE, "quartz_ores"));
-		getOrCreateTagBuilder(ConventionalBlockTags.WOODEN_BARRELS).addOptionalTag(Identifier.of(TagUtil.C_TAG_NAMESPACE, "wooden_barrels"));
-		getOrCreateTagBuilder(ConventionalBlockTags.WOODEN_CHESTS).addOptionalTag(Identifier.of(TagUtil.C_TAG_NAMESPACE, "wooden_chests"));
-		getOrCreateTagBuilder(ConventionalBlockTags.SANDSTONE_BLOCKS).addOptionalTag(Identifier.of(TagUtil.C_TAG_NAMESPACE, "sandstone_blocks"));
-		getOrCreateTagBuilder(ConventionalBlockTags.SANDSTONE_SLABS).addOptionalTag(Identifier.of(TagUtil.C_TAG_NAMESPACE, "sandstone_slabs"));
-		getOrCreateTagBuilder(ConventionalBlockTags.SANDSTONE_STAIRS).addOptionalTag(Identifier.of(TagUtil.C_TAG_NAMESPACE, "sandstone_stairs"));
-		getOrCreateTagBuilder(ConventionalBlockTags.RED_SANDSTONE_BLOCKS).addOptionalTag(Identifier.of(TagUtil.C_TAG_NAMESPACE, "red_sandstone_blocks"));
-		getOrCreateTagBuilder(ConventionalBlockTags.RED_SANDSTONE_SLABS).addOptionalTag(Identifier.of(TagUtil.C_TAG_NAMESPACE, "red_sandstone_slabs"));
-		getOrCreateTagBuilder(ConventionalBlockTags.RED_SANDSTONE_STAIRS).addOptionalTag(Identifier.of(TagUtil.C_TAG_NAMESPACE, "red_sandstone_stairs"));
-		getOrCreateTagBuilder(ConventionalBlockTags.UNCOLORED_SANDSTONE_BLOCKS).addOptionalTag(Identifier.of(TagUtil.C_TAG_NAMESPACE, "uncolored_sandstone_blocks"));
-		getOrCreateTagBuilder(ConventionalBlockTags.UNCOLORED_SANDSTONE_SLABS).addOptionalTag(Identifier.of(TagUtil.C_TAG_NAMESPACE, "uncolored_sandstone_slabs"));
-		getOrCreateTagBuilder(ConventionalBlockTags.UNCOLORED_SANDSTONE_STAIRS).addOptionalTag(Identifier.of(TagUtil.C_TAG_NAMESPACE, "uncolored_sandstone_stairs"));
+		getOrCreateTagBuilder(ConventionalBlockTags.RELOCATION_NOT_SUPPORTED).addOptionalTag(ResourceLocation.fromNamespaceAndPath(TagUtil.C_TAG_NAMESPACE, "movement_restricted"));
+		getOrCreateTagBuilder(ConventionalBlockTags.QUARTZ_ORES).addOptionalTag(ResourceLocation.fromNamespaceAndPath(TagUtil.C_TAG_NAMESPACE, "quartz_ores"));
+		getOrCreateTagBuilder(ConventionalBlockTags.WOODEN_BARRELS).addOptionalTag(ResourceLocation.fromNamespaceAndPath(TagUtil.C_TAG_NAMESPACE, "wooden_barrels"));
+		getOrCreateTagBuilder(ConventionalBlockTags.WOODEN_CHESTS).addOptionalTag(ResourceLocation.fromNamespaceAndPath(TagUtil.C_TAG_NAMESPACE, "wooden_chests"));
+		getOrCreateTagBuilder(ConventionalBlockTags.SANDSTONE_BLOCKS).addOptionalTag(ResourceLocation.fromNamespaceAndPath(TagUtil.C_TAG_NAMESPACE, "sandstone_blocks"));
+		getOrCreateTagBuilder(ConventionalBlockTags.SANDSTONE_SLABS).addOptionalTag(ResourceLocation.fromNamespaceAndPath(TagUtil.C_TAG_NAMESPACE, "sandstone_slabs"));
+		getOrCreateTagBuilder(ConventionalBlockTags.SANDSTONE_STAIRS).addOptionalTag(ResourceLocation.fromNamespaceAndPath(TagUtil.C_TAG_NAMESPACE, "sandstone_stairs"));
+		getOrCreateTagBuilder(ConventionalBlockTags.RED_SANDSTONE_BLOCKS).addOptionalTag(ResourceLocation.fromNamespaceAndPath(TagUtil.C_TAG_NAMESPACE, "red_sandstone_blocks"));
+		getOrCreateTagBuilder(ConventionalBlockTags.RED_SANDSTONE_SLABS).addOptionalTag(ResourceLocation.fromNamespaceAndPath(TagUtil.C_TAG_NAMESPACE, "red_sandstone_slabs"));
+		getOrCreateTagBuilder(ConventionalBlockTags.RED_SANDSTONE_STAIRS).addOptionalTag(ResourceLocation.fromNamespaceAndPath(TagUtil.C_TAG_NAMESPACE, "red_sandstone_stairs"));
+		getOrCreateTagBuilder(ConventionalBlockTags.UNCOLORED_SANDSTONE_BLOCKS).addOptionalTag(ResourceLocation.fromNamespaceAndPath(TagUtil.C_TAG_NAMESPACE, "uncolored_sandstone_blocks"));
+		getOrCreateTagBuilder(ConventionalBlockTags.UNCOLORED_SANDSTONE_SLABS).addOptionalTag(ResourceLocation.fromNamespaceAndPath(TagUtil.C_TAG_NAMESPACE, "uncolored_sandstone_slabs"));
+		getOrCreateTagBuilder(ConventionalBlockTags.UNCOLORED_SANDSTONE_STAIRS).addOptionalTag(ResourceLocation.fromNamespaceAndPath(TagUtil.C_TAG_NAMESPACE, "uncolored_sandstone_stairs"));
 		getOrCreateTagBuilder(ConventionalBlockTags.GLAZED_TERRACOTTAS).addOptionalTag(ConventionalBlockTags.GLAZED_TERRACOTTA);
 		getOrCreateTagBuilder(ConventionalBlockTags.CONCRETES).addOptionalTag(ConventionalBlockTags.CONCRETE);
 	}

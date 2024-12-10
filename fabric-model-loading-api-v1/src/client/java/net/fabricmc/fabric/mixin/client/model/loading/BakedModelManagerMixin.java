@@ -34,39 +34,37 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.BakedModelManager;
-import net.minecraft.client.render.model.BlockStatesLoader;
-import net.minecraft.client.render.model.ReferencedModelsCollector;
-import net.minecraft.client.render.model.UnbakedModel;
-import net.minecraft.client.util.ModelIdentifier;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.resource.ResourceReloader;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Pair;
-import net.minecraft.util.profiler.Profiler;
-
 import net.fabricmc.fabric.api.client.model.loading.v1.FabricBakedModelManager;
 import net.fabricmc.fabric.impl.client.model.loading.ModelLoadingConstants;
 import net.fabricmc.fabric.impl.client.model.loading.ModelLoadingEventDispatcher;
 import net.fabricmc.fabric.impl.client.model.loading.ModelLoadingPluginManager;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.BlockStateModelLoader;
+import net.minecraft.client.resources.model.ModelDiscovery;
+import net.minecraft.client.resources.model.ModelManager;
+import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.PreparableReloadListener;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.util.Tuple;
+import net.minecraft.util.profiling.ProfilerFiller;
 
-@Mixin(BakedModelManager.class)
+@Mixin(ModelManager.class)
 abstract class BakedModelManagerMixin implements FabricBakedModelManager {
 	@Unique
 	private volatile CompletableFuture<ModelLoadingEventDispatcher> eventDispatcherFuture;
 
 	@Shadow
-	private Map<ModelIdentifier, BakedModel> models;
+	private Map<ModelResourceLocation, BakedModel> models;
 
 	@Override
-	public BakedModel getModel(Identifier id) {
+	public BakedModel getModel(ResourceLocation id) {
 		return models.get(ModelLoadingConstants.toResourceModelId(id));
 	}
 
 	@Inject(method = "reload", at = @At("HEAD"))
-	private void onHeadReload(ResourceReloader.Synchronizer synchronizer, ResourceManager manager, Profiler prepareProfiler, Profiler applyProfiler, Executor prepareExecutor, Executor applyExecutor, CallbackInfoReturnable<CompletableFuture<Void>> cir) {
+	private void onHeadReload(PreparableReloadListener.PreparationBarrier synchronizer, ResourceManager manager, ProfilerFiller prepareProfiler, ProfilerFiller applyProfiler, Executor prepareExecutor, Executor applyExecutor, CallbackInfoReturnable<CompletableFuture<Void>> cir) {
 		eventDispatcherFuture = ModelLoadingPluginManager.preparePlugins(manager, prepareExecutor).thenApplyAsync(ModelLoadingEventDispatcher::new);
 	}
 
@@ -79,14 +77,14 @@ abstract class BakedModelManagerMixin implements FabricBakedModelManager {
 	}
 
 	@ModifyExpressionValue(method = "reload", at = @At(value = "INVOKE", target = "net/minecraft/client/render/model/BakedModelManager.reloadBlockStates(Lnet/minecraft/client/render/model/BlockStatesLoader;Lnet/minecraft/resource/ResourceManager;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;"))
-	private CompletableFuture<BlockStatesLoader.BlockStateDefinition> hookBlockStateModelLoading(CompletableFuture<BlockStatesLoader.BlockStateDefinition> modelsFuture) {
-		CompletableFuture<BlockStatesLoader.BlockStateDefinition> resolvedModelsFuture = eventDispatcherFuture.thenApplyAsync(ModelLoadingEventDispatcher::loadBlockStateModels);
+	private CompletableFuture<BlockStateModelLoader.LoadedModels> hookBlockStateModelLoading(CompletableFuture<BlockStateModelLoader.LoadedModels> modelsFuture) {
+		CompletableFuture<BlockStateModelLoader.LoadedModels> resolvedModelsFuture = eventDispatcherFuture.thenApplyAsync(ModelLoadingEventDispatcher::loadBlockStateModels);
 		return modelsFuture.thenCombine(resolvedModelsFuture, (models, resolvedModels) -> {
-			Map<ModelIdentifier, BlockStatesLoader.BlockModel> map = models.models();
+			Map<ModelResourceLocation, BlockStateModelLoader.LoadedModel> map = models.models();
 
 			if (!(map instanceof HashMap)) {
 				map = new HashMap<>(map);
-				models = new BlockStatesLoader.BlockStateDefinition(map);
+				models = new BlockStateModelLoader.LoadedModels(map);
 			}
 
 			map.putAll(resolvedModels.models());
@@ -102,15 +100,15 @@ abstract class BakedModelManagerMixin implements FabricBakedModelManager {
 					ordinal = 0,
 					remap = false
 			))
-	private CompletableFuture<ReferencedModelsCollector> hookModelDiscovery(
-			CompletableFuture<BlockStatesLoader.BlockStateDefinition> self,
-			CompletionStage<Map<Identifier, UnbakedModel>> otherFuture,
-			BiFunction<BlockStatesLoader.BlockStateDefinition, Map<Identifier, UnbakedModel>, ReferencedModelsCollector> function,
+	private CompletableFuture<ModelDiscovery> hookModelDiscovery(
+			CompletableFuture<BlockStateModelLoader.LoadedModels> self,
+			CompletionStage<Map<ResourceLocation, UnbakedModel>> otherFuture,
+			BiFunction<BlockStateModelLoader.LoadedModels, Map<ResourceLocation, UnbakedModel>, ModelDiscovery> function,
 			Executor executor) {
-		CompletableFuture<Pair<BlockStatesLoader.BlockStateDefinition, Map<Identifier, UnbakedModel>>> pairFuture = self.thenCombine(otherFuture, Pair::new);
+		CompletableFuture<Tuple<BlockStateModelLoader.LoadedModels, Map<ResourceLocation, UnbakedModel>>> pairFuture = self.thenCombine(otherFuture, Tuple::new);
 		return pairFuture.thenCombineAsync(eventDispatcherFuture, (pair, eventDispatcher) -> {
 			ModelLoadingEventDispatcher.CURRENT.set(eventDispatcher);
-			ReferencedModelsCollector referencedModelsCollector = function.apply(pair.getLeft(), pair.getRight());
+			ModelDiscovery referencedModelsCollector = function.apply(pair.getA(), pair.getB());
 			ModelLoadingEventDispatcher.CURRENT.remove();
 			return referencedModelsCollector;
 		}, executor);

@@ -26,16 +26,14 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.recipe.Ingredient;
-
 import net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredient;
 import net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredientSerializer;
 import net.fabricmc.fabric.api.recipe.v1.ingredient.FabricIngredient;
 import net.fabricmc.fabric.impl.recipe.ingredient.CustomIngredientImpl;
 import net.fabricmc.fabric.impl.recipe.ingredient.CustomIngredientPacketCodec;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.world.item.crafting.Ingredient;
 
 @Mixin(Ingredient.class)
 public class IngredientMixin implements FabricIngredient {
@@ -64,11 +62,11 @@ public class IngredientMixin implements FabricIngredient {
 			method = "<clinit>",
 			at = @At(
 					value = "INVOKE",
-					target = "Lnet/minecraft/network/codec/PacketCodec;xmap(Ljava/util/function/Function;Ljava/util/function/Function;)Lnet/minecraft/network/codec/PacketCodec;",
+					target = "Lnet/minecraft/network/codec/StreamCodec;map(Ljava/util/function/Function;Ljava/util/function/Function;)Lnet/minecraft/network/codec/StreamCodec;",
 					ordinal = 0
 			)
 	)
-	private static PacketCodec<RegistryByteBuf, Ingredient> useCustomIngredientPacketCodec(PacketCodec<RegistryByteBuf, Ingredient> original) {
+	private static StreamCodec<RegistryFriendlyByteBuf, Ingredient> useCustomIngredientPacketCodec(StreamCodec<RegistryFriendlyByteBuf, Ingredient> original) {
 		return new CustomIngredientPacketCodec(original);
 	}
 }

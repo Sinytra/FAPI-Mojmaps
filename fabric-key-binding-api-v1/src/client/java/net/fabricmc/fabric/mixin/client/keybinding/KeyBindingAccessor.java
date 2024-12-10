@@ -16,21 +16,19 @@
 
 package net.fabricmc.fabric.mixin.client.keybinding;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import java.util.Map;
-
+import net.minecraft.client.KeyMapping;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
-
-@Mixin(KeyBinding.class)
+@Mixin(KeyMapping.class)
 public interface KeyBindingAccessor {
-	@Accessor("CATEGORY_ORDER_MAP")
+	@Accessor("CATEGORY_SORT_ORDER")
 	static Map<String, Integer> fabric_getCategoryMap() {
 		throw new AssertionError();
 	}
 
-	@Accessor("boundKey")
-	InputUtil.Key fabric_getBoundKey();
+	@Accessor("key")
+	InputConstants.Key fabric_getBoundKey();
 }

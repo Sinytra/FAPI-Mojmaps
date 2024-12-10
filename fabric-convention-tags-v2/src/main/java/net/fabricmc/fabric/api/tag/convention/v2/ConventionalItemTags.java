@@ -16,15 +16,14 @@
 
 package net.fabricmc.fabric.api.tag.convention.v2;
 
-import net.minecraft.item.Item;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.registry.tag.ItemTags;
-import net.minecraft.registry.tag.TagKey;
-
 import net.fabricmc.fabric.impl.tag.convention.v2.TagRegistration;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
 
 /**
- * See {@link net.minecraft.registry.tag.ItemTags} for vanilla tags.
+ * See {@link net.minecraft.tags.ItemTags} for vanilla tags.
  * Note that addition to some vanilla tags implies having certain functionality.
  */
 public final class ConventionalItemTags {
@@ -259,7 +258,7 @@ public final class ConventionalItemTags {
 	/**
 	 * Tag that holds all blocks and items that can be dyed a specific color.
 	 * (Does not include color blending items like leather armor.
-	 * Use {@link net.minecraft.registry.tag.ItemTags#DYEABLE} tag instead for color blending items)
+	 * Use {@link net.minecraft.tags.ItemTags#DYEABLE} tag instead for color blending items)
 	 * <p></p>
 	 * Note: Use custom ingredients in recipes to do tag intersections and/or tag exclusions
 	 * to make more powerful recipes utilizing multiple tags such as dyed tags for an ingredient.
@@ -354,7 +353,7 @@ public final class ConventionalItemTags {
 	public static final TagKey<Item> SLIME_BALLS = register("slime_balls");
 	/**
 	 * For bonemeal-like items that can grow plants.
-	 * (Note: Could include durability-based modded bonemeal-like items. Check for durability {@link net.minecraft.component.DataComponentTypes#DAMAGE} to handle them properly)
+	 * (Note: Could include durability-based modded bonemeal-like items. Check for durability {@link net.minecraft.core.component.DataComponents#DAMAGE} to handle them properly)
 	 */
 	public static final TagKey<Item> FERTILIZERS = register("fertilizers");
 
@@ -384,7 +383,7 @@ public final class ConventionalItemTags {
 	@Deprecated
 	public static final TagKey<Item> COPPER_RAW_BLOCKS = register("raw_blocks/copper");
 	/**
-	 * This tag is redundant. Please use {@link net.minecraft.registry.tag.ItemTags#COALS} tag instead.
+	 * This tag is redundant. Please use {@link net.minecraft.tags.ItemTags#COALS} tag instead.
 	 */
 	@Deprecated
 	public static final TagKey<Item> COAL = register("coal");

@@ -23,18 +23,16 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import net.minecraft.test.GameTest;
-import net.minecraft.test.StructureTestUtil;
-import net.minecraft.test.TestFunction;
-import net.minecraft.test.TestFunctions;
-
 import net.fabricmc.fabric.impl.gametest.FabricGameTestHelper;
 import net.fabricmc.fabric.impl.gametest.FabricGameTestModInitializer;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestRegistry;
+import net.minecraft.gametest.framework.StructureUtils;
+import net.minecraft.gametest.framework.TestFunction;
 
-@Mixin(TestFunctions.class)
+@Mixin(GameTestRegistry.class)
 public abstract class TestFunctionsMixin {
-	@Inject(at = @At("HEAD"), method = "getTestFunction(Ljava/lang/reflect/Method;)Lnet/minecraft/test/TestFunction;", cancellable = true)
+	@Inject(at = @At("HEAD"), method = "turnMethodIntoTestFunction(Ljava/lang/reflect/Method;)Lnet/minecraft/gametest/framework/TestFunction;", cancellable = true)
 	private static void getTestFunction(Method method, CallbackInfoReturnable<TestFunction> cir) {
 		GameTest gameTest = method.getAnnotation(GameTest.class);
 		String testSuiteName = method.getDeclaringClass().getSimpleName().toLowerCase(Locale.ROOT);
@@ -43,19 +41,19 @@ public abstract class TestFunctionsMixin {
 		String modId = FabricGameTestModInitializer.getModIdForTestClass(method.getDeclaringClass());
 		String structureName = "%s:%s".formatted(modId, testCaseName);
 
-		if (!gameTest.templateName().isEmpty()) {
-			structureName = gameTest.templateName();
+		if (!gameTest.template().isEmpty()) {
+			structureName = gameTest.template();
 		}
 
-		TestFunction testFunction = new TestFunction(gameTest.batchId(),
+		TestFunction testFunction = new TestFunction(gameTest.batch(),
 				testCaseName,
 				structureName,
-				StructureTestUtil.getRotation(gameTest.rotation()),
-				gameTest.tickLimit(),
-				gameTest.duration(),
+				StructureUtils.getRotationForRotationSteps(gameTest.rotationSteps()),
+				gameTest.timeoutTicks(),
+				gameTest.setupTicks(),
 				gameTest.required(),
 				gameTest.manualOnly(),
-				gameTest.maxAttempts(),
+				gameTest.attempts(),
 				gameTest.requiredSuccesses(),
 				gameTest.skyAccess(),
 				FabricGameTestHelper.getTestMethodInvoker(method)

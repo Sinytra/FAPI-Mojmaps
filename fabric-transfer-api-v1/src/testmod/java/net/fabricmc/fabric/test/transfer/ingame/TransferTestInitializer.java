@@ -16,34 +16,33 @@
 
 package net.fabricmc.fabric.test.transfer.ingame;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 
 public class TransferTestInitializer implements ModInitializer {
 	public static final String MOD_ID = "fabric-transfer-api-v1-testmod";
 
-	private static final RegistryKey<Block> INFINITE_WATER_SOURCE_KEY = block("infinite_water_source");
-	private static final Block INFINITE_WATER_SOURCE = new Block(AbstractBlock.Settings.create().registryKey(INFINITE_WATER_SOURCE_KEY));
-	private static final RegistryKey<Block> INFINITE_LAVA_SOURCE_KEY = block("infinite_lava_source");
-	private static final Block INFINITE_LAVA_SOURCE = new Block(AbstractBlock.Settings.create().registryKey(INFINITE_LAVA_SOURCE_KEY));
-	private static final RegistryKey<Block> FLUID_CHUTE_KEY = block("fluid_chute");
-	private static final Block FLUID_CHUTE = new FluidChuteBlock(AbstractBlock.Settings.create().registryKey(FLUID_CHUTE_KEY));
-	private static final RegistryKey<Item> EXTRACT_STICK_KEY = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MOD_ID, "extract_stick"));
-	private static final Item EXTRACT_STICK = new ExtractStickItem(new Item.Settings().registryKey(EXTRACT_STICK_KEY));
+	private static final ResourceKey<Block> INFINITE_WATER_SOURCE_KEY = block("infinite_water_source");
+	private static final Block INFINITE_WATER_SOURCE = new Block(BlockBehaviour.Properties.of().setId(INFINITE_WATER_SOURCE_KEY));
+	private static final ResourceKey<Block> INFINITE_LAVA_SOURCE_KEY = block("infinite_lava_source");
+	private static final Block INFINITE_LAVA_SOURCE = new Block(BlockBehaviour.Properties.of().setId(INFINITE_LAVA_SOURCE_KEY));
+	private static final ResourceKey<Block> FLUID_CHUTE_KEY = block("fluid_chute");
+	private static final Block FLUID_CHUTE = new FluidChuteBlock(BlockBehaviour.Properties.of().setId(FLUID_CHUTE_KEY));
+	private static final ResourceKey<Item> EXTRACT_STICK_KEY = ResourceKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(MOD_ID, "extract_stick"));
+	private static final Item EXTRACT_STICK = new ExtractStickItem(new Item.Properties().setId(EXTRACT_STICK_KEY));
 	public static BlockEntityType<FluidChuteBlockEntity> FLUID_CHUTE_TYPE;
 
 	@Override
@@ -51,10 +50,10 @@ public class TransferTestInitializer implements ModInitializer {
 		registerBlock(INFINITE_WATER_SOURCE_KEY, INFINITE_WATER_SOURCE);
 		registerBlock(INFINITE_LAVA_SOURCE_KEY, INFINITE_LAVA_SOURCE);
 		registerBlock(FLUID_CHUTE_KEY, FLUID_CHUTE);
-		Registry.register(Registries.ITEM, Identifier.of(MOD_ID, "extract_stick"), EXTRACT_STICK);
+		Registry.register(BuiltInRegistries.ITEM, ResourceLocation.fromNamespaceAndPath(MOD_ID, "extract_stick"), EXTRACT_STICK);
 
 		FLUID_CHUTE_TYPE = FabricBlockEntityTypeBuilder.create(FluidChuteBlockEntity::new, FLUID_CHUTE).build();
-		Registry.register(Registries.BLOCK_ENTITY_TYPE, Identifier.of(MOD_ID, "fluid_chute"), FLUID_CHUTE_TYPE);
+		Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(MOD_ID, "fluid_chute"), FLUID_CHUTE_TYPE);
 
 		FluidStorage.SIDED.registerForBlocks((world, pos, state, be, direction) -> CreativeStorage.WATER, INFINITE_WATER_SOURCE);
 		FluidStorage.SIDED.registerForBlocks((world, pos, state, be, direction) -> CreativeStorage.LAVA, INFINITE_LAVA_SOURCE);
@@ -65,12 +64,12 @@ public class TransferTestInitializer implements ModInitializer {
 		ItemStorage.SIDED.registerForBlocks((world, pos, state, be, direction) -> CreativeStorage.DIAMONDS, Blocks.DIAMOND_ORE);
 	}
 
-	private static RegistryKey<Block> block(String name) {
-		return RegistryKey.of(RegistryKeys.BLOCK, Identifier.of(MOD_ID, name));
+	private static ResourceKey<Block> block(String name) {
+		return ResourceKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath(MOD_ID, name));
 	}
 
-	private static void registerBlock(RegistryKey<Block> key, Block block) {
-		Registry.register(Registries.BLOCK, key, block);
-		Registry.register(Registries.ITEM, key.getValue(), new BlockItem(block, new Item.Settings().registryKey(RegistryKey.of(RegistryKeys.ITEM, key.getValue()))));
+	private static void registerBlock(ResourceKey<Block> key, Block block) {
+		Registry.register(BuiltInRegistries.BLOCK, key, block);
+		Registry.register(BuiltInRegistries.ITEM, key.location(), new BlockItem(block, new Item.Properties().setId(ResourceKey.create(Registries.ITEM, key.location()))));
 	}
 }

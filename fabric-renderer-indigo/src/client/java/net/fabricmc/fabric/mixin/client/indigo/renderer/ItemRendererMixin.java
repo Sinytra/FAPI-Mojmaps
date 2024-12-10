@@ -25,13 +25,12 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.client.color.item.ItemColors;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.item.ItemRenderer;
-import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.json.ModelTransformationMode;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.item.ItemStack;
-
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.world.item.ItemStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.fabricmc.fabric.impl.client.indigo.renderer.render.ItemRenderContext;
 
 @Mixin(ItemRenderer.class)
@@ -43,8 +42,8 @@ public abstract class ItemRendererMixin {
 	@Unique
 	private final ThreadLocal<ItemRenderContext> fabric_contexts = ThreadLocal.withInitial(() -> new ItemRenderContext(colors));
 
-	@Inject(method = "renderItem(Lnet/minecraft/item/ItemStack;Lnet/minecraft/client/render/model/json/ModelTransformationMode;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IILnet/minecraft/client/render/model/BakedModel;Z)V", at = @At(value = "HEAD"), cancellable = true)
-	public void hook_renderItem(ItemStack stack, ModelTransformationMode transformMode, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int light, int overlay, BakedModel model, boolean notInHand, CallbackInfo ci) {
+	@Inject(method = "renderItem(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/client/render/model/json/ModelTransformationMode;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IILnet/minecraft/client/resources/model/BakedModel;Z)V", at = @At(value = "HEAD"), cancellable = true)
+	public void hook_renderItem(ItemStack stack, ModelTransformationMode transformMode, PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, int light, int overlay, BakedModel model, boolean notInHand, CallbackInfo ci) {
 		if (!model.isVanillaAdapter()) {
 			fabric_contexts.get().renderModel(stack, transformMode, matrixStack, vertexConsumerProvider, light, overlay, model);
 			ci.cancel();

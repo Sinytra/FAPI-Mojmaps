@@ -17,30 +17,28 @@
 package net.fabricmc.fabric.test.rendering.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-
-import net.minecraft.block.Blocks;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.ShaderProgramKeys;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.BufferRenderer;
-import net.minecraft.client.render.OverlayTexture;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.client.render.VertexFormats;
-import net.minecraft.client.render.VertexRendering;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.CoreShaders;
+import net.minecraft.client.renderer.ShapeRenderer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.Vec3;
 
 public class WorldRenderEventsTests implements ClientModInitializer {
 	private static boolean onBlockOutline(WorldRenderContext wrc, WorldRenderContext.BlockOutlineContext blockOutlineContext) {
-		if (blockOutlineContext.blockState().isOf(Blocks.DIAMOND_BLOCK)) {
-			MatrixStack matrixStack = new MatrixStack();
-			matrixStack.push();
-			Vec3d cameraPos = MinecraftClient.getInstance().gameRenderer.getCamera().getPos();
+		if (blockOutlineContext.blockState().is(Blocks.DIAMOND_BLOCK)) {
+			PoseStack matrixStack = new PoseStack();
+			matrixStack.pushPose();
+			Vec3 cameraPos = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
 			BlockPos pos = blockOutlineContext.blockPos();
 			double x = pos.getX() - cameraPos.x;
 			double y = pos.getY() - cameraPos.y;
@@ -48,11 +46,11 @@ public class WorldRenderEventsTests implements ClientModInitializer {
 			matrixStack.translate(x+0.25, y+0.25+1, z+0.25);
 			matrixStack.scale(0.5f, 0.5f, 0.5f);
 
-			MinecraftClient.getInstance().getBlockRenderManager().renderBlockAsEntity(
-					Blocks.DIAMOND_BLOCK.getDefaultState(),
-					matrixStack, wrc.consumers(), 15728880, OverlayTexture.DEFAULT_UV);
+			Minecraft.getInstance().getBlockRenderer().renderSingleBlock(
+					Blocks.DIAMOND_BLOCK.defaultBlockState(),
+					matrixStack, wrc.consumers(), 15728880, OverlayTexture.NO_OVERLAY);
 
-			matrixStack.pop();
+			matrixStack.popPose();
 		}
 
 		return true;
@@ -62,23 +60,23 @@ public class WorldRenderEventsTests implements ClientModInitializer {
 	 * Renders a translucent box at (0, 100, 0).
 	 */
 	private static void renderAfterTranslucent(WorldRenderContext context) {
-		MatrixStack matrices = context.matrixStack();
-		Vec3d camera = context.camera().getPos();
-		Tessellator tessellator = RenderSystem.renderThreadTesselator();
-		BufferBuilder buffer = tessellator.begin(VertexFormat.DrawMode.TRIANGLE_STRIP, VertexFormats.POSITION_COLOR);
+		PoseStack matrices = context.matrixStack();
+		Vec3 camera = context.camera().getPosition();
+		Tesselator tessellator = RenderSystem.renderThreadTesselator();
+		BufferBuilder buffer = tessellator.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
 
-		matrices.push();
+		matrices.pushPose();
 		matrices.translate(-camera.x, -camera.y, -camera.z);
 
-		RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR);
+		RenderSystem.setShader(CoreShaders.POSITION_COLOR);
 		RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
 		RenderSystem.enableBlend();
 		RenderSystem.defaultBlendFunc();
 
-		VertexRendering.drawBox(matrices, buffer, 0, 100, 0, 1, 101, 1, 0, 1, 0, 0.5f);
-		BufferRenderer.drawWithGlobalProgram(buffer.end());
+		ShapeRenderer.renderLineBox(matrices, buffer, 0, 100, 0, 1, 101, 1, 0, 1, 0, 0.5f);
+		BufferUploader.drawWithShader(buffer.buildOrThrow());
 
-		matrices.pop();
+		matrices.popPose();
 		RenderSystem.disableBlend();
 	}
 

@@ -17,7 +17,13 @@
 package net.fabricmc.fabric.mixin.object.builder;
 
 import java.util.stream.Stream;
-
+import net.minecraft.core.DefaultedRegistry;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.npc.VillagerTrades;
+import net.minecraft.world.entity.npc.VillagerType;
+import net.minecraft.world.item.trading.ItemCost;
+import net.minecraft.world.item.trading.MerchantOffer;
 import com.llamalad7.mixinextras.sugar.Local;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -25,15 +31,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.registry.DefaultedRegistry;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.village.TradeOffer;
-import net.minecraft.village.TradeOffers;
-import net.minecraft.village.TradedItem;
-import net.minecraft.village.VillagerType;
-
-@Mixin(TradeOffers.TypeAwareBuyForOneEmeraldFactory.class)
+@Mixin(VillagerTrades.EmeraldsForVillagerTypeItem.class)
 public abstract class TradeOffersTypeAwareBuyForOneEmeraldFactoryMixin {
 	/**
 	 * Vanilla will check the "VillagerType -> Item" map in the stream and throw an exception for villager types not specified in the map.
@@ -41,7 +39,7 @@ public abstract class TradeOffersTypeAwareBuyForOneEmeraldFactoryMixin {
 	 * We want to prevent this default logic so modded villager types will work.
 	 * So we return an empty stream so an exception is never thrown.
 	 */
-	@Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/registry/DefaultedRegistry;stream()Ljava/util/stream/Stream;"))
+	@Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/core/DefaultedRegistry;stream()Ljava/util/stream/Stream;"))
 	private <T> Stream<T> disableVanillaCheck(DefaultedRegistry<VillagerType> instance) {
 		return Stream.empty();
 	}
@@ -49,8 +47,8 @@ public abstract class TradeOffersTypeAwareBuyForOneEmeraldFactoryMixin {
 	/**
 	 * To prevent "item" -> "air" trades, if the result of a type aware trade is air, make sure no offer is created.
 	 */
-	@Inject(method = "create", at = @At(value = "NEW", target = "net/minecraft/village/TradeOffer"), cancellable = true)
-	private void failOnNullItem(Entity entity, Random random, CallbackInfoReturnable<TradeOffer> cir, @Local() TradedItem tradedItem) {
+	@Inject(method = "getOffer", at = @At(value = "NEW", target = "net/minecraft/world/item/trading/MerchantOffer"), cancellable = true)
+	private void failOnNullItem(Entity entity, RandomSource random, CallbackInfoReturnable<MerchantOffer> cir, @Local() ItemCost tradedItem) {
 		if (tradedItem.itemStack().isEmpty()) { // Will return true for an "empty" item stack that had null passed in the ctor
 			cir.setReturnValue(null); // Return null to prevent creation of empty trades
 		}

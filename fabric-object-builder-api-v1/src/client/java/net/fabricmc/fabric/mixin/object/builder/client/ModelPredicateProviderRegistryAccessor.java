@@ -21,12 +21,12 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 
 import net.minecraft.client.item.ClampedModelPredicateProvider;
 import net.minecraft.client.item.ModelPredicateProviderRegistry;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 @Mixin(ModelPredicateProviderRegistry.class)
 public interface ModelPredicateProviderRegistryAccessor {
 	@Invoker
-	static ClampedModelPredicateProvider callRegister(Identifier id, ClampedModelPredicateProvider provider) {
+	static ClampedModelPredicateProvider callRegister(ResourceLocation id, ClampedModelPredicateProvider provider) {
 		throw new AssertionError("mixin dummy");
 	}
 }

@@ -17,28 +17,26 @@
 package net.fabricmc.fabric.test.rendering.client;
 
 import java.util.Objects;
-
-import net.minecraft.client.gui.tooltip.TooltipComponent;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.TooltipComponentCallback;
 import net.fabricmc.fabric.test.rendering.TooltipComponentTestInit;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 
 public class TooltipComponentTests implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		TooltipComponentCallback.EVENT.register(data -> {
 			if (data instanceof TooltipComponentTestInit.Data d) {
-				return TooltipComponent.of(Text.literal(d.string()).setStyle(Style.EMPTY.withColor(Formatting.GREEN)).asOrderedText());
+				return ClientTooltipComponent.create(Component.literal(d.string()).setStyle(Style.EMPTY.withColor(ChatFormatting.GREEN)).getVisualOrderText());
 			}
 
 			return null;
 		});
 
 		// Test that TooltipComponent.of works with custom TooltipData
-		Objects.requireNonNull(TooltipComponent.of(new TooltipComponentTestInit.Data("Hello world!")));
+		Objects.requireNonNull(ClientTooltipComponent.create(new TooltipComponentTestInit.Data("Hello world!")));
 	}
 }

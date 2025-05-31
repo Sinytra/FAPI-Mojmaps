@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerConfigurationConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerConfigurationNetworking;
@@ -105,6 +106,17 @@ public class AttachmentSync implements ModInitializer {
 			((AttachmentTargetImpl) player.serverLevel()).fabric_computeInitialSyncChanges(player, changes::add);
 			// sync player's own persistent attachments that couldn't be synced earlier
 			((AttachmentTargetImpl) player).fabric_computeInitialSyncChanges(player, changes::add);
+
+			if (!changes.isEmpty()) {
+				AttachmentChange.partitionAndSendPackets(changes, player);
+			}
+		});
+
+		ServerEntityWorldChangeEvents.AFTER_PLAYER_CHANGE_WORLD.register((player, origin, destination) -> {
+			// sync new world's attachments
+			// no conflict with previous one because the client world is recreated every time
+			List<AttachmentChange> changes = new ArrayList<>();
+			((AttachmentTargetImpl) destination).fabric_computeInitialSyncChanges(player, changes::add);
 
 			if (!changes.isEmpty()) {
 				AttachmentChange.partitionAndSendPackets(changes, player);

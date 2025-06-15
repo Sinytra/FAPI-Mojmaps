@@ -18,8 +18,10 @@ package net.fabricmc.fabric.mixin.registry.sync;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -43,10 +45,12 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
+import net.fabricmc.fabric.api.event.registry.FabricRegistry;
 import net.fabricmc.fabric.api.event.registry.RegistryAttribute;
 import net.fabricmc.fabric.api.event.registry.RegistryAttributeHolder;
 import net.fabricmc.fabric.api.event.registry.RegistryEntryAddedCallback;
@@ -65,7 +69,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 
 @Mixin(MappedRegistry.class)
-public abstract class SimpleRegistryMixin<T> implements WritableRegistry<T>, RemappableRegistry, ListenableRegistry<T> {
+public abstract class SimpleRegistryMixin<T> implements WritableRegistry<T>, RemappableRegistry, ListenableRegistry<T>, FabricRegistry {
 	// Namespaces used by the vanilla game. "brigadier" is used by command argument type registry.
 	// While Realms use "realms" namespace, it is irrelevant for Registry Sync.
 	@Unique
@@ -109,6 +113,22 @@ public abstract class SimpleRegistryMixin<T> implements WritableRegistry<T>, Rem
 	private Object2IntMap<ResourceLocation> fabric_prevIndexedEntries;
 	@Unique
 	private BiMap<ResourceLocation, Holder.Reference<T>> fabric_prevEntries;
+	@Unique
+	// invariant: the sets of keys and values are disjoint (every alias points to a 'deepest' non-alias ID)
+	private Map<ResourceLocation, ResourceLocation> aliases = new HashMap<>();
+
+	@Shadow
+	public abstract boolean containsKey(ResourceLocation id);
+
+	@Shadow
+	public abstract String toString();
+
+	@Shadow
+	@Final
+	private ResourceKey<? extends Registry<T>> key;
+
+	@Shadow
+	protected abstract void validateWrite();
 
 	@Override
 	public Event<RegistryEntryAddedCallback<T>> fabric_getAddObjectEvent() {
@@ -129,6 +149,18 @@ public abstract class SimpleRegistryMixin<T> implements WritableRegistry<T>, Rem
 				}
 			}
 		);
+		// aliasing: check that no new entries use the id of an alias
+		fabric_addObjectEvent.register((rawId, id, object) -> {
+			if (aliases.containsKey(id)) {
+				throw new IllegalArgumentException(
+						"Tried registering %s to registry %s, but it is already an alias (for %s)".formatted(
+								id,
+								this.key,
+								aliases.get(id)
+						)
+				);
+			}
+		});
 		fabric_postRemapEvent = EventFactory.createArrayBacked(RegistryIdRemapCallback.class,
 			(callbacks) -> (a) -> {
 				for (RegistryIdRemapCallback<T> callback : callbacks) {
@@ -172,7 +204,7 @@ public abstract class SimpleRegistryMixin<T> implements WritableRegistry<T>, Rem
 			List<String> strings = null;
 
 			for (ResourceLocation remoteId : remoteIndexedEntries.keySet()) {
-				if (!byLocation.containsKey(remoteId)) {
+				if (!this.containsKey(remoteId)) {
 					if (strings == null) {
 						strings = new ArrayList<>();
 					}
@@ -379,5 +411,95 @@ public abstract class SimpleRegistryMixin<T> implements WritableRegistry<T>, Rem
 			fabric_prevIndexedEntries = null;
 			fabric_prevEntries = null;
 		}
+	}
+
+	@Override
+	public void addAlias(ResourceLocation old, ResourceLocation newId) {
+		Objects.requireNonNull(old, "alias cannot be null");
+		Objects.requireNonNull(newId, "aliased id cannot be null");
+
+		if (aliases.containsKey(old)) {
+			throw new IllegalArgumentException(
+					"Tried adding %s as an alias for %s, but it is already an alias (for %s) in registry %s".formatted(
+							old,
+							newId,
+							aliases.get(old),
+							this.key
+					)
+			);
+		}
+
+		if (this.byLocation.containsKey(old)) {
+			throw new IllegalArgumentException(
+					"Tried adding %s as an alias, but it is already present in registry %s".formatted(
+							old,
+							this.key
+					)
+			);
+		}
+
+		if (old.equals(aliases.get(newId))) {
+			// since an alias corresponds to at most one identifier, this is the only way to create a cycle
+			// that doesn't already fall under the first condition
+			throw new IllegalArgumentException(
+					"Making %1$s an alias of %2$s would create a cycle, as %2$s is already an alias of %1$s (registry %3$s)".formatted(
+							old,
+							newId,
+							this.key
+					)
+			);
+		}
+
+		if (!this.byLocation.containsKey(newId)) {
+			FABRIC_LOGGER.warn(
+					"Adding {} as an alias for {}, but the latter doesn't exist in registry {}",
+					old,
+					newId,
+					this.key
+			);
+		}
+
+		validateWrite();
+
+		// recompute alias map to preserve invariant, i.e. make sure all keys point to a non-alias ID
+		ResourceLocation deepest = aliases.getOrDefault(newId, newId);
+
+		for (Map.Entry<ResourceLocation, ResourceLocation> entry : aliases.entrySet()) {
+			if (old.equals(entry.getValue())) {
+				entry.setValue(deepest);
+			}
+		}
+
+		aliases.put(old, deepest);
+		FABRIC_LOGGER.debug("Adding alias {} for {} in registry {}", old, newId, this.key);
+	}
+
+	@ModifyVariable(
+			method = {
+					"getHolder(Lnet/minecraft/resources/ResourceLocation;)Ljava/util/Optional;",
+					"get(Lnet/minecraft/resources/ResourceLocation;)Ljava/lang/Object;",
+					"containsKey(Lnet/minecraft/resources/ResourceLocation;)Z"
+			},
+			at = @At("HEAD"),
+			argsOnly = true
+	)
+	private ResourceLocation aliasIdentifierParameter(ResourceLocation original) {
+		return aliases.getOrDefault(original, original);
+	}
+
+	@ModifyVariable(
+			method = {
+					"get(Lnet/minecraft/resources/ResourceKey;)Ljava/lang/Object;",
+					"getOptional(Lnet/minecraft/resources/ResourceKey;)Ljava/util/Optional;",
+					"getOrCreateHolderOrThrow",
+					"containsKey(Lnet/minecraft/resources/ResourceKey;)Z",
+					"registrationInfo"
+			},
+			at = @At("HEAD"),
+			argsOnly = true
+	)
+	private ResourceKey<T> aliasRegistryKeyParameter(ResourceKey<T> original) {
+		ResourceLocation aliased = aliases.get(original.location());
+		return aliased == null ? original : ResourceKey.create(original.registryKey(), aliased);
 	}
 }

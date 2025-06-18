@@ -499,6 +499,10 @@ public abstract class SimpleRegistryMixin<T> implements WritableRegistry<T>, Rem
 			argsOnly = true
 	)
 	private ResourceKey<T> aliasRegistryKeyParameter(ResourceKey<T> original) {
+		if (original == null) {
+			return null;
+		}
+
 		ResourceLocation aliased = aliases.get(original.location());
 		return aliased == null ? original : ResourceKey.create(original.registryKey(), aliased);
 	}

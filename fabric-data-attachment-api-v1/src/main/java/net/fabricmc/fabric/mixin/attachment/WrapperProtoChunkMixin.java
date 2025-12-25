@@ -23,25 +23,23 @@ import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.world.chunk.WorldChunk;
-import net.minecraft.world.chunk.WrapperProtoChunk;
-
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.fabricmc.fabric.impl.attachment.AttachmentTargetImpl;
 import net.fabricmc.fabric.impl.attachment.sync.AttachmentChange;
 import net.fabricmc.fabric.impl.attachment.sync.AttachmentTargetInfo;
 import net.fabricmc.fabric.impl.attachment.sync.s2c.AttachmentSyncPayloadS2C;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.chunk.ImposterProtoChunk;
+import net.minecraft.world.level.chunk.LevelChunk;
 
-@Mixin(WrapperProtoChunk.class)
+@Mixin(ImposterProtoChunk.class)
 abstract class WrapperProtoChunkMixin extends AttachmentTargetsMixin {
 	@Shadow
 	@Final
-	private WorldChunk wrapped;
+	private LevelChunk wrapped;
 
 	@Override
 	@Nullable
@@ -61,12 +59,12 @@ abstract class WrapperProtoChunkMixin extends AttachmentTargetsMixin {
 	}
 
 	@Override
-	public void fabric_writeAttachmentsToNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup) {
+	public void fabric_writeAttachmentsToNbt(CompoundTag nbt, HolderLookup.Provider wrapperLookup) {
 		((AttachmentTargetImpl) this.wrapped).fabric_writeAttachmentsToNbt(nbt, wrapperLookup);
 	}
 
 	@Override
-	public void fabric_readAttachmentsFromNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup) {
+	public void fabric_readAttachmentsFromNbt(CompoundTag nbt, HolderLookup.Provider wrapperLookup) {
 		((AttachmentTargetImpl) this.wrapped).fabric_readAttachmentsFromNbt(nbt, wrapperLookup);
 	}
 
@@ -86,7 +84,7 @@ abstract class WrapperProtoChunkMixin extends AttachmentTargetsMixin {
 	}
 
 	@Override
-	public void fabric_computeInitialSyncChanges(ServerPlayerEntity player, Consumer<AttachmentChange> changeOutput) {
+	public void fabric_computeInitialSyncChanges(ServerPlayer player, Consumer<AttachmentChange> changeOutput) {
 		((AttachmentTargetImpl) wrapped).fabric_computeInitialSyncChanges(player, changeOutput);
 	}
 
@@ -106,7 +104,7 @@ abstract class WrapperProtoChunkMixin extends AttachmentTargetsMixin {
 	}
 
 	@Override
-	public DynamicRegistryManager fabric_getDynamicRegistryManager() {
+	public RegistryAccess fabric_getDynamicRegistryManager() {
 		return ((AttachmentTargetImpl) wrapped).fabric_getDynamicRegistryManager();
 	}
 }

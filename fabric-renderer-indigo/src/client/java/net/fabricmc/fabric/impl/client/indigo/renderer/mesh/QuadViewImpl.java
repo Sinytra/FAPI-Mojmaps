@@ -36,14 +36,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
-
-import net.minecraft.util.math.Direction;
-
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
 import net.fabricmc.fabric.impl.client.indigo.renderer.helper.ColorHelper;
 import net.fabricmc.fabric.impl.client.indigo.renderer.helper.GeometryHelper;
 import net.fabricmc.fabric.impl.client.indigo.renderer.helper.NormalHelper;
 import net.fabricmc.fabric.impl.client.indigo.renderer.material.RenderMaterialImpl;
+import net.minecraft.core.Direction;
 
 /**
  * Base class for all quads / quad makers. Handles the ugly bits

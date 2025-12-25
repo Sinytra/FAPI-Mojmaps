@@ -16,38 +16,37 @@
 
 package net.fabricmc.fabric.api.client.render;
 
+import net.minecraft.client.color.block.BlockColor;
+import net.minecraft.client.color.item.ItemColor;
+import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.block.Block;
-import net.minecraft.client.color.block.BlockColorProvider;
-import net.minecraft.client.color.item.ItemColorProvider;
-import net.minecraft.item.ItemConvertible;
 
 /**
  * @deprecated Replaced by {@link net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry}
  */
 @Deprecated
 public interface ColorProviderRegistry<T, Provider> {
-	ColorProviderRegistry<ItemConvertible, ItemColorProvider> ITEM = new ColorProviderRegistry<ItemConvertible, ItemColorProvider>() {
+	ColorProviderRegistry<ItemLike, ItemColor> ITEM = new ColorProviderRegistry<ItemLike, ItemColor>() {
 		@Override
-		public void register(ItemColorProvider itemColorProvider, ItemConvertible... objects) {
+		public void register(ItemColor itemColorProvider, ItemLike... objects) {
 			net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry.ITEM.register(itemColorProvider, objects);
 		}
 
 		@Override
-		public ItemColorProvider get(ItemConvertible object) {
+		public ItemColor get(ItemLike object) {
 			return net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry.ITEM.get(object);
 		}
 	};
 
-	ColorProviderRegistry<Block, BlockColorProvider> BLOCK = new ColorProviderRegistry<Block, BlockColorProvider>() {
+	ColorProviderRegistry<Block, BlockColor> BLOCK = new ColorProviderRegistry<Block, BlockColor>() {
 		@Override
-		public void register(BlockColorProvider blockColorProvider, Block... objects) {
+		public void register(BlockColor blockColorProvider, Block... objects) {
 			net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry.BLOCK.register(blockColorProvider, objects);
 		}
 
 		@Override
-		public BlockColorProvider get(Block object) {
+		public BlockColor get(Block object) {
 			return net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry.BLOCK.get(object);
 		}
 	};

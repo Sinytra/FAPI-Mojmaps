@@ -16,12 +16,11 @@
 
 package net.fabricmc.fabric.mixin.gamerule;
 
+import net.minecraft.world.level.GameRules;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-import net.minecraft.world.GameRules;
-
-@Mixin(GameRules.IntRule.class)
+@Mixin(GameRules.IntegerValue.class)
 public interface GameRulesIntRuleAccessor {
 	@Accessor
 	int getValue();

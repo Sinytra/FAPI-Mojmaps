@@ -22,14 +22,12 @@ import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
-
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.option.KeyBinding;
-
 import net.fabricmc.fabric.mixin.client.keybinding.KeyBindingAccessor;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
 
 public final class KeyBindingRegistryImpl {
-	private static final List<KeyBinding> MODDED_KEY_BINDINGS = new ReferenceArrayList<>(); // ArrayList with identity based comparisons for contains/remove/indexOf etc., required for correctly handling duplicate keybinds
+	private static final List<KeyMapping> MODDED_KEY_BINDINGS = new ReferenceArrayList<>(); // ArrayList with identity based comparisons for contains/remove/indexOf etc., required for correctly handling duplicate keybinds
 
 	private KeyBindingRegistryImpl() {
 	}
@@ -51,16 +49,16 @@ public final class KeyBindingRegistryImpl {
 		return true;
 	}
 
-	public static KeyBinding registerKeyBinding(KeyBinding binding) {
-		if (MinecraftClient.getInstance().options != null) {
+	public static KeyMapping registerKeyBinding(KeyMapping binding) {
+		if (Minecraft.getInstance().options != null) {
 			throw new IllegalStateException("GameOptions has already been initialised");
 		}
 
-		for (KeyBinding existingKeyBindings : MODDED_KEY_BINDINGS) {
+		for (KeyMapping existingKeyBindings : MODDED_KEY_BINDINGS) {
 			if (existingKeyBindings == binding) {
-				throw new IllegalArgumentException("Attempted to register a key binding twice: " + binding.getTranslationKey());
-			} else if (existingKeyBindings.getTranslationKey().equals(binding.getTranslationKey())) {
-				throw new IllegalArgumentException("Attempted to register two key bindings with equal ID: " + binding.getTranslationKey() + "!");
+				throw new IllegalArgumentException("Attempted to register a key binding twice: " + binding.getName());
+			} else if (existingKeyBindings.getName().equals(binding.getName())) {
+				throw new IllegalArgumentException("Attempted to register two key bindings with equal ID: " + binding.getName() + "!");
 			}
 		}
 
@@ -74,10 +72,10 @@ public final class KeyBindingRegistryImpl {
 	 * Processes the keybindings array for our modded ones by first removing existing modded keybindings and readding them,
 	 * we can make sure that there are no duplicates this way.
 	 */
-	public static KeyBinding[] process(KeyBinding[] keysAll) {
-		List<KeyBinding> newKeysAll = Lists.newArrayList(keysAll);
+	public static KeyMapping[] process(KeyMapping[] keysAll) {
+		List<KeyMapping> newKeysAll = Lists.newArrayList(keysAll);
 		newKeysAll.removeAll(MODDED_KEY_BINDINGS);
 		newKeysAll.addAll(MODDED_KEY_BINDINGS);
-		return newKeysAll.toArray(new KeyBinding[0]);
+		return newKeysAll.toArray(new KeyMapping[0]);
 	}
 }

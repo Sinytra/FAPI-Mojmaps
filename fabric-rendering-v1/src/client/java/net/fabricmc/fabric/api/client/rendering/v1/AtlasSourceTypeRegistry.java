@@ -16,25 +16,24 @@
 
 package net.fabricmc.fabric.api.client.rendering.v1;
 
-import net.minecraft.client.texture.atlas.AtlasSourceType;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.impl.client.rendering.AtlasSourceTypeRegistryImpl;
+import net.minecraft.client.renderer.texture.atlas.SpriteSourceType;
+import net.minecraft.resources.ResourceLocation;
 
 /**
- * A registry for custom {@link AtlasSourceType}s. Registered types will be automatically available for use in atlas definition JSON files.
+ * A registry for custom {@link SpriteSourceType}s. Registered types will be automatically available for use in atlas definition JSON files.
  */
 public final class AtlasSourceTypeRegistry {
 	private AtlasSourceTypeRegistry() {
 	}
 
 	/**
-	 * Registers a new {@link AtlasSourceType}.
+	 * Registers a new {@link SpriteSourceType}.
 	 *
 	 * @param id the identifier of the atlas source type
 	 * @param type the atlas source type to register
 	 */
-	public static void register(Identifier id, AtlasSourceType type) {
+	public static void register(ResourceLocation id, SpriteSourceType type) {
 		AtlasSourceTypeRegistryImpl.register(id, type);
 	}
 }

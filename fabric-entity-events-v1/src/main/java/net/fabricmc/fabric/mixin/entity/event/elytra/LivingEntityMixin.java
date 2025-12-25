@@ -20,18 +20,16 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.world.World;
-
 import net.fabricmc.fabric.api.entity.event.v1.EntityElytraEvents;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
 
 @SuppressWarnings("unused")
 @Mixin(LivingEntity.class)
 abstract class LivingEntityMixin extends Entity {
-	LivingEntityMixin(EntityType<?> type, World world) {
+	LivingEntityMixin(EntityType<?> type, Level world) {
 		super(type, world);
 		throw new AssertionError();
 	}
@@ -40,14 +38,14 @@ abstract class LivingEntityMixin extends Entity {
 	 * Handle ALLOW and CUSTOM {@link EntityElytraEvents} when an entity is fall flying.
 	 */
 	@SuppressWarnings("ConstantConditions")
-	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;getEquippedStack(Lnet/minecraft/entity/EquipmentSlot;)Lnet/minecraft/item/ItemStack;"), method = "tickFallFlying()V", allow = 1, cancellable = true)
+	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getItemBySlot(Lnet/minecraft/world/entity/EquipmentSlot;)Lnet/minecraft/world/item/ItemStack;"), method = "updateFallFlying()V", allow = 1, cancellable = true)
 	void injectElytraTick(CallbackInfo info) {
 		LivingEntity self = (LivingEntity) (Object) this;
 
 		if (!EntityElytraEvents.ALLOW.invoker().allowElytraFlight(self)) {
 			// The entity is already fall flying by now, we just need to stop it.
-			if (!getWorld().isClient) {
-				setFlag(Entity.FALL_FLYING_FLAG_INDEX, false);
+			if (!level().isClientSide) {
+				setSharedFlag(Entity.FLAG_FALL_FLYING, false);
 			}
 
 			info.cancel();

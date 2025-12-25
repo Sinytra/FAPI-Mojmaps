@@ -17,25 +17,23 @@
 package net.fabricmc.fabric.impl.tag.convention.datagen.generators;
 
 import java.util.concurrent.CompletableFuture;
-
-import net.minecraft.entity.EntityType;
-import net.minecraft.registry.RegistryWrapper;
-
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalEntityTypeTags;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.world.entity.EntityType;
 
 public final class EntityTypeTagGenerator extends FabricTagProvider.EntityTypeTagProvider {
-	public EntityTypeTagGenerator(FabricDataOutput output, CompletableFuture<RegistryWrapper.WrapperLookup> completableFuture) {
+	public EntityTypeTagGenerator(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> completableFuture) {
 		super(output, completableFuture);
 	}
 
 	@Override
-	protected void configure(RegistryWrapper.WrapperLookup registries) {
-		getOrCreateTagBuilder(ConventionalEntityTypeTags.BOSSES)
+	protected void addTags(HolderLookup.Provider registries) {
+		tag(ConventionalEntityTypeTags.BOSSES)
 				.add(EntityType.ENDER_DRAGON)
 				.add(EntityType.WITHER);
-		getOrCreateTagBuilder(ConventionalEntityTypeTags.MINECARTS)
+		tag(ConventionalEntityTypeTags.MINECARTS)
 				.add(EntityType.MINECART)
 				.add(EntityType.TNT_MINECART)
 				.add(EntityType.CHEST_MINECART)
@@ -43,10 +41,10 @@ public final class EntityTypeTagGenerator extends FabricTagProvider.EntityTypeTa
 				.add(EntityType.COMMAND_BLOCK_MINECART)
 				.add(EntityType.HOPPER_MINECART)
 				.add(EntityType.SPAWNER_MINECART);
-		getOrCreateTagBuilder(ConventionalEntityTypeTags.BOATS)
+		tag(ConventionalEntityTypeTags.BOATS)
 				.add(EntityType.BOAT)
 				.add(EntityType.CHEST_BOAT);
-		getOrCreateTagBuilder(ConventionalEntityTypeTags.CAPTURING_NOT_SUPPORTED);
-		getOrCreateTagBuilder(ConventionalEntityTypeTags.TELEPORTING_NOT_SUPPORTED);
+		tag(ConventionalEntityTypeTags.CAPTURING_NOT_SUPPORTED);
+		tag(ConventionalEntityTypeTags.TELEPORTING_NOT_SUPPORTED);
 	}
 }

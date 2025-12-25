@@ -18,34 +18,32 @@ package net.fabricmc.fabric.mixin.client.particle;
 
 import java.util.List;
 import java.util.Map;
-
+import net.minecraft.client.particle.ParticleEngine;
+import net.minecraft.client.particle.ParticleProvider;
+import net.minecraft.client.particle.SpriteSet;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.resources.ResourceLocation;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-import net.minecraft.client.particle.ParticleFactory;
-import net.minecraft.client.particle.ParticleManager;
-import net.minecraft.client.particle.SpriteProvider;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.texture.SpriteAtlasTexture;
-import net.minecraft.util.Identifier;
-
-@Mixin(ParticleManager.class)
+@Mixin(ParticleEngine.class)
 public interface ParticleManagerAccessor {
-	@Accessor("particleAtlasTexture")
-	SpriteAtlasTexture getParticleAtlasTexture();
+	@Accessor("textureAtlas")
+	TextureAtlas getParticleAtlasTexture();
 
-	@Accessor("factories")
-	Int2ObjectMap<ParticleFactory<?>> getFactories();
+	@Accessor("providers")
+	Int2ObjectMap<ParticleProvider<?>> getFactories();
 
 	// NOTE: The field signature is actually Map<Identifier, SimpleSpriteProvider>
 	// This still works due to type erasure
-	@Accessor("spriteAwareFactories")
-	Map<Identifier, SpriteProvider> getSpriteAwareFactories();
+	@Accessor("spriteSets")
+	Map<ResourceLocation, SpriteSet> getSpriteAwareFactories();
 
-	@Mixin(ParticleManager.SimpleSpriteProvider.class)
+	@Mixin(ParticleEngine.MutableSpriteSet.class)
 	interface SimpleSpriteProviderAccessor {
 		@Accessor("sprites")
-		List<Sprite> getSprites();
+		List<TextureAtlasSprite> getSprites();
 	}
 }

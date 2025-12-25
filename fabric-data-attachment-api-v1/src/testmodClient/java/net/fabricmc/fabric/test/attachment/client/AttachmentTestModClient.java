@@ -27,23 +27,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.command.argument.BlockPosArgumentType;
-import net.minecraft.command.argument.DefaultPosArgument;
-import net.minecraft.command.argument.EntityArgumentType;
-import net.minecraft.command.argument.UuidArgumentType;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
-import net.minecraft.util.Colors;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.chunk.Chunk;
-
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentTarget;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -51,25 +34,40 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.test.attachment.AttachmentTestMod;
 import net.fabricmc.fabric.test.attachment.client.mixin.ClientWorldAccessor;
 import net.fabricmc.fabric.test.attachment.client.mixin.DefaultPosArgumentAccessor;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.commands.arguments.UuidArgument;
+import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
+import net.minecraft.commands.arguments.coordinates.WorldCoordinates;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.CommonColors;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.phys.Vec3;
 
 public class AttachmentTestModClient implements ClientModInitializer {
-	private static AbstractClientPlayerEntity parseClientPlayer(FabricClientCommandSource source, String name) throws CommandSyntaxException {
-		for (AbstractClientPlayerEntity player : source.getWorld().getPlayers()) {
-			if (name.equals(player.getName().getLiteralString())) {
+	private static AbstractClientPlayer parseClientPlayer(FabricClientCommandSource source, String name) throws CommandSyntaxException {
+		for (AbstractClientPlayer player : source.getWorld().players()) {
+			if (name.equals(player.getName().tryCollapseToString())) {
 				return player;
 			}
 		}
 
-		throw EntityArgumentType.PLAYER_NOT_FOUND_EXCEPTION.create();
+		throw EntityArgument.NO_PLAYERS_FOUND.create();
 	}
 
 	private static BlockPos getBlockPos(CommandContext<FabricClientCommandSource> context, String argName) {
-		DefaultPosArgumentAccessor posArg = (DefaultPosArgumentAccessor) context.getArgument(argName, DefaultPosArgument.class);
-		Vec3d pos = context.getSource().getPosition();
-		return BlockPos.ofFloored(new Vec3d(
-				posArg.getX().toAbsoluteCoordinate(pos.x),
-				posArg.getY().toAbsoluteCoordinate(pos.y),
-				posArg.getZ().toAbsoluteCoordinate(pos.z)
+		DefaultPosArgumentAccessor posArg = (DefaultPosArgumentAccessor) context.getArgument(argName, WorldCoordinates.class);
+		Vec3 pos = context.getSource().getPosition();
+		return BlockPos.containing(new Vec3(
+				posArg.getX().get(pos.x),
+				posArg.getY().get(pos.y),
+				posArg.getZ().get(pos.z)
 		));
 	}
 
@@ -79,31 +77,31 @@ public class AttachmentTestModClient implements ClientModInitializer {
 			Function<T, String> nameGetter
 	) {
 		context.getSource().sendFeedback(
-				Text.literal("Attachments for target %s:".formatted(nameGetter.apply(target)))
+				Component.literal("Attachments for target %s:".formatted(nameGetter.apply(target)))
 		);
 		boolean attAll = target.getAttachedOrCreate(AttachmentTestMod.SYNCED_WITH_ALL);
 		context.getSource().sendFeedback(
-				Text.literal("Synced-with-all attachment: %s".formatted(attAll)).withColor(attAll ? Colors.GREEN : Colors.WHITE)
+				Component.literal("Synced-with-all attachment: %s".formatted(attAll)).withColor(attAll ? CommonColors.GREEN : CommonColors.WHITE)
 		);
 		boolean attTarget = target.getAttachedOrCreate(AttachmentTestMod.SYNCED_WITH_TARGET);
 		context.getSource().sendFeedback(
-				Text.literal("Synced-with-target attachment: %s".formatted(attTarget))
-						.withColor(attTarget ? target == MinecraftClient.getInstance().player ? Colors.GREEN : Colors.RED : Colors.WHITE)
+				Component.literal("Synced-with-target attachment: %s".formatted(attTarget))
+						.withColor(attTarget ? target == Minecraft.getInstance().player ? CommonColors.GREEN : CommonColors.RED : CommonColors.WHITE)
 		);
 		boolean attOther = target.getAttachedOrCreate(AttachmentTestMod.SYNCED_EXCEPT_TARGET);
 		context.getSource().sendFeedback(
-				Text.literal("Synced-with-non-targets attachment: %s".formatted(attOther))
-						.withColor(attOther ? target != MinecraftClient.getInstance().player ? Colors.GREEN : Colors.RED : Colors.WHITE)
+				Component.literal("Synced-with-non-targets attachment: %s".formatted(attOther))
+						.withColor(attOther ? target != Minecraft.getInstance().player ? CommonColors.GREEN : CommonColors.RED : CommonColors.WHITE)
 		);
 		boolean attCustom = target.getAttachedOrCreate(AttachmentTestMod.SYNCED_CREATIVE_ONLY);
 		context.getSource().sendFeedback(
-				Text.literal("Synced-with-creative attachment: %s".formatted(attCustom))
-						.withColor(attCustom ? target instanceof PlayerEntity p && p.isCreative() ? Colors.GREEN : Colors.RED : Colors.WHITE)
+				Component.literal("Synced-with-creative attachment: %s".formatted(attCustom))
+						.withColor(attCustom ? target instanceof Player p && p.isCreative() ? CommonColors.GREEN : CommonColors.RED : CommonColors.WHITE)
 		);
 		ItemStack stack = target.getAttachedOrCreate(AttachmentTestMod.SYNCED_ITEM);
 		context.getSource().sendFeedback(
-				Text.literal("Synced-item attachment: %s".formatted(stack))
-						.withColor(attOther ? target != MinecraftClient.getInstance().player ? Colors.GREEN : Colors.RED : Colors.WHITE)
+				Component.literal("Synced-item attachment: %s".formatted(stack))
+						.withColor(attOther ? target != Minecraft.getInstance().player ? CommonColors.GREEN : CommonColors.RED : CommonColors.WHITE)
 		);
 	}
 
@@ -116,7 +114,7 @@ public class AttachmentTestModClient implements ClientModInitializer {
 									displayClientAttachmentInfo(
 											context,
 											context.getSource().getPlayer(),
-											PlayerEntity::getNameForScoreboard
+											Player::getScoreboardName
 									);
 									return 1;
 								})
@@ -125,7 +123,7 @@ public class AttachmentTestModClient implements ClientModInitializer {
 											displayClientAttachmentInfo(
 													context,
 													parseClientPlayer(context.getSource(), StringArgumentType.getString(context, "target")),
-													PlayerEntity::getNameForScoreboard
+													Player::getScoreboardName
 											);
 											return 1;
 										},
@@ -136,7 +134,7 @@ public class AttachmentTestModClient implements ClientModInitializer {
 									context -> {
 										UUID uuid = context.getArgument("uuid", UUID.class);
 										Entity entity = ((ClientWorldAccessor) context.getSource().getWorld())
-												.invokeGetEntityLookup()
+												.invokeGetEntities()
 												.get(uuid);
 
 										if (entity == null) {
@@ -147,7 +145,7 @@ public class AttachmentTestModClient implements ClientModInitializer {
 										return 1;
 									},
 									literal("entity"),
-									argument("uuid", UuidArgumentType.uuid())
+									argument("uuid", UuidArgument.uuid())
 								))
 								.then(chain(
 									context -> {
@@ -168,12 +166,12 @@ public class AttachmentTestModClient implements ClientModInitializer {
 										return 1;
 									},
 									literal("blockentity"),
-									argument("pos", BlockPosArgumentType.blockPos())
+									argument("pos", BlockPosArgument.blockPos())
 								))
 								.then(chain(
 									context -> {
 										BlockPos pos = getBlockPos(context, "pos");
-										Chunk chunk = context.getSource().getWorld().getChunk(pos);
+										ChunkAccess chunk = context.getSource().getWorld().getChunk(pos);
 										displayClientAttachmentInfo(
 												context,
 												chunk,
@@ -182,7 +180,7 @@ public class AttachmentTestModClient implements ClientModInitializer {
 										return 1;
 									},
 									literal("chunk"),
-									argument("pos", BlockPosArgumentType.blockPos())
+									argument("pos", BlockPosArgument.blockPos())
 								))
 								.then(literal("world").executes(
 										context -> {

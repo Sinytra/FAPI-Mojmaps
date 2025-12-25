@@ -25,39 +25,37 @@ import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.resource.JsonDataLoader;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.profiler.Profiler;
-
 import net.fabricmc.fabric.impl.resource.conditions.ResourceConditionsImpl;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import net.minecraft.util.profiling.ProfilerFiller;
 
 /**
  * Using {@link SinglePreparationResourceReloaderMixin}, apply resource conditions at the very beginning of the "apply" phase.
  */
-@Mixin(JsonDataLoader.class)
+@Mixin(SimpleJsonResourceReloadListener.class)
 public class JsonDataLoaderMixin extends SinglePreparationResourceReloaderMixin {
 	@Shadow
 	@Final
-	private String dataType;
+	private String directory;
 
 	@Override
 	@SuppressWarnings("unchecked")
-	protected void fabric_applyResourceConditions(ResourceManager resourceManager, Profiler profiler, Object object, @Nullable RegistryWrapper.WrapperLookup registryLookup) {
-		profiler.push("Fabric resource conditions: %s".formatted(dataType));
+	protected void fabric_applyResourceConditions(ResourceManager resourceManager, ProfilerFiller profiler, Object object, @Nullable HolderLookup.Provider registryLookup) {
+		profiler.push("Fabric resource conditions: %s".formatted(directory));
 
-		Iterator<Map.Entry<Identifier, JsonElement>> it = ((Map<Identifier, JsonElement>) object).entrySet().iterator();
+		Iterator<Map.Entry<ResourceLocation, JsonElement>> it = ((Map<ResourceLocation, JsonElement>) object).entrySet().iterator();
 
 		while (it.hasNext()) {
-			Map.Entry<Identifier, JsonElement> entry = it.next();
+			Map.Entry<ResourceLocation, JsonElement> entry = it.next();
 			JsonElement resourceData = entry.getValue();
 
 			if (resourceData.isJsonObject()) {
 				JsonObject obj = resourceData.getAsJsonObject();
 
-				if (!ResourceConditionsImpl.applyResourceConditions(obj, dataType, entry.getKey(), fabric_getRegistryLookup())) {
+				if (!ResourceConditionsImpl.applyResourceConditions(obj, directory, entry.getKey(), fabric_getRegistryLookup())) {
 					it.remove();
 				}
 			}

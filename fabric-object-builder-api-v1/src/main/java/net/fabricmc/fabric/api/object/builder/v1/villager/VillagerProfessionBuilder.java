@@ -19,29 +19,27 @@ package net.fabricmc.fabric.api.object.builder.v1.villager;
 import static com.google.common.base.Preconditions.checkState;
 
 import java.util.function.Predicate;
-
+import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.entity.ai.village.poi.PoiType;
+import net.minecraft.world.entity.npc.VillagerProfession;
+import net.minecraft.world.entity.npc.VillagerTrades;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import com.google.common.collect.ImmutableSet;
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.item.Item;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.Identifier;
-import net.minecraft.village.TradeOffers;
-import net.minecraft.village.VillagerProfession;
-import net.minecraft.world.poi.PointOfInterestType;
 
 /**
  * Allows for the creation of new {@link VillagerProfession}s.
  *
  * <p>The texture for the villagers are located at <code>assets/IDENTIFIER_NAMESPACE/textures/entity/villager/profession/IDENTIFIER_PATH.png</code>
  *
- * <p>A corresponding <code>IDENTIFIER_PATH.mcmeta</code> file exits in the same directory to define properties such as the {@link net.minecraft.client.render.entity.feature.VillagerResourceMetadata.HatType HatType} this profession would use.
+ * <p>A corresponding <code>IDENTIFIER_PATH.mcmeta</code> file exits in the same directory to define properties such as the {@link net.minecraft.client.resources.metadata.animation.VillagerMetaDataSection.Hat HatType} this profession would use.
  *
- * <p>Note this does not register any trades to these villagers. To register trades, add a new entry with your profession as the key to {@link TradeOffers#PROFESSION_TO_LEVELED_TRADE}.
+ * <p>Note this does not register any trades to these villagers. To register trades, add a new entry with your profession as the key to {@link VillagerTrades#TRADES}.
  *
  * @deprecated Replaced by access widener for {@link VillagerProfession#VillagerProfession}
  * in Fabric Transitive Access Wideners (v1).
@@ -50,9 +48,9 @@ import net.minecraft.world.poi.PointOfInterestType;
 public final class VillagerProfessionBuilder {
 	private final ImmutableSet.Builder<Item> gatherableItemsBuilder = ImmutableSet.builder();
 	private final ImmutableSet.Builder<Block> secondaryJobSiteBlockBuilder = ImmutableSet.builder();
-	private Identifier identifier;
-	private Predicate<RegistryEntry<PointOfInterestType>> pointOfInterestType;
-	private Predicate<RegistryEntry<PointOfInterestType>> acquirableJobSite;
+	private ResourceLocation identifier;
+	private Predicate<Holder<PoiType>> pointOfInterestType;
+	private Predicate<Holder<PoiType>> acquirableJobSite;
 	@Nullable
 	private SoundEvent workSoundEvent;
 
@@ -74,34 +72,34 @@ public final class VillagerProfessionBuilder {
 	 * @param id The identifier to assign to this profession.
 	 * @return this builder
 	 */
-	public VillagerProfessionBuilder id(Identifier id) {
+	public VillagerProfessionBuilder id(ResourceLocation id) {
 		this.identifier = id;
 		return this;
 	}
 
 	/**
-	 * The {@link PointOfInterestType} the Villager of this profession will search for when finding a workstation.
+	 * The {@link PoiType} the Villager of this profession will search for when finding a workstation.
 	 *
-	 * @param key The {@link PointOfInterestType} the Villager will attempt to find.
+	 * @param key The {@link PoiType} the Villager will attempt to find.
 	 * @return this builder.
 	 */
-	public VillagerProfessionBuilder workstation(RegistryKey<PointOfInterestType> key) {
-		jobSite(entry -> entry.matchesKey(key));
-		return workstation(entry -> entry.matchesKey(key));
+	public VillagerProfessionBuilder workstation(ResourceKey<PoiType> key) {
+		jobSite(entry -> entry.is(key));
+		return workstation(entry -> entry.is(key));
 	}
 
 	/**
-	 * The {@link PointOfInterestType} the Villager of this profession will search for when finding a workstation.
+	 * The {@link PoiType} the Villager of this profession will search for when finding a workstation.
 	 *
-	 * @param predicate The {@link PointOfInterestType} the Villager will attempt to find.
+	 * @param predicate The {@link PoiType} the Villager will attempt to find.
 	 * @return this builder.
 	 */
-	public VillagerProfessionBuilder workstation(Predicate<RegistryEntry<PointOfInterestType>> predicate) {
+	public VillagerProfessionBuilder workstation(Predicate<Holder<PoiType>> predicate) {
 		this.pointOfInterestType = predicate;
 		return this;
 	}
 
-	public VillagerProfessionBuilder jobSite(Predicate<RegistryEntry<PointOfInterestType>> predicate) {
+	public VillagerProfessionBuilder jobSite(Predicate<Holder<PoiType>> predicate) {
 		this.acquirableJobSite = predicate;
 		return this;
 	}
@@ -173,7 +171,7 @@ public final class VillagerProfessionBuilder {
 	 * Creates the {@link VillagerProfession}.
 	 *
 	 * @return a new {@link VillagerProfession}.
-	 * @throws IllegalStateException if the builder is missing an {@link Identifier id} and {@link PointOfInterestType workstation}.
+	 * @throws IllegalStateException if the builder is missing an {@link ResourceLocation id} and {@link PoiType workstation}.
 	 */
 	public VillagerProfession build() {
 		checkState(this.identifier != null, "An Identifier is required to build a new VillagerProfession.");

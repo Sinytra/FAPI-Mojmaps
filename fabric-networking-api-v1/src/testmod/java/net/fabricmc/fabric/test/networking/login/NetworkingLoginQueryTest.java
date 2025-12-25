@@ -18,12 +18,10 @@ package net.fabricmc.fabric.test.networking.login;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.FutureTask;
-
+import net.minecraft.Util;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerLoginNetworkHandler;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Util;
-
+import net.minecraft.server.network.ServerLoginPacketListenerImpl;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.networking.v1.LoginPacketSender;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
@@ -35,8 +33,8 @@ import net.fabricmc.fabric.test.networking.NetworkingTestmods;
 public final class NetworkingLoginQueryTest implements ModInitializer {
 	private static final boolean useLoginDelayTest = System.getProperty("fabric-networking-api-v1.loginDelayTest") != null;
 
-	public static final Identifier GLOBAL_TEST_CHANNEL = NetworkingTestmods.id("global_test_channel");
-	public static final Identifier LOCAL_TEST_CHANNEL = NetworkingTestmods.id("local_test_channel");
+	public static final ResourceLocation GLOBAL_TEST_CHANNEL = NetworkingTestmods.id("global_test_channel");
+	public static final ResourceLocation LOCAL_TEST_CHANNEL = NetworkingTestmods.id("local_test_channel");
 
 	@Override
 	public void onInitialize() {
@@ -59,7 +57,7 @@ public final class NetworkingLoginQueryTest implements ModInitializer {
 					});
 
 					// Execute the task on a worker thread as not to block the server thread
-					Util.getMainWorkerExecutor().execute(future);
+					Util.backgroundExecutor().execute(future);
 					synchronizer.waitFor(future);
 				}
 			} else {
@@ -80,7 +78,7 @@ public final class NetworkingLoginQueryTest implements ModInitializer {
 		});
 	}
 
-	private void delaySimply(ServerLoginNetworkHandler handler, MinecraftServer server, PacketSender sender, ServerLoginNetworking.LoginSynchronizer synchronizer) {
+	private void delaySimply(ServerLoginPacketListenerImpl handler, MinecraftServer server, PacketSender sender, ServerLoginNetworking.LoginSynchronizer synchronizer) {
 		if (useLoginDelayTest) {
 			synchronizer.waitFor(CompletableFuture.runAsync(() -> {
 				NetworkingTestmods.LOGGER.info("Starting simple delay task for 3000 milliseconds");
@@ -95,7 +93,7 @@ public final class NetworkingLoginQueryTest implements ModInitializer {
 		}
 	}
 
-	private void onLoginStart(ServerLoginNetworkHandler networkHandler, MinecraftServer server, LoginPacketSender sender, ServerLoginNetworking.LoginSynchronizer synchronizer) {
+	private void onLoginStart(ServerLoginPacketListenerImpl networkHandler, MinecraftServer server, LoginPacketSender sender, ServerLoginNetworking.LoginSynchronizer synchronizer) {
 		// Send a dummy query when the client starts accepting queries.
 		sender.sendPacket(GLOBAL_TEST_CHANNEL, PacketByteBufs.empty()); // dummy packet
 	}

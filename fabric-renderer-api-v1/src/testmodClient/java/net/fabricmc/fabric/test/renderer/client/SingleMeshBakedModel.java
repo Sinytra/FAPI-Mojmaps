@@ -21,28 +21,26 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.render.model.json.ModelOverrideList;
-import net.minecraft.client.render.model.json.ModelTransformation;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.BlockRenderView;
-
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.ItemOverrides;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class SingleMeshBakedModel implements BakedModel {
 	private final Mesh mesh;
-	private final Sprite particleSprite;
+	private final TextureAtlasSprite particleSprite;
 
-	public SingleMeshBakedModel(Mesh mesh, Sprite particleSprite) {
+	public SingleMeshBakedModel(Mesh mesh, TextureAtlasSprite particleSprite) {
 		this.mesh = mesh;
 		this.particleSprite = particleSprite;
 	}
@@ -53,17 +51,17 @@ public class SingleMeshBakedModel implements BakedModel {
 	}
 
 	@Override
-	public void emitBlockQuads(BlockRenderView blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context) {
+	public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context) {
 		mesh.outputTo(context.getEmitter());
 	}
 
 	@Override
-	public void emitItemQuads(ItemStack stack, Supplier<Random> randomSupplier, RenderContext context) {
+	public void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context) {
 		mesh.outputTo(context.getEmitter());
 	}
 
 	@Override
-	public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, Random random) {
+	public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction face, RandomSource random) {
 		return Collections.emptyList();
 	}
 
@@ -73,32 +71,32 @@ public class SingleMeshBakedModel implements BakedModel {
 	}
 
 	@Override
-	public boolean hasDepth() {
+	public boolean isGui3d() {
 		return false;
 	}
 
 	@Override
-	public boolean isSideLit() {
+	public boolean usesBlockLight() {
 		return true;
 	}
 
 	@Override
-	public boolean isBuiltin() {
+	public boolean isCustomRenderer() {
 		return false;
 	}
 
 	@Override
-	public Sprite getParticleSprite() {
+	public TextureAtlasSprite getParticleIcon() {
 		return particleSprite;
 	}
 
 	@Override
-	public ModelTransformation getTransformation() {
+	public ItemTransforms getTransforms() {
 		return ModelHelper.MODEL_TRANSFORM_BLOCK;
 	}
 
 	@Override
-	public ModelOverrideList getOverrides() {
-		return ModelOverrideList.EMPTY;
+	public ItemOverrides getOverrides() {
+		return ItemOverrides.EMPTY;
 	}
 }

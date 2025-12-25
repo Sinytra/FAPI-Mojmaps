@@ -17,9 +17,6 @@
 package net.fabricmc.fabric.impl.tag.convention.datagen.generators;
 
 import java.util.concurrent.CompletableFuture;
-
-import net.minecraft.registry.RegistryWrapper;
-
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalBiomeTags;
@@ -29,14 +26,15 @@ import net.fabricmc.fabric.api.tag.convention.v2.ConventionalEntityTypeTags;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalFluidTags;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalItemTags;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalStructureTags;
+import net.minecraft.core.HolderLookup;
 
 public class EnglishTagLangGenerator extends FabricLanguageProvider {
-	public EnglishTagLangGenerator(FabricDataOutput output, CompletableFuture<RegistryWrapper.WrapperLookup> registryLookup) {
+	public EnglishTagLangGenerator(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> registryLookup) {
 		super(output, registryLookup);
 	}
 
 	@Override
-	public void generateTranslations(RegistryWrapper.WrapperLookup registryLookup, TranslationBuilder translationBuilder) {
+	public void generateTranslations(HolderLookup.Provider registryLookup, TranslationBuilder translationBuilder) {
 		// Blocks
 		translationBuilder.add(ConventionalBlockTags.STONES, "Stones");
 		translationBuilder.add(ConventionalBlockTags.COBBLESTONES, "Cobblestones");

@@ -26,51 +26,49 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
-
-import net.minecraft.client.world.ClientChunkManager;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.packet.s2c.play.ChunkData;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.chunk.WorldChunk;
-
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientChunkEvents;
+import net.minecraft.client.multiplayer.ClientChunkCache;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.game.ClientboundLevelChunkPacketData;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.LevelChunk;
 
-@Mixin(ClientChunkManager.class)
+@Mixin(ClientChunkCache.class)
 public abstract class ClientChunkManagerMixin {
 	@Final
 	@Shadow
-	private ClientWorld world;
+	private ClientLevel level;
 
-	@Inject(method = "loadChunkFromPacket", at = @At("TAIL"))
-	private void onChunkLoad(int x, int z, PacketByteBuf packetByteBuf, NbtCompound nbtCompound, Consumer<ChunkData.BlockEntityVisitor> consumer, CallbackInfoReturnable<WorldChunk> info) {
-		ClientChunkEvents.CHUNK_LOAD.invoker().onChunkLoad(this.world, info.getReturnValue());
+	@Inject(method = "replaceWithPacketData", at = @At("TAIL"))
+	private void onChunkLoad(int x, int z, FriendlyByteBuf packetByteBuf, CompoundTag nbtCompound, Consumer<ClientboundLevelChunkPacketData.BlockEntityTagOutput> consumer, CallbackInfoReturnable<LevelChunk> info) {
+		ClientChunkEvents.CHUNK_LOAD.invoker().onChunkLoad(this.level, info.getReturnValue());
 	}
 
-	@Inject(method = "loadChunkFromPacket", at = @At(value = "NEW", target = "net/minecraft/world/chunk/WorldChunk", shift = At.Shift.BEFORE), locals = LocalCapture.CAPTURE_FAILHARD)
-	private void onChunkUnload(int x, int z, PacketByteBuf buf, NbtCompound tag, Consumer<ChunkData.BlockEntityVisitor> consumer, CallbackInfoReturnable<WorldChunk> info, int index, WorldChunk worldChunk, ChunkPos chunkPos) {
+	@Inject(method = "replaceWithPacketData", at = @At(value = "NEW", target = "net/minecraft/world/level/chunk/LevelChunk", shift = At.Shift.BEFORE), locals = LocalCapture.CAPTURE_FAILHARD)
+	private void onChunkUnload(int x, int z, FriendlyByteBuf buf, CompoundTag tag, Consumer<ClientboundLevelChunkPacketData.BlockEntityTagOutput> consumer, CallbackInfoReturnable<LevelChunk> info, int index, LevelChunk worldChunk, ChunkPos chunkPos) {
 		if (worldChunk != null) {
-			ClientChunkEvents.CHUNK_UNLOAD.invoker().onChunkUnload(this.world, worldChunk);
+			ClientChunkEvents.CHUNK_UNLOAD.invoker().onChunkUnload(this.level, worldChunk);
 		}
 	}
 
-	@Inject(method = "unload", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/world/ClientChunkManager$ClientChunkMap;compareAndSet(ILnet/minecraft/world/chunk/WorldChunk;Lnet/minecraft/world/chunk/WorldChunk;)Lnet/minecraft/world/chunk/WorldChunk;"), locals = LocalCapture.CAPTURE_FAILHARD)
-	private void onChunkUnload(ChunkPos pos, CallbackInfo ci, int i, WorldChunk chunk) {
-		ClientChunkEvents.CHUNK_UNLOAD.invoker().onChunkUnload(this.world, chunk);
+	@Inject(method = "drop", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ClientChunkCache$Storage;replace(ILnet/minecraft/world/level/chunk/LevelChunk;Lnet/minecraft/world/level/chunk/LevelChunk;)Lnet/minecraft/world/level/chunk/LevelChunk;"), locals = LocalCapture.CAPTURE_FAILHARD)
+	private void onChunkUnload(ChunkPos pos, CallbackInfo ci, int i, LevelChunk chunk) {
+		ClientChunkEvents.CHUNK_UNLOAD.invoker().onChunkUnload(this.level, chunk);
 	}
 
 	@Inject(
-			method = "updateLoadDistance",
+			method = "updateViewRadius",
 			at = @At(
 					value = "INVOKE",
-					target = "net/minecraft/client/world/ClientChunkManager$ClientChunkMap.isInRadius(II)Z"
+					target = "Lnet/minecraft/client/multiplayer/ClientChunkCache$Storage;inRange(II)Z"
 			),
 			locals = LocalCapture.CAPTURE_FAILHARD
 	)
-	private void onUpdateLoadDistance(int loadDistance, CallbackInfo ci, int oldRadius, int newRadius, ClientChunkManager.ClientChunkMap clientChunkMap, int k, WorldChunk oldChunk, ChunkPos chunkPos) {
-		if (!clientChunkMap.isInRadius(chunkPos.x, chunkPos.z)) {
-			ClientChunkEvents.CHUNK_UNLOAD.invoker().onChunkUnload(this.world, oldChunk);
+	private void onUpdateLoadDistance(int loadDistance, CallbackInfo ci, int oldRadius, int newRadius, ClientChunkCache.Storage clientChunkMap, int k, LevelChunk oldChunk, ChunkPos chunkPos) {
+		if (!clientChunkMap.inRange(chunkPos.x, chunkPos.z)) {
+			ClientChunkEvents.CHUNK_UNLOAD.invoker().onChunkUnload(this.level, oldChunk);
 		}
 	}
 }

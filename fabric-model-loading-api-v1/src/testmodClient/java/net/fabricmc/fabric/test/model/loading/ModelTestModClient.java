@@ -17,24 +17,6 @@
 package net.fabricmc.fabric.test.model.loading;
 
 import java.util.function.Supplier;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.CropBlock;
-import net.minecraft.block.HorizontalConnectingBlock;
-import net.minecraft.client.render.block.BlockModels;
-import net.minecraft.client.render.entity.PlayerEntityRenderer;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.ModelLoader;
-import net.minecraft.client.render.model.UnbakedModel;
-import net.minecraft.client.util.ModelIdentifier;
-import net.minecraft.resource.ResourceType;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.BlockRenderView;
-
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.model.loading.v1.DelegatingUnbakedModel;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
@@ -43,13 +25,29 @@ import net.fabricmc.fabric.api.client.rendering.v1.LivingEntityFeatureRendererRe
 import net.fabricmc.fabric.api.renderer.v1.model.ForwardingBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.minecraft.client.renderer.block.BlockModelShaper;
+import net.minecraft.client.renderer.entity.player.PlayerRenderer;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.ModelBakery;
+import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.CropBlock;
+import net.minecraft.world.level.block.CrossCollisionBlock;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class ModelTestModClient implements ClientModInitializer {
 	public static final String ID = "fabric-model-loading-api-v1-testmod";
 
-	public static final Identifier HALF_RED_SAND_MODEL_ID = id("half_red_sand");
-	public static final Identifier GOLD_BLOCK_MODEL_ID = Identifier.ofVanilla("block/gold_block");
-	public static final Identifier BROWN_GLAZED_TERRACOTTA_MODEL_ID = Identifier.ofVanilla("block/brown_glazed_terracotta");
+	public static final ResourceLocation HALF_RED_SAND_MODEL_ID = id("half_red_sand");
+	public static final ResourceLocation GOLD_BLOCK_MODEL_ID = ResourceLocation.withDefaultNamespace("block/gold_block");
+	public static final ResourceLocation BROWN_GLAZED_TERRACOTTA_MODEL_ID = ResourceLocation.withDefaultNamespace("block/brown_glazed_terracotta");
 
 	static class DownQuadRemovingModel extends ForwardingBakedModel {
 		DownQuadRemovingModel(BakedModel model) {
@@ -57,7 +55,7 @@ public class ModelTestModClient implements ClientModInitializer {
 		}
 
 		@Override
-		public void emitBlockQuads(BlockRenderView blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context) {
+		public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context) {
 			context.pushTransform(q -> q.cullFace() != Direction.DOWN);
 			super.emitBlockQuads(blockView, state, pos, randomSupplier, context);
 			context.popTransform();
@@ -70,7 +68,7 @@ public class ModelTestModClient implements ClientModInitializer {
 			pluginContext.addModels(HALF_RED_SAND_MODEL_ID);
 			// remove bottom face of gold blocks
 			pluginContext.modifyModelAfterBake().register(ModelModifier.WRAP_PHASE, (model, context) -> {
-				Identifier id = context.resourceId();
+				ResourceLocation id = context.resourceId();
 
 				if (id != null && id.equals(GOLD_BLOCK_MODEL_ID)) {
 					return new DownQuadRemovingModel(model);
@@ -79,12 +77,12 @@ public class ModelTestModClient implements ClientModInitializer {
 				return model;
 			});
 			// make fences with west: true and everything else false appear to be a missing model visually
-			ModelIdentifier fenceId = BlockModels.getModelId(Blocks.OAK_FENCE.getDefaultState().with(HorizontalConnectingBlock.WEST, true));
+			ModelResourceLocation fenceId = BlockModelShaper.stateToModelLocation(Blocks.OAK_FENCE.defaultBlockState().setValue(CrossCollisionBlock.WEST, true));
 			pluginContext.modifyModelOnLoad().register(ModelModifier.OVERRIDE_PHASE, (model, context) -> {
-				ModelIdentifier id = context.topLevelId();
+				ModelResourceLocation id = context.topLevelId();
 
 				if (id != null && id.equals(fenceId)) {
-					return context.getOrLoadModel(ModelLoader.MISSING_ID);
+					return context.getOrLoadModel(ModelBakery.MISSING_MODEL_LOCATION);
 				}
 
 				return model;
@@ -92,10 +90,10 @@ public class ModelTestModClient implements ClientModInitializer {
 			// make brown glazed terracotta appear to be a missing model visually, but without affecting the item, by using pre-bake
 			// using load here would make the item also appear missing
 			pluginContext.modifyModelBeforeBake().register(ModelModifier.OVERRIDE_PHASE, (model, context) -> {
-				Identifier id = context.resourceId();
+				ResourceLocation id = context.resourceId();
 
 				if (id != null && id.equals(BROWN_GLAZED_TERRACOTTA_MODEL_ID)) {
-					return context.baker().getOrLoadModel(ModelLoader.MISSING_ID);
+					return context.baker().getModel(ModelBakery.MISSING_MODEL_LOCATION);
 				}
 
 				return model;
@@ -103,32 +101,32 @@ public class ModelTestModClient implements ClientModInitializer {
 
 			// Make wheat stages 1->6 use the same model as stage 0. This can be done with resource packs, this is just a test.
 			pluginContext.registerBlockStateResolver(Blocks.WHEAT, context -> {
-				BlockState state = context.block().getDefaultState();
+				BlockState state = context.block().defaultBlockState();
 
 				// All the block state models are top-level...
 				// Use a delegating unbaked model to make sure the identical models only get baked a single time.
-				Identifier wheatStage0Id = Identifier.ofVanilla("block/wheat_stage0");
+				ResourceLocation wheatStage0Id = ResourceLocation.withDefaultNamespace("block/wheat_stage0");
 
 				UnbakedModel stage0Model = new DelegatingUnbakedModel(wheatStage0Id);
 
 				for (int age = 0; age <= 6; age++) {
-					context.setModel(state.with(CropBlock.AGE, age), stage0Model);
+					context.setModel(state.setValue(CropBlock.AGE, age), stage0Model);
 				}
 
-				context.setModel(state.with(CropBlock.AGE, 7), context.getOrLoadModel(Identifier.ofVanilla("block/wheat_stage7")));
+				context.setModel(state.setValue(CropBlock.AGE, 7), context.getOrLoadModel(ResourceLocation.withDefaultNamespace("block/wheat_stage7")));
 			});
 		});
 
-		ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(SpecificModelReloadListener.INSTANCE);
+		ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(SpecificModelReloadListener.INSTANCE);
 
 		LivingEntityFeatureRendererRegistrationCallback.EVENT.register((entityType, entityRenderer, registrationHelper, context) -> {
-			if (entityRenderer instanceof PlayerEntityRenderer playerRenderer) {
+			if (entityRenderer instanceof PlayerRenderer playerRenderer) {
 				registrationHelper.register(new BakedModelFeatureRenderer<>(playerRenderer, SpecificModelReloadListener.INSTANCE::getSpecificModel));
 			}
 		});
 	}
 
-	public static Identifier id(String path) {
-		return Identifier.of(ID, path);
+	public static ResourceLocation id(String path) {
+		return ResourceLocation.fromNamespaceAndPath(ID, path);
 	}
 }

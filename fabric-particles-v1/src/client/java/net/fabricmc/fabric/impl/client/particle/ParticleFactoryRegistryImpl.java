@@ -18,40 +18,38 @@ package net.fabricmc.fabric.impl.client.particle;
 
 import java.util.IdentityHashMap;
 import java.util.Map;
-
-import net.minecraft.client.particle.ParticleFactory;
-import net.minecraft.client.particle.ParticleManager;
-import net.minecraft.client.particle.SpriteProvider;
-import net.minecraft.particle.ParticleEffect;
-import net.minecraft.particle.ParticleType;
-import net.minecraft.registry.Registries;
-
 import net.fabricmc.fabric.api.client.particle.v1.FabricSpriteProvider;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.fabricmc.fabric.mixin.client.particle.ParticleManagerAccessor;
+import net.minecraft.client.particle.ParticleEngine;
+import net.minecraft.client.particle.ParticleProvider;
+import net.minecraft.client.particle.SpriteSet;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 public final class ParticleFactoryRegistryImpl implements ParticleFactoryRegistry {
 	public static final ParticleFactoryRegistryImpl INSTANCE = new ParticleFactoryRegistryImpl();
 
 	static class DeferredParticleFactoryRegistry implements ParticleFactoryRegistry {
-		private final Map<ParticleType<?>, ParticleFactory<?>> factories = new IdentityHashMap<>();
+		private final Map<ParticleType<?>, ParticleProvider<?>> factories = new IdentityHashMap<>();
 		private final Map<ParticleType<?>, PendingParticleFactory<?>> constructors = new IdentityHashMap<>();
 
 		@Override
-		public <T extends ParticleEffect> void register(ParticleType<T> type, ParticleFactory<T> factory) {
+		public <T extends ParticleOptions> void register(ParticleType<T> type, ParticleProvider<T> factory) {
 			factories.put(type, factory);
 		}
 
 		@Override
-		public <T extends ParticleEffect> void register(ParticleType<T> type, PendingParticleFactory<T> factory) {
+		public <T extends ParticleOptions> void register(ParticleType<T> type, PendingParticleFactory<T> factory) {
 			constructors.put(type, factory);
 		}
 
 		@SuppressWarnings("unchecked")
 		void applyTo(ParticleFactoryRegistry registry) {
-			for (Map.Entry<ParticleType<?>, ParticleFactory<?>> entry : factories.entrySet()) {
+			for (Map.Entry<ParticleType<?>, ParticleProvider<?>> entry : factories.entrySet()) {
 				ParticleType type = entry.getKey();
-				ParticleFactory factory = entry.getValue();
+				ParticleProvider factory = entry.getValue();
 				registry.register(type, factory);
 			}
 
@@ -64,22 +62,22 @@ public final class ParticleFactoryRegistryImpl implements ParticleFactoryRegistr
 	}
 
 	static class DirectParticleFactoryRegistry implements ParticleFactoryRegistry {
-		private final ParticleManager particleManager;
+		private final ParticleEngine particleManager;
 
-		DirectParticleFactoryRegistry(ParticleManager particleManager) {
+		DirectParticleFactoryRegistry(ParticleEngine particleManager) {
 			this.particleManager = particleManager;
 		}
 
 		@Override
-		public <T extends ParticleEffect> void register(ParticleType<T> type, ParticleFactory<T> factory) {
-			((ParticleManagerAccessor) particleManager).getFactories().put(Registries.PARTICLE_TYPE.getRawId(type), factory);
+		public <T extends ParticleOptions> void register(ParticleType<T> type, ParticleProvider<T> factory) {
+			((ParticleManagerAccessor) particleManager).getFactories().put(BuiltInRegistries.PARTICLE_TYPE.getId(type), factory);
 		}
 
 		@Override
-		public <T extends ParticleEffect> void register(ParticleType<T> type, PendingParticleFactory<T> constructor) {
-			SpriteProvider delegate = new ParticleManager.SimpleSpriteProvider();
+		public <T extends ParticleOptions> void register(ParticleType<T> type, PendingParticleFactory<T> constructor) {
+			SpriteSet delegate = new ParticleEngine.MutableSpriteSet();
 			FabricSpriteProvider fabricSpriteProvider = new FabricSpriteProviderImpl(particleManager, delegate);
-			((ParticleManagerAccessor) particleManager).getSpriteAwareFactories().put(Registries.PARTICLE_TYPE.getId(type), delegate);
+			((ParticleManagerAccessor) particleManager).getSpriteAwareFactories().put(BuiltInRegistries.PARTICLE_TYPE.getKey(type), delegate);
 			register(type, constructor.create(fabricSpriteProvider));
 		}
 	}
@@ -89,16 +87,16 @@ public final class ParticleFactoryRegistryImpl implements ParticleFactoryRegistr
 	private ParticleFactoryRegistryImpl() { }
 
 	@Override
-	public <T extends ParticleEffect> void register(ParticleType<T> type, ParticleFactory<T> factory) {
+	public <T extends ParticleOptions> void register(ParticleType<T> type, ParticleProvider<T> factory) {
 		internalRegistry.register(type, factory);
 	}
 
 	@Override
-	public <T extends ParticleEffect> void register(ParticleType<T> type, PendingParticleFactory<T> constructor) {
+	public <T extends ParticleOptions> void register(ParticleType<T> type, PendingParticleFactory<T> constructor) {
 		internalRegistry.register(type, constructor);
 	}
 
-	public void initialize(ParticleManager particleManager) {
+	public void initialize(ParticleEngine particleManager) {
 		ParticleFactoryRegistry newRegistry = new DirectParticleFactoryRegistry(particleManager);
 		DeferredParticleFactoryRegistry oldRegistry = (DeferredParticleFactoryRegistry) internalRegistry;
 		oldRegistry.applyTo(newRegistry);

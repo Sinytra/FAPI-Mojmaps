@@ -16,18 +16,18 @@
 
 package net.fabricmc.fabric.api.entity;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.hit.HitResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 
 /**
  * Convenience interface for entities that want more stack picking context than what
- * {@link Entity#getPickBlockStack()} provides.
+ * {@link Entity#getPickResult()} provides.
  *
  * <p>The hit result is guaranteed to be an {@link EntityHitResult}.
  */
 public interface EntityPickInteractionAware {
-	ItemStack getPickedStack(PlayerEntity player, HitResult result);
+	ItemStack getPickedStack(Player player, HitResult result);
 }

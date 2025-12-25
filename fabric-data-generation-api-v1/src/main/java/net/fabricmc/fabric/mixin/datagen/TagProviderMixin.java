@@ -20,15 +20,13 @@ import com.llamalad7.mixinextras.sugar.Local;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
-
-import net.minecraft.data.server.tag.TagProvider;
-import net.minecraft.registry.tag.TagBuilder;
-
 import net.fabricmc.fabric.impl.datagen.FabricTagBuilder;
+import net.minecraft.data.tags.TagsProvider;
+import net.minecraft.tags.TagBuilder;
 
-@Mixin(TagProvider.class)
+@Mixin(TagsProvider.class)
 public class TagProviderMixin {
-	@ModifyArg(method = "method_27046", at = @At(value = "INVOKE", target = "Lnet/minecraft/registry/tag/TagFile;<init>(Ljava/util/List;Z)V"), index = 1)
+	@ModifyArg(method = "lambda$run$5", at = @At(value = "INVOKE", target = "Lnet/minecraft/tags/TagFile;<init>(Ljava/util/List;Z)V"), index = 1)
 	private boolean addReplaced(boolean replaced, @Local TagBuilder tagBuilder) {
 		if (tagBuilder instanceof FabricTagBuilder fabricTagBuilder) {
 			return fabricTagBuilder.fabric_isReplaced();

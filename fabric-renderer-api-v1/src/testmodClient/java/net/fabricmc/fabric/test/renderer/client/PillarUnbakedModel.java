@@ -23,36 +23,34 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.Baker;
-import net.minecraft.client.render.model.ModelBakeSettings;
-import net.minecraft.client.render.model.UnbakedModel;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.util.SpriteIdentifier;
-import net.minecraft.screen.PlayerScreenHandler;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.test.renderer.RendererTest;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.Material;
+import net.minecraft.client.resources.model.ModelBaker;
+import net.minecraft.client.resources.model.ModelState;
+import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.inventory.InventoryMenu;
 
 public class PillarUnbakedModel implements UnbakedModel {
-	private static final List<SpriteIdentifier> SPRITES = Stream.of("alone", "bottom", "middle", "top")
-			.map(suffix -> new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, RendererTest.id("block/pillar_" + suffix)))
+	private static final List<Material> SPRITES = Stream.of("alone", "bottom", "middle", "top")
+			.map(suffix -> new Material(InventoryMenu.BLOCK_ATLAS, RendererTest.id("block/pillar_" + suffix)))
 			.toList();
 
 	@Override
-	public Collection<Identifier> getModelDependencies() {
+	public Collection<ResourceLocation> getDependencies() {
 		return Collections.emptySet();
 	}
 
 	@Override
-	public void setParents(Function<Identifier, UnbakedModel> modelLoader) {
+	public void resolveParents(Function<ResourceLocation, UnbakedModel> modelLoader) {
 	}
 
 	@Nullable
 	@Override
-	public BakedModel bake(Baker baker, Function<SpriteIdentifier, Sprite> textureGetter, ModelBakeSettings rotationContainer) {
-		Sprite[] sprites = new Sprite[SPRITES.size()];
+	public BakedModel bake(ModelBaker baker, Function<Material, TextureAtlasSprite> textureGetter, ModelState rotationContainer) {
+		TextureAtlasSprite[] sprites = new TextureAtlasSprite[SPRITES.size()];
 
 		for (int i = 0; i < sprites.length; ++i) {
 			sprites[i] = textureGetter.apply(SPRITES.get(i));

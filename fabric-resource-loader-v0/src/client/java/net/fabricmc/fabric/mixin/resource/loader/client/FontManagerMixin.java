@@ -17,17 +17,15 @@
 package net.fabricmc.fabric.mixin.resource.loader.client;
 
 import org.spongepowered.asm.mixin.Mixin;
-
-import net.minecraft.client.font.FontManager;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
 import net.fabricmc.fabric.api.resource.ResourceReloadListenerKeys;
+import net.minecraft.client.gui.font.FontManager;
+import net.minecraft.resources.ResourceLocation;
 
 @Mixin(FontManager.class)
 public abstract class FontManagerMixin implements IdentifiableResourceReloadListener {
 	@Override
-	public Identifier getFabricId() {
+	public ResourceLocation getFabricId() {
 		return ResourceReloadListenerKeys.FONTS;
 	}
 }

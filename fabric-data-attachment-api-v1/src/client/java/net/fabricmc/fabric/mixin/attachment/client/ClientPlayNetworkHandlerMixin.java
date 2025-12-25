@@ -21,24 +21,22 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.network.packet.s2c.play.PlayerRespawnS2CPacket;
-
 import net.fabricmc.fabric.impl.attachment.AttachmentTargetImpl;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.protocol.game.ClientboundRespawnPacket;
 
-@Mixin(ClientPlayNetworkHandler.class)
+@Mixin(ClientPacketListener.class)
 abstract class ClientPlayNetworkHandlerMixin {
 	@WrapOperation(
-			method = "onPlayerRespawn",
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;init()V")
+			method = "handleRespawn",
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;resetPos()V")
 	)
-	private void copyAttachmentsOnClientRespawn(ClientPlayerEntity newPlayer, Operation<Void> init, PlayerRespawnS2CPacket packet, @Local(ordinal = 0) ClientPlayerEntity oldPlayer) {
+	private void copyAttachmentsOnClientRespawn(LocalPlayer newPlayer, Operation<Void> init, ClientboundRespawnPacket packet, @Local(ordinal = 0) LocalPlayer oldPlayer) {
 		/*
 		 * The KEEP_ATTRIBUTES flag is not set on a death respawn, and set in all other cases
 		 */
-		AttachmentTargetImpl.transfer(oldPlayer, newPlayer, !packet.hasFlag(PlayerRespawnS2CPacket.KEEP_ATTRIBUTES));
+		AttachmentTargetImpl.transfer(oldPlayer, newPlayer, !packet.shouldKeep(ClientboundRespawnPacket.KEEP_ATTRIBUTE_MODIFIERS));
 		init.call(newPlayer);
 	}
 }

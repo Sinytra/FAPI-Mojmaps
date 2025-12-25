@@ -27,20 +27,6 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
-
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.SimpleRegistry;
-import net.minecraft.server.command.CommandManager;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -50,6 +36,18 @@ import net.fabricmc.fabric.api.event.registry.RegistryAttribute;
 import net.fabricmc.fabric.api.event.registry.RegistryAttributeHolder;
 import net.fabricmc.fabric.impl.registry.sync.RegistrySyncManager;
 import net.fabricmc.fabric.impl.registry.sync.RemapException;
+import net.minecraft.commands.Commands;
+import net.minecraft.core.MappedRegistry;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 
 public class RegistrySyncTest implements ModInitializer {
 	private static final Logger LOGGER = LogUtils.getLogger();
@@ -63,7 +61,7 @@ public class RegistrySyncTest implements ModInitializer {
 	// Store a list of Registries used with PacketCodecs.registry, and then check that they are marked as synced when the server starts.
 	// We check them later as they may be used before the registry attributes are assigned.
 	private static boolean hasCheckedEarlyRegistries = false;
-	private static final List<RegistryKey<? extends Registry<?>>> sycnedRegistriesToCheck = new ArrayList<>();
+	private static final List<ResourceKey<? extends Registry<?>>> sycnedRegistriesToCheck = new ArrayList<>();
 
 	@Override
 	public void onInitialize() {
@@ -73,21 +71,21 @@ public class RegistrySyncTest implements ModInitializer {
 			registerBlocks("registry_sync2", 50, 0);
 			registerBlocks("registry_sync", 2, 5);
 
-			Validate.isTrue(RegistryAttributeHolder.get(Registries.BLOCK).hasAttribute(RegistryAttribute.MODDED), "Modded block was registered but registry not marked as modded");
+			Validate.isTrue(RegistryAttributeHolder.get(BuiltInRegistries.BLOCK).hasAttribute(RegistryAttribute.MODDED), "Modded block was registered but registry not marked as modded");
 
 			if (REGISTER_ITEMS) {
-				Validate.isTrue(RegistryAttributeHolder.get(Registries.ITEM).hasAttribute(RegistryAttribute.MODDED), "Modded item was registered but registry not marked as modded");
+				Validate.isTrue(RegistryAttributeHolder.get(BuiltInRegistries.ITEM).hasAttribute(RegistryAttribute.MODDED), "Modded item was registered but registry not marked as modded");
 			}
 		}
 
-		RegistryKey<Registry<String>> fabricRegistryKey = RegistryKey.ofRegistry(Identifier.of("registry_sync", "fabric_registry"));
-		SimpleRegistry<String> fabricRegistry = FabricRegistryBuilder.createSimple(fabricRegistryKey)
+		ResourceKey<Registry<String>> fabricRegistryKey = ResourceKey.createRegistryKey(ResourceLocation.fromNamespaceAndPath("registry_sync", "fabric_registry"));
+		MappedRegistry<String> fabricRegistry = FabricRegistryBuilder.createSimple(fabricRegistryKey)
 				.attribute(RegistryAttribute.SYNCED)
 				.buildAndRegister();
 
-		Registry.register(fabricRegistry, Identifier.of("registry_sync", "test"), "test");
+		Registry.register(fabricRegistry, ResourceLocation.fromNamespaceAndPath("registry_sync", "test"), "test");
 
-		Validate.isTrue(Registries.REGISTRIES.getIds().contains(Identifier.of("registry_sync", "fabric_registry")));
+		Validate.isTrue(BuiltInRegistries.REGISTRY.keySet().contains(ResourceLocation.fromNamespaceAndPath("registry_sync", "fabric_registry")));
 
 		Validate.isTrue(RegistryAttributeHolder.get(fabricRegistry).hasAttribute(RegistryAttribute.MODDED));
 		Validate.isTrue(RegistryAttributeHolder.get(fabricRegistry).hasAttribute(RegistryAttribute.SYNCED));
@@ -96,7 +94,7 @@ public class RegistrySyncTest implements ModInitializer {
 
 		DynamicRegistrySetupCallback.EVENT.register(registryManager -> {
 			setupCalled.set(true);
-			registryManager.registerEntryAdded(RegistryKeys.BIOME, (rawId, id, object) -> {
+			registryManager.registerEntryAdded(Registries.BIOME, (rawId, id, object) -> {
 				LOGGER.info("Biome added: {}", id);
 			});
 		});
@@ -111,22 +109,22 @@ public class RegistrySyncTest implements ModInitializer {
 		});
 
 		// Vanilla status effects don't have an entry for the int id 0, test we can handle this.
-		RegistryAttributeHolder.get(Registries.STATUS_EFFECT).addAttribute(RegistryAttribute.MODDED);
+		RegistryAttributeHolder.get(BuiltInRegistries.MOB_EFFECT).addAttribute(RegistryAttribute.MODDED);
 
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
-				dispatcher.register(CommandManager.literal("remote_remap_error_test").executes(context -> {
-					Map<Identifier, Object2IntMap<Identifier>> registryData = Map.of(
-							RegistryKeys.BLOCK.getValue(), createFakeRegistryEntries(),
-							RegistryKeys.ITEM.getValue(), createFakeRegistryEntries()
+				dispatcher.register(Commands.literal("remote_remap_error_test").executes(context -> {
+					Map<ResourceLocation, Object2IntMap<ResourceLocation>> registryData = Map.of(
+							Registries.BLOCK.location(), createFakeRegistryEntries(),
+							Registries.ITEM.location(), createFakeRegistryEntries()
 					);
 
 					try {
 						RegistrySyncManager.checkRemoteRemap(registryData);
 					} catch (RemapException e) {
-						final ServerPlayerEntity player = context.getSource().getPlayer();
+						final ServerPlayer player = context.getSource().getPlayer();
 
 						if (player != null) {
-							player.networkHandler.disconnect(Objects.requireNonNull(e.getText()));
+							player.connection.disconnect(Objects.requireNonNull(e.getText()));
 						}
 
 						return 1;
@@ -136,8 +134,8 @@ public class RegistrySyncTest implements ModInitializer {
 				})));
 	}
 
-	public static void checkSyncedRegistry(RegistryKey<? extends Registry<?>> registry) {
-		if (!Registries.REGISTRIES.containsId(registry.getValue())) {
+	public static void checkSyncedRegistry(ResourceKey<? extends Registry<?>> registry) {
+		if (!BuiltInRegistries.REGISTRY.containsKey(registry.location())) {
 			// Skip dynamic registries, as there are always synced.
 			return;
 		}
@@ -148,27 +146,27 @@ public class RegistrySyncTest implements ModInitializer {
 		}
 
 		if (!RegistryAttributeHolder.get(registry).hasAttribute(RegistryAttribute.SYNCED)) {
-			throw new IllegalStateException("Registry " + registry.getValue() + " is not marked as SYNCED!");
+			throw new IllegalStateException("Registry " + registry.location() + " is not marked as SYNCED!");
 		}
 	}
 
 	private static void registerBlocks(String namespace, int amount, int startingId) {
 		for (int i = 0; i < amount; i++) {
-			Block block = new Block(AbstractBlock.Settings.create());
-			Registry.register(Registries.BLOCK, Identifier.of(namespace, "block_" + (i + startingId)), block);
+			Block block = new Block(BlockBehaviour.Properties.of());
+			Registry.register(BuiltInRegistries.BLOCK, ResourceLocation.fromNamespaceAndPath(namespace, "block_" + (i + startingId)), block);
 
 			if (REGISTER_ITEMS) {
-				BlockItem blockItem = new BlockItem(block, new Item.Settings());
-				Registry.register(Registries.ITEM, Identifier.of(namespace, "block_" + (i + startingId)), blockItem);
+				BlockItem blockItem = new BlockItem(block, new Item.Properties());
+				Registry.register(BuiltInRegistries.ITEM, ResourceLocation.fromNamespaceAndPath(namespace, "block_" + (i + startingId)), blockItem);
 			}
 		}
 	}
 
-	private static Object2IntMap<Identifier> createFakeRegistryEntries() {
-		Object2IntMap<Identifier> map = new Object2IntOpenHashMap<>();
+	private static Object2IntMap<ResourceLocation> createFakeRegistryEntries() {
+		Object2IntMap<ResourceLocation> map = new Object2IntOpenHashMap<>();
 
 		for (int i = 0; i < 12; i++) {
-			map.put(Identifier.of("mod_" + i, "entry"), 0);
+			map.put(ResourceLocation.fromNamespaceAndPath("mod_" + i, "entry"), 0);
 		}
 
 		return map;

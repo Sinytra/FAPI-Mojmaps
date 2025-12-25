@@ -27,14 +27,12 @@ import com.mojang.brigadier.context.CommandContext;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.world.GameRules;
-
+import net.minecraft.world.level.GameRules;
 import net.fabricmc.fabric.api.gamerule.v1.GameRuleRegistry;
 
-public final class EnumRule<E extends Enum<E>> extends GameRules.Rule<EnumRule<E>> {
+public final class EnumRule<E extends Enum<E>> extends GameRules.Value<EnumRule<E>> {
 	private static final Logger LOGGER = LoggerFactory.getLogger(GameRuleRegistry.class);
 
 	private final Class<E> classType;
@@ -65,7 +63,7 @@ public final class EnumRule<E extends Enum<E>> extends GameRules.Rule<EnumRule<E
 	}
 
 	@Override
-	protected void setFromArgument(CommandContext<ServerCommandSource> context, String name) {
+	protected void updateFromArgument(CommandContext<CommandSourceStack> context, String name) {
 		// Do nothing. We use a different system for application with literals
 	}
 
@@ -96,7 +94,7 @@ public final class EnumRule<E extends Enum<E>> extends GameRules.Rule<EnumRule<E
 	}
 
 	@Override
-	protected EnumRule<E> getThis() {
+	protected EnumRule<E> getSelf() {
 		return this;
 	}
 
@@ -115,13 +113,13 @@ public final class EnumRule<E extends Enum<E>> extends GameRules.Rule<EnumRule<E
 	}
 
 	@Override
-	public void setValue(EnumRule<E> rule, MinecraftServer minecraftServer) {
+	public void setFrom(EnumRule<E> rule, MinecraftServer minecraftServer) {
 		if (!this.supports(rule.value)) {
 			throw new IllegalArgumentException(String.format("Rule does not support value: %s", rule.value));
 		}
 
 		this.value = rule.value;
-		this.changed(minecraftServer);
+		this.onChanged(minecraftServer);
 	}
 
 	public E get() {
@@ -153,6 +151,6 @@ public final class EnumRule<E extends Enum<E>> extends GameRules.Rule<EnumRule<E
 		}
 
 		this.value = value;
-		this.changed(server);
+		this.onChanged(server);
 	}
 }

@@ -21,50 +21,48 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.ChunkSerializer;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.ProtoChunk;
-import net.minecraft.world.chunk.WorldChunk;
-import net.minecraft.world.poi.PointOfInterestStorage;
-import net.minecraft.world.storage.StorageKey;
-
 import net.fabricmc.fabric.impl.attachment.AttachmentTargetImpl;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.ai.village.poi.PoiManager;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.ProtoChunk;
+import net.minecraft.world.level.chunk.storage.ChunkSerializer;
+import net.minecraft.world.level.chunk.storage.RegionStorageInfo;
 
 @Mixin(ChunkSerializer.class)
 abstract class ChunkSerializerMixin {
 	@ModifyExpressionValue(
 			at = @At(
 					value = "NEW",
-					target = "net/minecraft/world/chunk/WorldChunk"
+					target = "net/minecraft/world/level/chunk/LevelChunk"
 			),
-			method = "deserialize"
+			method = "read"
 	)
-	private static WorldChunk readWorldChunkAttachments(WorldChunk chunk, ServerWorld world, PointOfInterestStorage poiStorage, StorageKey storageKey, ChunkPos chunkPos, NbtCompound nbt) {
-		((AttachmentTargetImpl) chunk).fabric_readAttachmentsFromNbt(nbt, world.getRegistryManager());
+	private static LevelChunk readWorldChunkAttachments(LevelChunk chunk, ServerLevel world, PoiManager poiStorage, RegionStorageInfo storageKey, ChunkPos chunkPos, CompoundTag nbt) {
+		((AttachmentTargetImpl) chunk).fabric_readAttachmentsFromNbt(nbt, world.registryAccess());
 		return chunk;
 	}
 
 	@ModifyExpressionValue(
 			at = @At(
 					value = "NEW",
-					target = "net/minecraft/world/chunk/ProtoChunk"
+					target = "net/minecraft/world/level/chunk/ProtoChunk"
 			),
-			method = "deserialize"
+			method = "read"
 	)
-	private static ProtoChunk readProtoChunkAttachments(ProtoChunk chunk, ServerWorld world, PointOfInterestStorage poiStorage, StorageKey storageKey, ChunkPos chunkPos, NbtCompound nbt) {
-		((AttachmentTargetImpl) chunk).fabric_readAttachmentsFromNbt(nbt, world.getRegistryManager());
+	private static ProtoChunk readProtoChunkAttachments(ProtoChunk chunk, ServerLevel world, PoiManager poiStorage, RegionStorageInfo storageKey, ChunkPos chunkPos, CompoundTag nbt) {
+		((AttachmentTargetImpl) chunk).fabric_readAttachmentsFromNbt(nbt, world.registryAccess());
 		return chunk;
 	}
 
 	@Inject(
 			at = @At("RETURN"),
-			method = "serialize"
+			method = "write"
 	)
-	private static void writeChunkAttachments(ServerWorld world, Chunk chunk, CallbackInfoReturnable<NbtCompound> cir) {
-		((AttachmentTargetImpl) chunk).fabric_writeAttachmentsToNbt(cir.getReturnValue(), world.getRegistryManager());
+	private static void writeChunkAttachments(ServerLevel world, ChunkAccess chunk, CallbackInfoReturnable<CompoundTag> cir) {
+		((AttachmentTargetImpl) chunk).fabric_writeAttachmentsToNbt(cir.getReturnValue(), world.registryAccess());
 	}
 }

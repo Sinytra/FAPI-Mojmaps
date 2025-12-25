@@ -26,52 +26,50 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
-
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.network.ClientPlayerInteractionManager;
-import net.minecraft.client.option.GameOptions;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.Vec3d;
-
 import net.fabricmc.fabric.api.event.client.player.ClientPickBlockApplyCallback;
 import net.fabricmc.fabric.api.event.client.player.ClientPickBlockCallback;
 import net.fabricmc.fabric.api.event.client.player.ClientPickBlockGatherCallback;
 import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.Options;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.network.protocol.game.ServerboundInteractPacket;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 
-@Mixin(MinecraftClient.class)
+@Mixin(Minecraft.class)
 public abstract class MinecraftClientMixin {
 	private boolean fabric_itemPickCancelled;
 	private boolean fabric_attackCancelled;
 
 	@SuppressWarnings("deprecation")
 	private ItemStack fabric_emulateOldPick() {
-		MinecraftClient client = (MinecraftClient) (Object) this;
+		Minecraft client = (Minecraft) (Object) this;
 		ClientPickBlockCallback.Container ctr = new ClientPickBlockCallback.Container(ItemStack.EMPTY);
-		ClientPickBlockCallback.EVENT.invoker().pick(client.player, client.crosshairTarget, ctr);
+		ClientPickBlockCallback.EVENT.invoker().pick(client.player, client.hitResult, ctr);
 		return ctr.getStack();
 	}
 
-	@Inject(at = @At("HEAD"), method = "doItemPick", cancellable = true)
+	@Inject(at = @At("HEAD"), method = "pickBlock", cancellable = true)
 	private void fabric_doItemPickWrapper(CallbackInfo info) {
-		MinecraftClient client = (MinecraftClient) (Object) this;
+		Minecraft client = (Minecraft) (Object) this;
 
 		// Do a "best effort" emulation of the old events.
-		ItemStack stack = ClientPickBlockGatherCallback.EVENT.invoker().pick(client.player, client.crosshairTarget);
+		ItemStack stack = ClientPickBlockGatherCallback.EVENT.invoker().pick(client.player, client.hitResult);
 
 		// TODO: Remove in 0.3.0
 		if (stack.isEmpty()) {
@@ -84,48 +82,48 @@ public abstract class MinecraftClientMixin {
 			info.cancel();
 
 			// I don't like that we clone vanilla logic here, but it's our best bet for now.
-			PlayerInventory playerInventory = client.player.getInventory();
+			Inventory playerInventory = client.player.getInventory();
 
-			if (client.player.isInCreativeMode() && Screen.hasControlDown() && client.crosshairTarget.getType() == HitResult.Type.BLOCK) {
-				BlockEntity be = client.world.getBlockEntity(((BlockHitResult) client.crosshairTarget).getBlockPos());
+			if (client.player.hasInfiniteMaterials() && Screen.hasControlDown() && client.hitResult.getType() == HitResult.Type.BLOCK) {
+				BlockEntity be = client.level.getBlockEntity(((BlockHitResult) client.hitResult).getBlockPos());
 
 				if (be != null) {
-					addBlockEntityNbt(stack, be, world.getRegistryManager());
+					addCustomNbtData(stack, be, level.registryAccess());
 				}
 			}
 
-			stack = ClientPickBlockApplyCallback.EVENT.invoker().pick(client.player, client.crosshairTarget, stack);
+			stack = ClientPickBlockApplyCallback.EVENT.invoker().pick(client.player, client.hitResult, stack);
 
 			if (stack.isEmpty()) {
 				return;
 			}
 
-			if (client.player.isInCreativeMode()) {
-				playerInventory.addPickBlock(stack);
-				client.interactionManager.clickCreativeStack(client.player.getStackInHand(Hand.MAIN_HAND), 36 + playerInventory.selectedSlot);
+			if (client.player.hasInfiniteMaterials()) {
+				playerInventory.setPickedItem(stack);
+				client.gameMode.handleCreativeModeItemAdd(client.player.getItemInHand(InteractionHand.MAIN_HAND), 36 + playerInventory.selected);
 			} else {
-				int slot = playerInventory.getSlotWithStack(stack);
+				int slot = playerInventory.findSlotMatchingItem(stack);
 
 				if (slot >= 0) {
-					if (PlayerInventory.isValidHotbarIndex(slot)) {
-						playerInventory.selectedSlot = slot;
+					if (Inventory.isHotbarSlot(slot)) {
+						playerInventory.selected = slot;
 					} else {
-						client.interactionManager.pickFromInventory(slot);
+						client.gameMode.handlePickItem(slot);
 					}
 				}
 			}
 		}
 	}
 
-	@ModifyVariable(at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/PlayerInventory;getSlotWithStack(Lnet/minecraft/item/ItemStack;)I", shift = At.Shift.BEFORE), method = "doItemPick", ordinal = 0)
+	@ModifyVariable(at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Inventory;findSlotMatchingItem(Lnet/minecraft/world/item/ItemStack;)I", shift = At.Shift.BEFORE), method = "pickBlock", ordinal = 0)
 	public ItemStack modifyItemPick(ItemStack stack) {
-		MinecraftClient client = (MinecraftClient) (Object) this;
-		ItemStack result = ClientPickBlockApplyCallback.EVENT.invoker().pick(client.player, client.crosshairTarget, stack);
+		Minecraft client = (Minecraft) (Object) this;
+		ItemStack result = ClientPickBlockApplyCallback.EVENT.invoker().pick(client.player, client.hitResult, stack);
 		fabric_itemPickCancelled = result.isEmpty();
 		return result;
 	}
 
-	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/PlayerInventory;getSlotWithStack(Lnet/minecraft/item/ItemStack;)I"), method = "doItemPick", cancellable = true)
+	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Inventory;findSlotMatchingItem(Lnet/minecraft/world/item/ItemStack;)I"), method = "pickBlock", cancellable = true)
 	public void cancelItemPick(CallbackInfo info) {
 		if (fabric_itemPickCancelled) {
 			info.cancel();
@@ -133,46 +131,46 @@ public abstract class MinecraftClientMixin {
 	}
 
 	@Shadow
-	private ClientPlayerEntity player;
+	private LocalPlayer player;
 
 	@Shadow
-	public abstract ClientPlayNetworkHandler getNetworkHandler();
+	public abstract ClientPacketListener getConnection();
 
 	@Shadow
 	@Final
-	public GameOptions options;
+	public Options options;
 
 	@Shadow
 	@Nullable
-	public ClientPlayerInteractionManager interactionManager;
+	public MultiPlayerGameMode gameMode;
 
 	@Shadow
-	protected abstract void addBlockEntityNbt(ItemStack stack, BlockEntity blockEntity, DynamicRegistryManager dynamicRegistryManager);
+	protected abstract void addCustomNbtData(ItemStack stack, BlockEntity blockEntity, RegistryAccess dynamicRegistryManager);
 
 	@Shadow
 	@Nullable
-	public ClientWorld world;
+	public ClientLevel level;
 
 	@Inject(
 			at = @At(
 					value = "INVOKE",
 					target = "net/minecraft/client/network/ClientPlayerInteractionManager.interactEntityAtLocation(Lnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/entity/Entity;Lnet/minecraft/util/hit/EntityHitResult;Lnet/minecraft/util/Hand;)Lnet/minecraft/util/ActionResult;"
 			),
-			method = "doItemUse",
+			method = "startUseItem",
 			cancellable = true,
 			locals = LocalCapture.CAPTURE_FAILHARD
 	)
-	private void injectUseEntityCallback(CallbackInfo ci, Hand[] hands, int i1, int i2, Hand hand, ItemStack stack, EntityHitResult hitResult, Entity entity) {
-		ActionResult result = UseEntityCallback.EVENT.invoker().interact(player, player.getEntityWorld(), hand, entity, hitResult);
+	private void injectUseEntityCallback(CallbackInfo ci, InteractionHand[] hands, int i1, int i2, InteractionHand hand, ItemStack stack, EntityHitResult hitResult, Entity entity) {
+		InteractionResult result = UseEntityCallback.EVENT.invoker().interact(player, player.getCommandSenderWorld(), hand, entity, hitResult);
 
-		if (result != ActionResult.PASS) {
-			if (result.isAccepted()) {
-				Vec3d hitVec = hitResult.getPos().subtract(entity.getX(), entity.getY(), entity.getZ());
-				getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.interactAt(entity, player.isSneaking(), hand, hitVec));
+		if (result != InteractionResult.PASS) {
+			if (result.consumesAction()) {
+				Vec3 hitVec = hitResult.getLocation().subtract(entity.getX(), entity.getY(), entity.getZ());
+				getConnection().send(ServerboundInteractPacket.createInteractionPacket(entity, player.isShiftKeyDown(), hand, hitVec));
 			}
 
-			if (result.shouldSwingHand()) {
-				player.swingHand(hand);
+			if (result.shouldSwing()) {
+				player.swing(hand);
 			}
 
 			ci.cancel();
@@ -180,37 +178,37 @@ public abstract class MinecraftClientMixin {
 	}
 
 	@Inject(
-			method = "handleInputEvents",
+			method = "handleKeybinds",
 			at = @At(
 					value = "INVOKE",
-					target = "Lnet/minecraft/client/network/ClientPlayerEntity;isUsingItem()Z",
+					target = "Lnet/minecraft/client/player/LocalPlayer;isUsingItem()Z",
 					ordinal = 0
 			)
 	)
 	private void injectHandleInputEventsForPreAttackCallback(CallbackInfo ci) {
-		int attackKeyPressCount = ((KeyBindingAccessor) options.attackKey).fabric_getTimesPressed();
+		int attackKeyPressCount = ((KeyBindingAccessor) options.keyAttack).fabric_getTimesPressed();
 
-		if (options.attackKey.isPressed() || attackKeyPressCount != 0) {
+		if (options.keyAttack.isDown() || attackKeyPressCount != 0) {
 			fabric_attackCancelled = ClientPreAttackCallback.EVENT.invoker().onClientPlayerPreAttack(
-					(MinecraftClient) (Object) this, player, attackKeyPressCount
+					(Minecraft) (Object) this, player, attackKeyPressCount
 			);
 		} else {
 			fabric_attackCancelled = false;
 		}
 	}
 
-	@Inject(method = "doAttack", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "startAttack", at = @At("HEAD"), cancellable = true)
 	private void injectDoAttackForCancelling(CallbackInfoReturnable<Boolean> cir) {
 		if (fabric_attackCancelled) {
 			cir.setReturnValue(false);
 		}
 	}
 
-	@Inject(method = "handleBlockBreaking", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "continueAttack", at = @At("HEAD"), cancellable = true)
 	private void injectHandleBlockBreakingForCancelling(boolean breaking, CallbackInfo ci) {
 		if (fabric_attackCancelled) {
-			if (interactionManager != null) {
-				interactionManager.cancelBlockBreaking();
+			if (gameMode != null) {
+				gameMode.stopDestroyBlock();
 			}
 
 			ci.cancel();

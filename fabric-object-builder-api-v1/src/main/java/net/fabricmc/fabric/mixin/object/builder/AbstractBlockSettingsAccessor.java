@@ -18,110 +18,108 @@ package net.fabricmc.fabric.mixin.object.builder;
 
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
-
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.flag.FeatureFlagSet;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
+import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.PushReaction;
+import net.minecraft.world.level.storage.loot.LootTable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.MapColor;
-import net.minecraft.block.enums.NoteBlockInstrument;
-import net.minecraft.block.piston.PistonBehavior;
-import net.minecraft.entity.EntityType;
-import net.minecraft.loot.LootTable;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.resource.featuretoggle.FeatureSet;
-import net.minecraft.sound.BlockSoundGroup;
-
-@Mixin(AbstractBlock.Settings.class)
+@Mixin(BlockBehaviour.Properties.class)
 public interface AbstractBlockSettingsAccessor {
 	/* GETTERS */
 	@Accessor
-	float getHardness();
+	float getDestroyTime();
 
 	@Accessor
-	float getResistance();
+	float getExplosionResistance();
 
 	@Accessor
-	boolean getCollidable();
+	boolean getHasCollision();
 
 	@Accessor
-	boolean getRandomTicks();
+	boolean getIsRandomlyTicking();
 
-	@Accessor("luminance")
+	@Accessor("lightEmission")
 	ToIntFunction<BlockState> getLuminance();
 
 	@Accessor
-	Function<BlockState, MapColor> getMapColorProvider();
+	Function<BlockState, MapColor> getMapColor();
 
 	@Accessor
-	BlockSoundGroup getSoundGroup();
+	SoundType getSoundType();
 
 	@Accessor
-	float getSlipperiness();
+	float getFriction();
 
 	@Accessor
-	float getVelocityMultiplier();
+	float getSpeedFactor();
 
 	@Accessor
-	float getJumpVelocityMultiplier();
+	float getJumpFactor();
 
 	@Accessor
-	boolean getDynamicBounds();
+	boolean getDynamicShape();
 
 	@Accessor
-	boolean getOpaque();
+	boolean getCanOcclude();
 
 	@Accessor
 	boolean getIsAir();
 
 	@Accessor
-	boolean isToolRequired();
+	boolean isRequiresCorrectToolForDrops();
 
 	@Accessor
-	AbstractBlock.TypedContextPredicate<EntityType<?>> getAllowsSpawningPredicate();
+	BlockBehaviour.StateArgumentPredicate<EntityType<?>> getIsValidSpawn();
 
 	@Accessor
-	AbstractBlock.ContextPredicate getSolidBlockPredicate();
+	BlockBehaviour.StatePredicate getIsRedstoneConductor();
 
 	@Accessor
-	AbstractBlock.ContextPredicate getSuffocationPredicate();
+	BlockBehaviour.StatePredicate getIsSuffocating();
 
 	@Accessor
-	AbstractBlock.ContextPredicate getBlockVisionPredicate();
+	BlockBehaviour.StatePredicate getIsViewBlocking();
 
 	@Accessor
-	AbstractBlock.ContextPredicate getPostProcessPredicate();
+	BlockBehaviour.StatePredicate getHasPostProcess();
 
 	@Accessor
-	AbstractBlock.ContextPredicate getEmissiveLightingPredicate();
+	BlockBehaviour.StatePredicate getEmissiveRendering();
 
 	@Accessor
-	AbstractBlock.Offsetter getOffsetter();
+	BlockBehaviour.OffsetFunction getOffsetFunction();
 
 	@Accessor
-	RegistryKey<LootTable> getLootTableKey();
+	ResourceKey<LootTable> getDrops();
 
 	@Accessor
-	boolean getBlockBreakParticles();
+	boolean getSpawnTerrainParticles();
 
 	@Accessor
-	FeatureSet getRequiredFeatures();
+	FeatureFlagSet getRequiredFeatures();
 
 	@Accessor
-	boolean getBurnable();
+	boolean getIgnitedByLava();
 
 	@Accessor
 	boolean getLiquid();
 
 	@Accessor
-	boolean getForceNotSolid();
+	boolean getForceSolidOff();
 
 	@Accessor
-	boolean getForceSolid();
+	boolean getForceSolidOn();
 
 	@Accessor
-	PistonBehavior getPistonBehavior();
+	PushReaction getPushReaction();
 
 	@Accessor
 	NoteBlockInstrument getInstrument();
@@ -131,49 +129,49 @@ public interface AbstractBlockSettingsAccessor {
 
 	/* SETTERS */
 	@Accessor
-	void setCollidable(boolean collidable);
+	void setHasCollision(boolean collidable);
 
 	@Accessor
-	void setRandomTicks(boolean ticksRandomly);
+	void setIsRandomlyTicking(boolean ticksRandomly);
 
 	@Accessor
-	void setMapColorProvider(Function<BlockState, MapColor> mapColorProvider);
+	void setMapColor(Function<BlockState, MapColor> mapColorProvider);
 
 	@Accessor
-	void setDynamicBounds(boolean dynamicBounds);
+	void setDynamicShape(boolean dynamicBounds);
 
 	@Accessor
-	void setOpaque(boolean opaque);
+	void setCanOcclude(boolean opaque);
 
 	@Accessor
 	void setIsAir(boolean isAir);
 
 	@Accessor
-	void setLootTableKey(RegistryKey<LootTable> lootTableKey);
+	void setDrops(ResourceKey<LootTable> lootTableKey);
 
 	@Accessor
-	void setToolRequired(boolean toolRequired);
+	void setRequiresCorrectToolForDrops(boolean toolRequired);
 
 	@Accessor
-	void setBlockBreakParticles(boolean blockBreakParticles);
+	void setSpawnTerrainParticles(boolean blockBreakParticles);
 
 	@Accessor
-	void setRequiredFeatures(FeatureSet requiredFeatures);
+	void setRequiredFeatures(FeatureFlagSet requiredFeatures);
 
 	@Accessor
-	void setOffsetter(AbstractBlock.Offsetter offsetter);
+	void setOffsetFunction(BlockBehaviour.OffsetFunction offsetter);
 
 	@Accessor
-	void setBurnable(boolean burnable);
+	void setIgnitedByLava(boolean burnable);
 
 	@Accessor
 	void setLiquid(boolean liquid);
 
 	@Accessor
-	void setForceNotSolid(boolean forceNotSolid);
+	void setForceSolidOff(boolean forceNotSolid);
 
 	@Accessor
-	void setForceSolid(boolean forceSolid);
+	void setForceSolidOn(boolean forceSolid);
 
 	@Accessor
 	void setReplaceable(boolean replaceable);

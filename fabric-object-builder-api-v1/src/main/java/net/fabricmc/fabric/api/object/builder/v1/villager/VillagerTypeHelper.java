@@ -17,31 +17,29 @@
 package net.fabricmc.fabric.api.object.builder.v1.villager;
 
 import java.util.Objects;
-
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.npc.VillagerProfession;
+import net.minecraft.world.entity.npc.VillagerType;
+import net.minecraft.world.level.biome.Biome;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.util.Identifier;
-import net.minecraft.village.VillagerProfession;
-import net.minecraft.village.VillagerType;
-import net.minecraft.world.biome.Biome;
 
 /**
  * Utilities related to the creation of {@link VillagerType}s.
  * Not to be confused with a {@link VillagerProfession}, a villager type defines the appearance of a villager.
  *
- * <p>Creation and registration of custom villager types may be done by using {@link VillagerTypeHelper#register(Identifier)}.
+ * <p>Creation and registration of custom villager types may be done by using {@link VillagerTypeHelper#register(ResourceLocation)}.
  *
  * <p>Creation and registration of a villager type does not guarantee villagers of a specific type will be created in a world.
  * Typically the villager type is bound to a specific group of biomes.
- * To allow a villager type to be spawned in a specific biome, use {@link VillagerTypeHelper#addVillagerTypeToBiome(RegistryKey, VillagerType)}.
+ * To allow a villager type to be spawned in a specific biome, use {@link VillagerTypeHelper#addVillagerTypeToBiome(ResourceKey, VillagerType)}.
  *
  * <p>The texture used for the appearance of the villager is located at {@code assets/IDENTIFIER_NAMESPACE/textures/entity/villager/type/IDENTIFIER_PATH.png}.
  *
- * @deprecated Replaced by access wideners for {@link VillagerType#create} and {@link VillagerType#BIOME_TO_TYPE}
+ * @deprecated Replaced by access wideners for {@link VillagerType#register} and {@link VillagerType#BY_BIOME}
  * in Fabric Transitive Access Wideners (v1).
  */
 @Deprecated
@@ -54,9 +52,9 @@ public final class VillagerTypeHelper {
 	 * @param id the id of the villager type
 	 * @return a new villager type
 	 */
-	public static VillagerType register(Identifier id) {
+	public static VillagerType register(ResourceLocation id) {
 		Objects.requireNonNull(id, "Id of villager type cannot be null");
-		return Registry.register(Registries.VILLAGER_TYPE, id, new VillagerType(id.toString()));
+		return Registry.register(BuiltInRegistries.VILLAGER_TYPE, id, new VillagerType(id.toString()));
 	}
 
 	/**
@@ -65,12 +63,12 @@ public final class VillagerTypeHelper {
 	 * @param biomeKey the registry key of the biome
 	 * @param villagerType the villager type
 	 */
-	public static void addVillagerTypeToBiome(RegistryKey<Biome> biomeKey, VillagerType villagerType) {
+	public static void addVillagerTypeToBiome(ResourceKey<Biome> biomeKey, VillagerType villagerType) {
 		Objects.requireNonNull(biomeKey, "Biome registry key cannot be null");
 		Objects.requireNonNull(villagerType, "Villager type cannot be null");
 
-		if (VillagerType.BIOME_TO_TYPE.put(biomeKey, villagerType) != null) {
-			LOGGER.debug("Overriding existing Biome -> VillagerType registration for Biome {}", biomeKey.getValue().toString());
+		if (VillagerType.BY_BIOME.put(biomeKey, villagerType) != null) {
+			LOGGER.debug("Overriding existing Biome -> VillagerType registration for Biome {}", biomeKey.location().toString());
 		}
 	}
 

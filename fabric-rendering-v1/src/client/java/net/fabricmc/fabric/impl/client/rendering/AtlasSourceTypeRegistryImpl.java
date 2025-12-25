@@ -17,21 +17,19 @@
 package net.fabricmc.fabric.impl.client.rendering;
 
 import java.util.Objects;
-
-import net.minecraft.client.texture.atlas.AtlasSourceType;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.mixin.client.rendering.AtlasSourceManagerAccessor;
+import net.minecraft.client.renderer.texture.atlas.SpriteSourceType;
+import net.minecraft.resources.ResourceLocation;
 
 public final class AtlasSourceTypeRegistryImpl {
 	private AtlasSourceTypeRegistryImpl() {
 	}
 
-	public static void register(Identifier id, AtlasSourceType type) {
+	public static void register(ResourceLocation id, SpriteSourceType type) {
 		Objects.requireNonNull(id, "id must not be null!");
 		Objects.requireNonNull(type, "type must not be null!");
 
-		AtlasSourceType oldType = AtlasSourceManagerAccessor.getSourceTypeById().putIfAbsent(id, type);
+		SpriteSourceType oldType = AtlasSourceManagerAccessor.getSourceTypeById().putIfAbsent(id, type);
 
 		if (oldType != null) {
 			throw new IllegalStateException("Duplicate registration " + id);

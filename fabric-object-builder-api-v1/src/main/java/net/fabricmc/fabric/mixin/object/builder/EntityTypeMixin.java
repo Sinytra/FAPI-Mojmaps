@@ -21,17 +21,15 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import net.minecraft.entity.EntityType;
-
 import net.fabricmc.fabric.impl.object.builder.FabricEntityTypeImpl;
+import net.minecraft.world.entity.EntityType;
 
 @Mixin(EntityType.class)
 public abstract class EntityTypeMixin implements FabricEntityTypeImpl {
 	@Unique
 	private Boolean alwaysUpdateVelocity;
 
-	@Inject(method = "alwaysUpdateVelocity", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "trackDeltas", at = @At("HEAD"), cancellable = true)
 	public void alwaysUpdateVelocity(CallbackInfoReturnable<Boolean> cir) {
 		if (alwaysUpdateVelocity != null) {
 			cir.setReturnValue(alwaysUpdateVelocity);

@@ -16,20 +16,19 @@
 
 package net.fabricmc.fabric.test.attachment.client.mixin;
 
+import net.minecraft.commands.arguments.coordinates.WorldCoordinate;
+import net.minecraft.commands.arguments.coordinates.WorldCoordinates;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-import net.minecraft.command.argument.CoordinateArgument;
-import net.minecraft.command.argument.DefaultPosArgument;
-
-@Mixin(DefaultPosArgument.class)
+@Mixin(WorldCoordinates.class)
 public interface DefaultPosArgumentAccessor {
 	@Accessor("x")
-	CoordinateArgument getX();
+	WorldCoordinate getX();
 
 	@Accessor("y")
-	CoordinateArgument getY();
+	WorldCoordinate getY();
 
 	@Accessor("z")
-	CoordinateArgument getZ();
+	WorldCoordinate getZ();
 }

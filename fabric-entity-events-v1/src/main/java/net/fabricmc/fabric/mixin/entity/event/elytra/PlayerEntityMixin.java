@@ -21,18 +21,16 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.world.World;
-
 import net.fabricmc.fabric.api.entity.event.v1.EntityElytraEvents;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 
 @SuppressWarnings("unused")
-@Mixin(PlayerEntity.class)
+@Mixin(Player.class)
 abstract class PlayerEntityMixin extends LivingEntity {
-	PlayerEntityMixin(EntityType<? extends LivingEntity> entityType, World world) {
+	PlayerEntityMixin(EntityType<? extends LivingEntity> entityType, Level world) {
 		super(entityType, world);
 		throw new AssertionError();
 	}
@@ -45,9 +43,9 @@ abstract class PlayerEntityMixin extends LivingEntity {
 	 * and otherwise to succeed for elytra flight through {@link EntityElytraEvents#CUSTOM}.
 	 */
 	@SuppressWarnings("ConstantConditions")
-	@Inject(at = @At(value = "FIELD", target = "Lnet/minecraft/entity/EquipmentSlot;CHEST:Lnet/minecraft/entity/EquipmentSlot;"), method = "checkFallFlying()Z", allow = 1, cancellable = true)
+	@Inject(at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/EquipmentSlot;CHEST:Lnet/minecraft/world/entity/EquipmentSlot;"), method = "tryToStartFallFlying()Z", allow = 1, cancellable = true)
 	void injectElytraCheck(CallbackInfoReturnable<Boolean> cir) {
-		PlayerEntity self = (PlayerEntity) (Object) this;
+		Player self = (Player) (Object) this;
 
 		if (!EntityElytraEvents.ALLOW.invoker().allowElytraFlight(self)) {
 			cir.setReturnValue(false);

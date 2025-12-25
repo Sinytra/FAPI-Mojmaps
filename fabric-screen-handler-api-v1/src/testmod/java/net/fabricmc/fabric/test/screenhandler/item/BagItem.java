@@ -16,32 +16,31 @@
 
 package net.fabricmc.fabric.test.screenhandler.item;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.NamedScreenHandlerFactory;
-import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
-import net.minecraft.util.Hand;
-import net.minecraft.util.TypedActionResult;
-import net.minecraft.world.World;
-
 import net.fabricmc.fabric.test.screenhandler.screen.BagScreenHandler;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
 public class BagItem extends Item {
-	public BagItem(Settings settings) {
+	public BagItem(Properties settings) {
 		super(settings);
 	}
 
 	@Override
-	public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
-		ItemStack stack = user.getStackInHand(hand);
-		user.openHandledScreen(createScreenHandlerFactory(stack));
-		return TypedActionResult.success(stack);
+	public InteractionResultHolder<ItemStack> use(Level world, Player user, InteractionHand hand) {
+		ItemStack stack = user.getItemInHand(hand);
+		user.openMenu(createScreenHandlerFactory(stack));
+		return InteractionResultHolder.success(stack);
 	}
 
-	private NamedScreenHandlerFactory createScreenHandlerFactory(ItemStack stack) {
-		return new SimpleNamedScreenHandlerFactory((syncId, inventory, player) -> {
+	private MenuProvider createScreenHandlerFactory(ItemStack stack) {
+		return new SimpleMenuProvider((syncId, inventory, player) -> {
 			return new BagScreenHandler(syncId, inventory, new BagInventory(stack));
-		}, stack.getName());
+		}, stack.getHoverName());
 	}
 }

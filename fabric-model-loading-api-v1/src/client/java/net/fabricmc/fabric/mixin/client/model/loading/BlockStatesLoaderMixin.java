@@ -22,23 +22,21 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.model.BlockStatesLoader;
-import net.minecraft.state.StateManager;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.impl.client.model.loading.BlockStatesLoaderHooks;
+import net.minecraft.client.resources.model.BlockStateModelLoader;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
 
-@Mixin(BlockStatesLoader.class)
+@Mixin(BlockStateModelLoader.class)
 abstract class BlockStatesLoaderMixin implements BlockStatesLoaderHooks {
 	@Unique
 	@Nullable
 	private LoadingOverride loadingOverride;
 
-	@Inject(method = "loadBlockStates(Lnet/minecraft/util/Identifier;Lnet/minecraft/state/StateManager;)V", at = @At("HEAD"), cancellable = true)
-	private void onHeadLoadBlockStates(Identifier id, StateManager<Block, BlockState> stateManager, CallbackInfo ci) {
+	@Inject(method = "loadBlockStateDefinitions(Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/world/level/block/state/StateDefinition;)V", at = @At("HEAD"), cancellable = true)
+	private void onHeadLoadBlockStates(ResourceLocation id, StateDefinition<Block, BlockState> stateManager, CallbackInfo ci) {
 		if (loadingOverride != null && loadingOverride.loadBlockStates(id, stateManager)) {
 			ci.cancel();
 		}

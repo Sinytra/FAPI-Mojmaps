@@ -18,13 +18,11 @@ package net.fabricmc.fabric.api.recipe.v1.ingredient;
 
 import com.mojang.serialization.MapCodec;
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.impl.recipe.ingredient.CustomIngredientImpl;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.crafting.Ingredient;
 
 /**
  * Serializer for a {@link CustomIngredient}.
@@ -47,29 +45,29 @@ public interface CustomIngredientSerializer<T extends CustomIngredient> {
 	 * {@return the custom ingredient serializer registered with the given identifier, or {@code null} if there is no such serializer}.
 	 */
 	@Nullable
-	static CustomIngredientSerializer<?> get(Identifier identifier) {
+	static CustomIngredientSerializer<?> get(ResourceLocation identifier) {
 		return CustomIngredientImpl.getSerializer(identifier);
 	}
 
 	/**
 	 * {@return the identifier of this serializer}.
 	 */
-	Identifier getIdentifier();
+	ResourceLocation getIdentifier();
 
 	/**
 	 * {@return the codec}.
 	 *
 	 * <p>Codecs are used to read the ingredient from the recipe JSON files.
 	 *
-	 * @see Ingredient#ALLOW_EMPTY_CODEC
-	 * @see Ingredient#DISALLOW_EMPTY_CODEC
+	 * @see Ingredient#CODEC
+	 * @see Ingredient#CODEC_NONEMPTY
 	 */
 	MapCodec<T> getCodec(boolean allowEmpty);
 
 	/**
 	 * {@return the packet codec for serializing this ingredient}.
 	 *
-	 * @see Ingredient#PACKET_CODEC
+	 * @see Ingredient#CONTENTS_STREAM_CODEC
 	 */
-	PacketCodec<RegistryByteBuf, T> getPacketCodec();
+	StreamCodec<RegistryFriendlyByteBuf, T> getPacketCodec();
 }

@@ -16,43 +16,41 @@
 
 package net.fabricmc.fabric.test.model.loading;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import java.util.function.Supplier;
-
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.Sheets;
+import net.minecraft.client.renderer.entity.RenderLayerParent;
+import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.world.entity.LivingEntity;
 import org.joml.AxisAngle4f;
 import org.joml.Quaternionf;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.OverlayTexture;
-import net.minecraft.client.render.TexturedRenderLayers;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.feature.FeatureRenderer;
-import net.minecraft.client.render.entity.feature.FeatureRendererContext;
-import net.minecraft.client.render.entity.model.EntityModel;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.LivingEntity;
-
-public class BakedModelFeatureRenderer<T extends LivingEntity, M extends EntityModel<T>> extends FeatureRenderer<T, M> {
+public class BakedModelFeatureRenderer<T extends LivingEntity, M extends EntityModel<T>> extends RenderLayer<T, M> {
 	private final Supplier<BakedModel> modelSupplier;
 
-	public BakedModelFeatureRenderer(FeatureRendererContext<T, M> context, Supplier<BakedModel> modelSupplier) {
+	public BakedModelFeatureRenderer(RenderLayerParent<T, M> context, Supplier<BakedModel> modelSupplier) {
 		super(context);
 		this.modelSupplier = modelSupplier;
 	}
 
 	@Override
-	public void render(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, T entity, float limbAngle, float limbDistance, float tickDelta, float animationProgress, float headYaw, float headPitch) {
+	public void render(PoseStack matrices, MultiBufferSource vertexConsumers, int light, T entity, float limbAngle, float limbDistance, float tickDelta, float animationProgress, float headYaw, float headPitch) {
 		BakedModel model = modelSupplier.get();
-		VertexConsumer vertices = vertexConsumers.getBuffer(TexturedRenderLayers.getEntityCutout());
-		matrices.push();
+		VertexConsumer vertices = vertexConsumers.getBuffer(Sheets.cutoutBlockSheet());
+		matrices.pushPose();
 		//matrices.multiply(Vector3f.POSITIVE_Y.getDegreesQuaternion(headYaw));
 		//matrices.multiply(Vector3f.POSITIVE_X.getDegreesQuaternion(headPitch));
-		matrices.multiply(new Quaternionf(new AxisAngle4f(animationProgress * 0.07F, 0, 1, 0)));
+		matrices.mulPose(new Quaternionf(new AxisAngle4f(animationProgress * 0.07F, 0, 1, 0)));
 		matrices.scale(-0.75F, -0.75F, 0.75F);
 		float aboveHead = (float) (Math.sin(animationProgress * 0.08F)) * 0.5F + 0.5F;
 		matrices.translate(-0.5F, 0.75F + aboveHead, -0.5F);
-		MinecraftClient.getInstance().getBlockRenderManager().getModelRenderer().render(matrices.peek(), vertices, null, model, 1, 1, 1, light, OverlayTexture.DEFAULT_UV);
-		matrices.pop();
+		Minecraft.getInstance().getBlockRenderer().getModelRenderer().renderModel(matrices.last(), vertices, null, model, 1, 1, 1, light, OverlayTexture.NO_OVERLAY);
+		matrices.popPose();
 	}
 }

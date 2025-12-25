@@ -16,14 +16,13 @@
 
 package net.fabricmc.fabric.test.recipe.ingredient.client;
 
-import net.minecraft.recipe.ShapelessRecipe;
-import net.minecraft.test.GameTestException;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.impl.recipe.ingredient.CustomIngredientImpl;
 import net.fabricmc.fabric.impl.recipe.ingredient.builtin.ComponentsIngredient;
+import net.minecraft.gametest.framework.GameTestAssertException;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.crafting.ShapelessRecipe;
 
 public class ClientCustomIngredientSyncTests implements ClientModInitializer {
 	/**
@@ -32,15 +31,15 @@ public class ClientCustomIngredientSyncTests implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		ClientTickEvents.END_WORLD_TICK.register(world -> {
-			Identifier recipeId = Identifier.of("fabric-recipe-api-v1-testmod", "test_customingredients_sync");
-			ShapelessRecipe recipe = (ShapelessRecipe) world.getRecipeManager().get(recipeId).get().value();
+			ResourceLocation recipeId = ResourceLocation.fromNamespaceAndPath("fabric-recipe-api-v1-testmod", "test_customingredients_sync");
+			ShapelessRecipe recipe = (ShapelessRecipe) world.getRecipeManager().byKey(recipeId).get().value();
 
 			if (!(recipe.getIngredients().getFirst() instanceof CustomIngredientImpl customIngredient)) {
-				throw new GameTestException("Expected the first ingredient to be a CustomIngredientImpl");
+				throw new GameTestAssertException("Expected the first ingredient to be a CustomIngredientImpl");
 			}
 
 			if (!(customIngredient.getCustomIngredient() instanceof ComponentsIngredient)) {
-				throw new GameTestException("Expected the custom ingredient to be a ComponentsIngredient");
+				throw new GameTestAssertException("Expected the custom ingredient to be a ComponentsIngredient");
 			}
 		});
 	}

@@ -39,13 +39,11 @@ import com.mojang.brigadier.tree.CommandNode;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
-import net.minecraft.text.Texts;
-
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.mixin.command.HelpCommandAccessor;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentUtils;
 
 public final class ClientCommandInternals {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ClientCommandInternals.class);
@@ -70,11 +68,11 @@ public final class ClientCommandInternals {
 	 * @return true if the command should not be sent to the server, false otherwise
 	 */
 	public static boolean executeCommand(String command) {
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 
 		// The interface is implemented on ClientCommandSource with a mixin.
 		// noinspection ConstantConditions
-		FabricClientCommandSource commandSource = (FabricClientCommandSource) client.getNetworkHandler().getCommandSource();
+		FabricClientCommandSource commandSource = (FabricClientCommandSource) client.getConnection().getSuggestionsProvider();
 
 		client.getProfiler().push(command);
 
@@ -97,7 +95,7 @@ public final class ClientCommandInternals {
 			return true;
 		} catch (Exception e) {
 			LOGGER.warn("Error while executing client-sided command '{}'", command, e);
-			commandSource.sendError(Text.of(e.getMessage()));
+			commandSource.sendError(Component.nullToEmpty(e.getMessage()));
 			return true;
 		} finally {
 			client.getProfiler().pop();
@@ -121,11 +119,11 @@ public final class ClientCommandInternals {
 	}
 
 	// See ChatInputSuggestor.formatException. That cannot be used directly as it returns an OrderedText instead of a Text.
-	private static Text getErrorMessage(CommandSyntaxException e) {
-		Text message = Texts.toText(e.getRawMessage());
+	private static Component getErrorMessage(CommandSyntaxException e) {
+		Component message = ComponentUtils.fromMessage(e.getRawMessage());
 		String context = e.getContext();
 
-		return context != null ? Text.translatable("command.context.parse_error", message, e.getCursor(), context) : message;
+		return context != null ? Component.translatable("command.context.parse_error", message, e.getCursor(), context) : message;
 	}
 
 	/**
@@ -169,7 +167,7 @@ public final class ClientCommandInternals {
 		Map<CommandNode<FabricClientCommandSource>, String> commands = activeDispatcher.getSmartUsage(startNode, context.getSource());
 
 		for (String command : commands.values()) {
-			context.getSource().sendFeedback(Text.literal("/" + command));
+			context.getSource().sendFeedback(Component.literal("/" + command));
 		}
 
 		return commands.size();

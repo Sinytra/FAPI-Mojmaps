@@ -22,43 +22,41 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.serialization.Decoder;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.registry.MutableRegistry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryLoader;
-import net.minecraft.registry.RegistryOps;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.registry.entry.RegistryEntryInfo;
-import net.minecraft.resource.Resource;
-
 import net.fabricmc.fabric.impl.item.EnchantmentUtil;
+import net.minecraft.core.Holder;
+import net.minecraft.core.RegistrationInfo;
+import net.minecraft.core.WritableRegistry;
+import net.minecraft.resources.RegistryDataLoader;
+import net.minecraft.resources.RegistryOps;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.world.item.enchantment.Enchantment;
 
-@Mixin(RegistryLoader.class)
+@Mixin(RegistryDataLoader.class)
 abstract class RegistryLoaderMixin {
 	@WrapOperation(
-			method = "parseAndAdd",
+			method = "loadElementFromResource",
 			at = @At(
 					value = "INVOKE",
-					target = "Lnet/minecraft/registry/MutableRegistry;add(Lnet/minecraft/registry/RegistryKey;Ljava/lang/Object;Lnet/minecraft/registry/entry/RegistryEntryInfo;)Lnet/minecraft/registry/entry/RegistryEntry$Reference;"
+					target = "Lnet/minecraft/core/WritableRegistry;register(Lnet/minecraft/resources/ResourceKey;Ljava/lang/Object;Lnet/minecraft/core/RegistrationInfo;)Lnet/minecraft/core/Holder$Reference;"
 			)
 	)
 	@SuppressWarnings("unchecked")
-	private static <T> RegistryEntry.Reference<T> enchantmentKey(
-			MutableRegistry<T> instance,
-			RegistryKey<T> objectKey,
+	private static <T> Holder.Reference<T> enchantmentKey(
+			WritableRegistry<T> instance,
+			ResourceKey<T> objectKey,
 			Object object,
-			RegistryEntryInfo registryEntryInfo,
-			Operation<RegistryEntry.Reference<T>> original,
-			MutableRegistry<T> registry,
+			RegistrationInfo registryEntryInfo,
+			Operation<Holder.Reference<T>> original,
+			WritableRegistry<T> registry,
 			Decoder<T> decoder,
 			RegistryOps<JsonElement> ops,
-			RegistryKey<T> registryKey,
+			ResourceKey<T> registryKey,
 			Resource resource,
-			RegistryEntryInfo entryInfo
+			RegistrationInfo entryInfo
 	) {
 		if (object instanceof Enchantment enchantment) {
-			object = EnchantmentUtil.modify((RegistryKey<Enchantment>) objectKey, enchantment, EnchantmentUtil.determineSource(resource));
+			object = EnchantmentUtil.modify((ResourceKey<Enchantment>) objectKey, enchantment, EnchantmentUtil.determineSource(resource));
 		}
 
 		return original.call(instance, registryKey, object, registryEntryInfo);

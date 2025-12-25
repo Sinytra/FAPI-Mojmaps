@@ -24,27 +24,25 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.registry.tag.TagManagerLoader;
-
 import net.fabricmc.fabric.impl.resource.conditions.ResourceConditionsImpl;
+import net.minecraft.tags.TagManager;
 
 /**
  * Capture deserialized tags, right at the end of the "apply" phase of the tag loader, for use by the xxx_tags_populated condition.
  * This gives access to these tags during the rest of the "apply" phase, when resource conditions are applied.
  */
-@Mixin(TagManagerLoader.class)
+@Mixin(TagManager.class)
 public class TagManagerLoaderMixin {
 	@Shadow
-	private List<TagManagerLoader.RegistryTags<?>> registryTags;
+	private List<TagManager.LoadResult<?>> results;
 
 	// lambda body inside thenAcceptAsync, in the reload method
 	@Dynamic
 	@Inject(
-			method = "method_40098(Ljava/util/List;Ljava/lang/Void;)V",
+			method = "lambda$reload$2(Ljava/util/List;Ljava/lang/Void;)V",
 			at = @At("RETURN")
 	)
 	private void hookApply(List<?> list, Void void_, CallbackInfo ci) {
-		ResourceConditionsImpl.setTags(registryTags);
+		ResourceConditionsImpl.setTags(results);
 	}
 }

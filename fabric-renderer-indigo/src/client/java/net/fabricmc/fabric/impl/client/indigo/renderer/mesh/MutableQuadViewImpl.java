@@ -29,11 +29,6 @@ import static net.fabricmc.fabric.impl.client.indigo.renderer.mesh.EncodingForma
 import static net.fabricmc.fabric.impl.client.indigo.renderer.mesh.EncodingFormat.VERTEX_X;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.util.math.Direction;
-
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
@@ -42,6 +37,9 @@ import net.fabricmc.fabric.impl.client.indigo.renderer.helper.ColorHelper;
 import net.fabricmc.fabric.impl.client.indigo.renderer.helper.NormalHelper;
 import net.fabricmc.fabric.impl.client.indigo.renderer.helper.TextureHelper;
 import net.fabricmc.fabric.impl.client.indigo.renderer.material.RenderMaterialImpl;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.Direction;
 
 /**
  * Almost-concrete implementation of a mutable quad. The only missing part is {@link #emitDirectly()},
@@ -90,7 +88,7 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 	}
 
 	@Override
-	public MutableQuadViewImpl spriteBake(Sprite sprite, int bakeFlags) {
+	public MutableQuadViewImpl spriteBake(TextureAtlasSprite sprite, int bakeFlags) {
 		TextureHelper.bakeSprite(this, sprite, bakeFlags);
 		return this;
 	}
@@ -195,12 +193,12 @@ public abstract class MutableQuadViewImpl extends QuadViewImpl implements QuadEm
 
 	@Override
 	public final MutableQuadViewImpl fromVanilla(BakedQuad quad, RenderMaterial material, @Nullable Direction cullFace) {
-		fromVanilla(quad.getVertexData(), 0);
+		fromVanilla(quad.getVertices(), 0);
 		data[baseIndex + HEADER_BITS] = EncodingFormat.cullFace(0, cullFace);
-		nominalFace(quad.getFace());
-		colorIndex(quad.getColorIndex());
+		nominalFace(quad.getDirection());
+		colorIndex(quad.getTintIndex());
 
-		if (!quad.hasShade()) {
+		if (!quad.isShade()) {
 			material = RenderMaterialImpl.setDisableDiffuse((RenderMaterialImpl) material, true);
 		}
 

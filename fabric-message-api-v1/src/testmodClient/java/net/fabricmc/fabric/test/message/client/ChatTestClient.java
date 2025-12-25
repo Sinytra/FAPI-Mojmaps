@@ -19,14 +19,12 @@ package net.fabricmc.fabric.test.message.client;
 import com.mojang.brigadier.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import net.minecraft.text.Text;
-
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
+import net.minecraft.network.chat.Component;
 
 public class ChatTestClient implements ClientModInitializer {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ChatTestClient.class);
@@ -103,7 +101,7 @@ public class ChatTestClient implements ClientModInitializer {
 		ClientReceiveMessageEvents.MODIFY_GAME.register((message, overlay) -> {
 			if (message.getString().contains("modify receive")) {
 				LOGGER.info("Modifying received game message: " + message.getString());
-				return Text.of("modified receiving game message");
+				return Component.nullToEmpty("modified receiving game message");
 			}
 
 			return message;

@@ -21,17 +21,15 @@ import java.util.List;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
-
-import net.minecraft.registry.RegistryLoader;
-import net.minecraft.server.SaveLoading;
-
 import net.fabricmc.fabric.api.event.registry.DynamicRegistries;
+import net.minecraft.resources.RegistryDataLoader;
+import net.minecraft.server.WorldLoader;
 
 // Implements dynamic registry loading.
-@Mixin(SaveLoading.class)
+@Mixin(WorldLoader.class)
 abstract class SaveLoadingMixin {
-	@ModifyArg(method = "load", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/SaveLoading;withRegistriesLoaded(Lnet/minecraft/resource/ResourceManager;Lnet/minecraft/registry/CombinedDynamicRegistries;Lnet/minecraft/registry/ServerDynamicRegistryType;Ljava/util/List;)Lnet/minecraft/registry/CombinedDynamicRegistries;"), allow = 1)
-	private static List<RegistryLoader.Entry<?>> modifyLoadedEntries(List<RegistryLoader.Entry<?>> entries) {
+	@ModifyArg(method = "load", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/WorldLoader;loadAndReplaceLayer(Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/core/LayeredRegistryAccess;Lnet/minecraft/server/RegistryLayer;Ljava/util/List;)Lnet/minecraft/core/LayeredRegistryAccess;"), allow = 1)
+	private static List<RegistryDataLoader.RegistryData<?>> modifyLoadedEntries(List<RegistryDataLoader.RegistryData<?>> entries) {
 		return DynamicRegistries.getDynamicRegistries();
 	}
 }

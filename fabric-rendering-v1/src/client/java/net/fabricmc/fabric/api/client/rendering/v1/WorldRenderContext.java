@@ -16,27 +16,26 @@
 
 package net.fabricmc.fabric.api.client.rendering.v1;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Camera;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.Frustum;
-import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.profiler.Profiler;
-
 /**
  * Except as noted below, the properties exposed here match the parameters passed to
- * {@link WorldRenderer#render}.
+ * {@link LevelRenderer#renderLevel}.
  */
 public interface WorldRenderContext {
 	/**
@@ -44,15 +43,15 @@ public interface WorldRenderContext {
 	 *
 	 * @return WorldRenderer instance invoking the event
 	 */
-	WorldRenderer worldRenderer();
+	LevelRenderer worldRenderer();
 
 	/**
 	 * The matrix stack is only not null in {@link WorldRenderEvents#AFTER_ENTITIES} or later events.
 	 */
 	@Nullable
-	MatrixStack matrixStack();
+	PoseStack matrixStack();
 
-	RenderTickCounter tickCounter();
+	DeltaTracker tickCounter();
 
 	boolean blockOutlines();
 
@@ -60,7 +59,7 @@ public interface WorldRenderContext {
 
 	GameRenderer gameRenderer();
 
-	LightmapTextureManager lightmapTextureManager();
+	LightTexture lightmapTextureManager();
 
 	Matrix4f projectionMatrix();
 
@@ -71,14 +70,14 @@ public interface WorldRenderContext {
 	 *
 	 * @return world renderer's client world instance
 	 */
-	ClientWorld world();
+	ClientLevel world();
 
 	/**
 	 * Convenient access to game performance profiler.
 	 *
 	 * @return the active profiler
 	 */
-	Profiler profiler();
+	ProfilerFiller profiler();
 
 	/**
 	 * Test to know if "fabulous" graphics mode is enabled.
@@ -108,7 +107,7 @@ public interface WorldRenderContext {
 	 * must be drawn directly to the frame buffer, preferably in {@link WorldRenderEvents#LAST} to avoid being
 	 * overdrawn or cleared.
 	 */
-	@Nullable VertexConsumerProvider consumers();
+	@Nullable MultiBufferSource consumers();
 
 	/**
 	 * View frustum, after it is initialized. Will be {@code null} during

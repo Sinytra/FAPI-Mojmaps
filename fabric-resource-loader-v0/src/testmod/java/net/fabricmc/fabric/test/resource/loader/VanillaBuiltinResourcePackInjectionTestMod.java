@@ -16,27 +16,26 @@
 
 package net.fabricmc.fabric.test.resource.loader;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.api.ModInitializer;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 
 public class VanillaBuiltinResourcePackInjectionTestMod implements ModInitializer {
 	public static final String MODID = "fabric-resource-loader-v0-testmod";
 
-	public static final Block TEST_BLOCK = new Block(AbstractBlock.Settings.copy(Blocks.STONE));
+	public static final Block TEST_BLOCK = new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.STONE));
 
 	@Override
 	public void onInitialize() {
-		Identifier id = Identifier.of(MODID, "testblock");
+		ResourceLocation id = ResourceLocation.fromNamespaceAndPath(MODID, "testblock");
 
-		Registry.register(Registries.BLOCK, id, TEST_BLOCK);
-		Registry.register(Registries.ITEM, id, new BlockItem(TEST_BLOCK, new Item.Settings()));
+		Registry.register(BuiltInRegistries.BLOCK, id, TEST_BLOCK);
+		Registry.register(BuiltInRegistries.ITEM, id, new BlockItem(TEST_BLOCK, new Item.Properties()));
 	}
 }

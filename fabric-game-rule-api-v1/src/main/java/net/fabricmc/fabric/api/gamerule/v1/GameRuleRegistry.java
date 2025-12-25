@@ -16,10 +16,9 @@
 
 package net.fabricmc.fabric.api.gamerule.v1;
 
-import net.minecraft.world.GameRules;
-
 import net.fabricmc.fabric.impl.gamerule.RuleKeyExtensions;
 import net.fabricmc.fabric.mixin.gamerule.GameRulesAccessor;
+import net.minecraft.world.level.GameRules;
 
 /**
  * A utility class which allows for registration of game rules.
@@ -35,7 +34,7 @@ public final class GameRuleRegistry {
 	}
 
 	/**
-	 * Registers a {@link GameRules.Rule}.
+	 * Registers a {@link GameRules.Value}.
 	 *
 	 * @param name   the name of the rule
 	 * @param category the category of this rule
@@ -44,12 +43,12 @@ public final class GameRuleRegistry {
 	 * @return a rule key which can be used to query the value of the rule
 	 * @throws IllegalStateException if a rule of the same name already exists
 	 */
-	public static <T extends GameRules.Rule<T>> GameRules.Key<T> register(String name, GameRules.Category category, GameRules.Type<T> type) {
+	public static <T extends GameRules.Value<T>> GameRules.Key<T> register(String name, GameRules.Category category, GameRules.Type<T> type) {
 		return GameRulesAccessor.callRegister(name, category, type);
 	}
 
 	/**
-	 * Registers a {@link GameRules.Rule} with a custom category.
+	 * Registers a {@link GameRules.Value} with a custom category.
 	 *
 	 * @param name 	the name of the rule
 	 * @param category the category of this rule
@@ -58,7 +57,7 @@ public final class GameRuleRegistry {
 	 * @return a rule key which can be used to query the value of the rule
 	 * @throws IllegalStateException if a rule of the same name already exists
 	 */
-	public static <T extends GameRules.Rule<T>> GameRules.Key<T> register(String name, CustomGameRuleCategory category, GameRules.Type<T> type) {
+	public static <T extends GameRules.Value<T>> GameRules.Key<T> register(String name, CustomGameRuleCategory category, GameRules.Type<T> type) {
 		final GameRules.Key<T> key = GameRulesAccessor.callRegister(name, GameRules.Category.MISC, type);
 		((RuleKeyExtensions) (Object) key).fabric_setCustomCategory(category);
 		return key;
@@ -71,6 +70,6 @@ public final class GameRuleRegistry {
 	 * @return true if the name is taken.
 	 */
 	public static boolean hasRegistration(String ruleName) {
-		return GameRulesAccessor.getRuleTypes().keySet().stream().anyMatch(key -> key.getName().equals(ruleName));
+		return GameRulesAccessor.getRuleTypes().keySet().stream().anyMatch(key -> key.getId().equals(ruleName));
 	}
 }

@@ -17,14 +17,12 @@
 package net.fabricmc.fabric.api.transfer.v1.fluid.base;
 
 import java.util.Objects;
-
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryWrapper;
-
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.StoragePreconditions;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 
 /**
  * A storage that can store a single fluid variant at any given time.
@@ -67,14 +65,14 @@ public abstract class SingleFluidStorage extends SingleVariantStorage<FluidVaria
 	 * Simple implementation of reading from NBT, to match what is written by {@link #writeNbt}.
 	 * Other formats are allowed, this is just a suggestion.
 	 */
-	public void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup) {
+	public void readNbt(CompoundTag nbt, HolderLookup.Provider wrapperLookup) {
 		SingleVariantStorage.readNbt(this, FluidVariant.CODEC, FluidVariant::blank, nbt, wrapperLookup);
 	}
 
 	/**
 	 * Simple implementation of writing to NBT. Other formats are allowed, this is just a convenient suggestion.
 	 */
-	public void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup) {
+	public void writeNbt(CompoundTag nbt, HolderLookup.Provider wrapperLookup) {
 		SingleVariantStorage.writeNbt(this, FluidVariant.CODEC, nbt, wrapperLookup);
 	}
 }

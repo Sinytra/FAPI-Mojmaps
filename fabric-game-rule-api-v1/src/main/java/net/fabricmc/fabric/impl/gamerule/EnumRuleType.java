@@ -16,7 +16,7 @@
 
 package net.fabricmc.fabric.impl.gamerule;
 
-import static net.minecraft.server.command.CommandManager.literal;
+import static net.minecraft.commands.Commands.literal;
 
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -24,23 +24,21 @@ import java.util.function.Function;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
-
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.world.GameRules;
-
+import net.minecraft.world.level.GameRules;
 import net.fabricmc.fabric.api.gamerule.v1.rule.EnumRule;
 
 public final class EnumRuleType<E extends Enum<E>> extends GameRules.Type<EnumRule<E>> {
 	private final E[] supportedValues;
 
-	public EnumRuleType(Function<GameRules.Type<EnumRule<E>>, EnumRule<E>> ruleFactory, BiConsumer<MinecraftServer, EnumRule<E>> changeCallback, E[] supportedValues, GameRules.Acceptor<EnumRule<E>> acceptor) {
+	public EnumRuleType(Function<GameRules.Type<EnumRule<E>>, EnumRule<E>> ruleFactory, BiConsumer<MinecraftServer, EnumRule<E>> changeCallback, E[] supportedValues, GameRules.VisitorCaller<EnumRule<E>> acceptor) {
 		super(null, ruleFactory, changeCallback, acceptor);
 		this.supportedValues = supportedValues;
 	}
 
-	public void register(LiteralArgumentBuilder<ServerCommandSource> literalArgumentBuilder, GameRules.Key<EnumRule<E>> key) {
-		LiteralCommandNode<ServerCommandSource> ruleNode = literal(key.getName()).build();
+	public void register(LiteralArgumentBuilder<CommandSourceStack> literalArgumentBuilder, GameRules.Key<EnumRule<E>> key) {
+		LiteralCommandNode<CommandSourceStack> ruleNode = literal(key.getId()).build();
 
 		for (E supportedValue : this.supportedValues) {
 			ruleNode.addChild(literal(supportedValue.toString()).executes(context -> EnumRuleCommand.executeAndSetEnum(context, supportedValue, key)).build());
@@ -51,7 +49,7 @@ public final class EnumRuleType<E extends Enum<E>> extends GameRules.Type<EnumRu
 
 	@Override
 	@Deprecated
-	public RequiredArgumentBuilder<ServerCommandSource, ?> argument(String name) {
-		return super.argument(name);
+	public RequiredArgumentBuilder<CommandSourceStack, ?> createArgument(String name) {
+		return super.createArgument(name);
 	}
 }

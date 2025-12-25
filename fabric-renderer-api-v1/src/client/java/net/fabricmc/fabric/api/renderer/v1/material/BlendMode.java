@@ -16,56 +16,56 @@
 
 package net.fabricmc.fabric.api.renderer.v1.material;
 
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.RenderLayers;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.RenderType;
 
 /**
  * Controls how sprite pixels will be blended with the scene.
  */
 public enum BlendMode {
 	/**
-	 * Emulate blending behavior of the {@link RenderLayer} associated with the block state through
-	 * {@link RenderLayers}.
+	 * Emulate blending behavior of the {@link RenderType} associated with the block state through
+	 * {@link ItemBlockRenderTypes}.
 	 */
 	DEFAULT(null),
 
 	/**
 	 * Fully opaque with depth test, no blending. Used for most normal blocks.
 	 */
-	SOLID(RenderLayer.getSolid()),
+	SOLID(RenderType.solid()),
 
 	/**
 	 * Pixels with alpha &gt; 0.5 are rendered as if {@code SOLID}. Other pixels are not rendered.
 	 * Texture mip-map enabled.  Used for leaves.
 	 */
-	CUTOUT_MIPPED(RenderLayer.getCutoutMipped()),
+	CUTOUT_MIPPED(RenderType.cutoutMipped()),
 
 	/**
 	 * Pixels with alpha &gt; 0.5 are rendered as if {@code SOLID}. Other pixels are not rendered.
 	 * Texture mip-map disabled.  Used for iron bars, glass and other cutout sprites with hard edges.
 	 */
-	CUTOUT(RenderLayer.getCutout()),
+	CUTOUT(RenderType.cutout()),
 
 	/**
 	 * Pixels are blended with the background according to alpha color values. Some performance cost,
 	 * use in moderation. Texture mip-map enabled.  Used for stained glass.
 	 */
-	TRANSLUCENT(RenderLayer.getTranslucent());
+	TRANSLUCENT(RenderType.translucent());
 
-	public final RenderLayer blockRenderLayer;
+	public final RenderType blockRenderLayer;
 
-	BlendMode(RenderLayer blockRenderLayer) {
+	BlendMode(RenderType blockRenderLayer) {
 		this.blockRenderLayer = blockRenderLayer;
 	}
 
-	public static BlendMode fromRenderLayer(RenderLayer renderLayer) {
-		if (renderLayer == RenderLayer.getSolid()) {
+	public static BlendMode fromRenderLayer(RenderType renderLayer) {
+		if (renderLayer == RenderType.solid()) {
 			return SOLID;
-		} else if (renderLayer == RenderLayer.getCutoutMipped()) {
+		} else if (renderLayer == RenderType.cutoutMipped()) {
 			return CUTOUT_MIPPED;
-		} else if (renderLayer == RenderLayer.getCutout()) {
+		} else if (renderLayer == RenderType.cutout()) {
 			return CUTOUT;
-		} else if (renderLayer == RenderLayer.getTranslucent()) {
+		} else if (renderLayer == RenderType.translucent()) {
 			return TRANSLUCENT;
 		} else {
 			return DEFAULT;

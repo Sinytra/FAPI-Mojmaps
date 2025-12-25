@@ -22,12 +22,10 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import net.minecraft.test.TestFunctions;
-
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.entrypoint.EntrypointContainer;
+import net.minecraft.gametest.framework.GameTestRegistry;
 
 public final class FabricGameTestModInitializer implements ModInitializer {
 	private static final String ENTRYPOINT_KEY = "fabric-gametest";
@@ -48,7 +46,7 @@ public final class FabricGameTestModInitializer implements ModInitializer {
 			}
 
 			GAME_TEST_IDS.put(testClass, modid);
-			TestFunctions.register(testClass);
+			GameTestRegistry.register(testClass);
 
 			LOGGER.debug("Registered test class {} for mod {}", testClass.getCanonicalName(), modid);
 		}

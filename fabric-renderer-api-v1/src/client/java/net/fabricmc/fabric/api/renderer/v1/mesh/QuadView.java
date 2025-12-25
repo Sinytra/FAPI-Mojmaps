@@ -20,13 +20,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
-
-import net.minecraft.client.render.VertexFormats;
-import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.util.math.Direction;
-
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.Direction;
 
 /**
  * Interface for reading quad data encoded by {@link MeshBuilder}.
@@ -37,7 +35,7 @@ import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
  */
 public interface QuadView {
 	/** Count of integers in a conventional (un-modded) block or item vertex. */
-	int VANILLA_VERTEX_STRIDE = VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL.getVertexSizeByte() / 4;
+	int VANILLA_VERTEX_STRIDE = DefaultVertexFormat.BLOCK.getVertexSize() / 4;
 
 	/** Count of integers in a conventional (un-modded) block or item quad. */
 	int VANILLA_QUAD_STRIDE = VANILLA_VERTEX_STRIDE * 4;
@@ -132,7 +130,7 @@ public interface QuadView {
 	Direction cullFace();
 
 	/**
-	 * Equivalent to {@link BakedQuad#getFace()}. This is the face used for vanilla lighting
+	 * Equivalent to {@link BakedQuad#getDirection()}. This is the face used for vanilla lighting
 	 * calculations and will be the block face to which the quad is most closely aligned. Always
 	 * the same as cull face for quads that are on a block face, but never null.
 	 */
@@ -172,7 +170,7 @@ public interface QuadView {
 	int tag();
 
 	/**
-	 * Reads baked vertex data and outputs standard {@link BakedQuad#getVertexData() baked quad vertex data}
+	 * Reads baked vertex data and outputs standard {@link BakedQuad#getVertices() baked quad vertex data}
 	 * in the given array and location.
 	 *
 	 * @param target Target array for the baked quad data.
@@ -193,7 +191,7 @@ public interface QuadView {
 	 * supported by vanilla features. Will retain emissive light maps, for example,
 	 * but the standard Minecraft renderer will not use them.
 	 */
-	default BakedQuad toBakedQuad(Sprite sprite) {
+	default BakedQuad toBakedQuad(TextureAtlasSprite sprite) {
 		int[] vertexData = new int[VANILLA_QUAD_STRIDE];
 		toVanilla(vertexData, 0);
 
@@ -247,10 +245,10 @@ public interface QuadView {
 	}
 
 	/**
-	 * @deprecated Use {@link #toBakedQuad(Sprite)} instead.
+	 * @deprecated Use {@link #toBakedQuad(TextureAtlasSprite)} instead.
 	 */
 	@Deprecated
-	default BakedQuad toBakedQuad(int spriteIndex, Sprite sprite, boolean isItem) {
+	default BakedQuad toBakedQuad(int spriteIndex, TextureAtlasSprite sprite, boolean isItem) {
 		return toBakedQuad(sprite);
 	}
 }

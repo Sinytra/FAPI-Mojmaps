@@ -17,42 +17,40 @@
 package net.fabricmc.fabric.impl.client.particle;
 
 import java.util.List;
-
-import net.minecraft.client.particle.ParticleManager;
-import net.minecraft.client.particle.SpriteProvider;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.texture.SpriteAtlasTexture;
-import net.minecraft.util.math.random.Random;
-
 import net.fabricmc.fabric.api.client.particle.v1.FabricSpriteProvider;
 import net.fabricmc.fabric.mixin.client.particle.ParticleManagerAccessor;
+import net.minecraft.client.particle.ParticleEngine;
+import net.minecraft.client.particle.SpriteSet;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.RandomSource;
 
 public class FabricSpriteProviderImpl implements FabricSpriteProvider {
-	private final ParticleManager particleManager;
-	private final SpriteProvider delegate;
+	private final ParticleEngine particleManager;
+	private final SpriteSet delegate;
 
-	FabricSpriteProviderImpl(ParticleManager particleManager, SpriteProvider delegate) {
+	FabricSpriteProviderImpl(ParticleEngine particleManager, SpriteSet delegate) {
 		this.particleManager = particleManager;
 		this.delegate = delegate;
 	}
 
 	@Override
-	public SpriteAtlasTexture getAtlas() {
+	public TextureAtlas getAtlas() {
 		return ((ParticleManagerAccessor) particleManager).getParticleAtlasTexture();
 	}
 
 	@Override
-	public List<Sprite> getSprites() {
+	public List<TextureAtlasSprite> getSprites() {
 		return ((ParticleManagerAccessor.SimpleSpriteProviderAccessor) delegate).getSprites();
 	}
 
 	@Override
-	public Sprite getSprite(int i, int j) {
-		return delegate.getSprite(i, j);
+	public TextureAtlasSprite get(int i, int j) {
+		return delegate.get(i, j);
 	}
 
 	@Override
-	public Sprite getSprite(Random random) {
-		return delegate.getSprite(random);
+	public TextureAtlasSprite get(RandomSource random) {
+		return delegate.get(random);
 	}
 }

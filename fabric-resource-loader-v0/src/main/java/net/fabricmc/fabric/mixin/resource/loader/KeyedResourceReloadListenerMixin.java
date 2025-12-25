@@ -21,41 +21,39 @@ import java.util.Collections;
 import java.util.Locale;
 
 import org.spongepowered.asm.mixin.Mixin;
-
-import net.minecraft.recipe.RecipeManager;
-import net.minecraft.registry.tag.TagManagerLoader;
-import net.minecraft.server.ServerAdvancementLoader;
-import net.minecraft.server.function.FunctionLoader;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
 import net.fabricmc.fabric.api.resource.ResourceReloadListenerKeys;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.ServerAdvancementManager;
+import net.minecraft.server.ServerFunctionLibrary;
+import net.minecraft.tags.TagManager;
+import net.minecraft.world.item.crafting.RecipeManager;
 
 @Mixin({
 		/* public */
-		RecipeManager.class, ServerAdvancementLoader.class, FunctionLoader.class, TagManagerLoader.class
+		RecipeManager.class, ServerAdvancementManager.class, ServerFunctionLibrary.class, TagManager.class
 		/* private */
 })
 public abstract class KeyedResourceReloadListenerMixin implements IdentifiableResourceReloadListener {
-	private Identifier fabric$id;
-	private Collection<Identifier> fabric$dependencies;
+	private ResourceLocation fabric$id;
+	private Collection<ResourceLocation> fabric$dependencies;
 
 	@Override
 	@SuppressWarnings({"ConstantConditions", "RedundantCast"})
-	public Identifier getFabricId() {
+	public ResourceLocation getFabricId() {
 		if (this.fabric$id == null) {
 			Object self = this;
 
 			if (self instanceof RecipeManager) {
 				this.fabric$id = ResourceReloadListenerKeys.RECIPES;
-			} else if (self instanceof ServerAdvancementLoader) {
+			} else if (self instanceof ServerAdvancementManager) {
 				this.fabric$id = ResourceReloadListenerKeys.ADVANCEMENTS;
-			} else if (self instanceof FunctionLoader) {
+			} else if (self instanceof ServerFunctionLibrary) {
 				this.fabric$id = ResourceReloadListenerKeys.FUNCTIONS;
-			} else if (self instanceof TagManagerLoader) {
+			} else if (self instanceof TagManager) {
 				this.fabric$id = ResourceReloadListenerKeys.TAGS;
 			} else {
-				this.fabric$id = Identifier.ofVanilla("private/" + self.getClass().getSimpleName().toLowerCase(Locale.ROOT));
+				this.fabric$id = ResourceLocation.withDefaultNamespace("private/" + self.getClass().getSimpleName().toLowerCase(Locale.ROOT));
 			}
 		}
 
@@ -64,11 +62,11 @@ public abstract class KeyedResourceReloadListenerMixin implements IdentifiableRe
 
 	@Override
 	@SuppressWarnings({"ConstantConditions", "RedundantCast"})
-	public Collection<Identifier> getFabricDependencies() {
+	public Collection<ResourceLocation> getFabricDependencies() {
 		if (this.fabric$dependencies == null) {
 			Object self = this;
 
-			if (self instanceof TagManagerLoader) {
+			if (self instanceof TagManager) {
 				this.fabric$dependencies = Collections.emptyList();
 			} else {
 				this.fabric$dependencies = Collections.singletonList(ResourceReloadListenerKeys.TAGS);

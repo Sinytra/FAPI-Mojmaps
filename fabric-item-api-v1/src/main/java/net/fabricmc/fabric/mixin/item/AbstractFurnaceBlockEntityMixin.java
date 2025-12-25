@@ -16,6 +16,12 @@
 
 package net.fabricmc.fabric.mixin.item;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -24,24 +30,17 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.AbstractFurnaceBlockEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.recipe.RecipeEntry;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-
 @Mixin(AbstractFurnaceBlockEntity.class)
 public abstract class AbstractFurnaceBlockEntityMixin {
 	@Unique
 	private static final ThreadLocal<ItemStack> REMAINDER_STACK = new ThreadLocal<>();
 
-	@Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/ItemStack;getItem()Lnet/minecraft/item/Item;"), locals = LocalCapture.CAPTURE_FAILHARD, allow = 1)
-	private static void getStackRemainder(World world, BlockPos pos, BlockState state, AbstractFurnaceBlockEntity blockEntity, CallbackInfo ci, boolean bl, boolean bl2, ItemStack itemStack, ItemStack itemStack2, boolean bl3, boolean bl4, RecipeEntry recipeEntry, int i) {
+	@Inject(method = "serverTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;getItem()Lnet/minecraft/world/item/Item;"), locals = LocalCapture.CAPTURE_FAILHARD, allow = 1)
+	private static void getStackRemainder(Level world, BlockPos pos, BlockState state, AbstractFurnaceBlockEntity blockEntity, CallbackInfo ci, boolean bl, boolean bl2, ItemStack itemStack, ItemStack itemStack2, boolean bl3, boolean bl4, RecipeHolder recipeEntry, int i) {
 		REMAINDER_STACK.set(itemStack.getRecipeRemainder());
 	}
 
-	@ModifyArg(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/collection/DefaultedList;set(ILjava/lang/Object;)Ljava/lang/Object;"), index = 1, allow = 1)
+	@ModifyArg(method = "serverTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/core/NonNullList;set(ILjava/lang/Object;)Ljava/lang/Object;"), index = 1, allow = 1)
 	private static <E> E setStackRemainder(E element) {
 		E remainder = (E) REMAINDER_STACK.get();
 		REMAINDER_STACK.remove();

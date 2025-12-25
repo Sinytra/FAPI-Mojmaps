@@ -25,28 +25,26 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.entity.Entity;
-import net.minecraft.server.network.EntityTrackerEntry;
-import net.minecraft.server.network.ServerPlayerEntity;
-
 import net.fabricmc.fabric.impl.attachment.AttachmentTargetImpl;
 import net.fabricmc.fabric.impl.attachment.sync.AttachmentChange;
+import net.minecraft.server.level.ServerEntity;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 
-@Mixin(EntityTrackerEntry.class)
+@Mixin(ServerEntity.class)
 abstract class EntityTrackerEntryMixin {
 	@Shadow
 	@Final
 	private Entity entity;
 
 	@Inject(
-			method = "startTracking",
+			method = "addPairing",
 			at = @At(
 					value = "INVOKE",
-					target = "Lnet/minecraft/entity/Entity;onStartedTrackingBy(Lnet/minecraft/server/network/ServerPlayerEntity;)V"
+					target = "Lnet/minecraft/world/entity/Entity;startSeenByPlayer(Lnet/minecraft/server/level/ServerPlayer;)V"
 			)
 	)
-	private void syncAttachmentsAfterSpawn(ServerPlayerEntity player, CallbackInfo ci) {
+	private void syncAttachmentsAfterSpawn(ServerPlayer player, CallbackInfo ci) {
 		// mixin because the START_TRACKING event triggers before the spawn packet is sent to the client,
 		// whereas we want to modify the entity on the client
 		List<AttachmentChange> changes = new ArrayList<>();

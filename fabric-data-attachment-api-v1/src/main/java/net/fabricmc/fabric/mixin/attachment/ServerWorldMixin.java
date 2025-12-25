@@ -24,18 +24,17 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.core.Holder;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.profiler.Profiler;
-import net.minecraft.world.MutableWorldProperties;
-import net.minecraft.world.PersistentState;
-import net.minecraft.world.World;
-import net.minecraft.world.dimension.DimensionType;
-
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedData.Factory;
+import net.minecraft.world.level.storage.WritableLevelData;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.impl.attachment.AttachmentPersistentState;
@@ -45,13 +44,13 @@ import net.fabricmc.fabric.impl.attachment.sync.AttachmentSync;
 import net.fabricmc.fabric.impl.attachment.sync.AttachmentTargetInfo;
 import net.fabricmc.fabric.impl.attachment.sync.s2c.AttachmentSyncPayloadS2C;
 
-@Mixin(ServerWorld.class)
-abstract class ServerWorldMixin extends World implements AttachmentTargetImpl {
+@Mixin(ServerLevel.class)
+abstract class ServerWorldMixin extends Level implements AttachmentTargetImpl {
 	@Shadow
 	@Final
 	private MinecraftServer server;
 
-	protected ServerWorldMixin(MutableWorldProperties properties, RegistryKey<World> registryRef, DynamicRegistryManager registryManager, RegistryEntry<DimensionType> dimensionEntry, Supplier<Profiler> profiler, boolean isClient, boolean debugWorld, long biomeAccess, int maxChainedNeighborUpdates) {
+	protected ServerWorldMixin(WritableLevelData properties, ResourceKey<Level> registryRef, RegistryAccess registryManager, Holder<DimensionType> dimensionEntry, Supplier<ProfilerFiller> profiler, boolean isClient, boolean debugWorld, long biomeAccess, int maxChainedNeighborUpdates) {
 		super(
 				properties,
 				registryRef,
@@ -68,18 +67,18 @@ abstract class ServerWorldMixin extends World implements AttachmentTargetImpl {
 	@Inject(at = @At("TAIL"), method = "<init>")
 	private void createAttachmentsPersistentState(CallbackInfo ci) {
 		// Force persistent state creation
-		ServerWorld world = (ServerWorld) (Object) this;
-		var type = new PersistentState.Type<>(
+		ServerLevel world = (ServerLevel) (Object) this;
+		var type = new SavedData.Factory<>(
 				() -> new AttachmentPersistentState(world),
-				(nbt, wrapperLookup) -> AttachmentPersistentState.read(world, nbt, server.getRegistryManager()),
+				(nbt, wrapperLookup) -> AttachmentPersistentState.read(world, nbt, server.registryAccess()),
 				null // Object builder API 12.1.0 and later makes this a no-op
 		);
-		world.getPersistentStateManager().getOrCreate(type, AttachmentPersistentState.ID);
+		world.getDataStorage().computeIfAbsent(type, AttachmentPersistentState.ID);
 	}
 
 	@Override
 	public void fabric_syncChange(AttachmentType<?> type, AttachmentSyncPayloadS2C payload) {
-		if ((Object) this instanceof ServerWorld serverWorld) {
+		if ((Object) this instanceof ServerLevel serverWorld) {
 			PlayerLookup.world(serverWorld)
 					.forEach(player -> {
 						if (((AttachmentTypeImpl<?>) type).syncPredicate().test(this, player)) {
@@ -95,7 +94,7 @@ abstract class ServerWorldMixin extends World implements AttachmentTargetImpl {
 	}
 
 	@Override
-	public DynamicRegistryManager fabric_getDynamicRegistryManager() {
-		return getRegistryManager();
+	public RegistryAccess fabric_getDynamicRegistryManager() {
+		return registryAccess();
 	}
 }

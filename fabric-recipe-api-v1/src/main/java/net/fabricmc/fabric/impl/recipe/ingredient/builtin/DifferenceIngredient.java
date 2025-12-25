@@ -22,15 +22,13 @@ import java.util.List;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredient;
 import net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredientSerializer;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 
 public class DifferenceIngredient implements CustomIngredient {
 	public static final CustomIngredientSerializer<DifferenceIngredient> SERIALIZER = new Serializer();
@@ -50,7 +48,7 @@ public class DifferenceIngredient implements CustomIngredient {
 
 	@Override
 	public List<ItemStack> getMatchingStacks() {
-		List<ItemStack> stacks = new ArrayList<>(List.of(base.getMatchingStacks()));
+		List<ItemStack> stacks = new ArrayList<>(List.of(base.getItems()));
 		stacks.removeIf(subtracted);
 		return stacks;
 	}
@@ -74,12 +72,12 @@ public class DifferenceIngredient implements CustomIngredient {
 	}
 
 	private static class Serializer implements CustomIngredientSerializer<DifferenceIngredient> {
-		private static final Identifier ID = Identifier.of("fabric", "difference");
-		private static final MapCodec<DifferenceIngredient> ALLOW_EMPTY_CODEC = createCodec(Ingredient.ALLOW_EMPTY_CODEC);
-		private static final MapCodec<DifferenceIngredient> DISALLOW_EMPTY_CODEC = createCodec(Ingredient.DISALLOW_EMPTY_CODEC);
-		private static final PacketCodec<RegistryByteBuf, DifferenceIngredient> PACKET_CODEC = PacketCodec.tuple(
-				Ingredient.PACKET_CODEC, DifferenceIngredient::getBase,
-				Ingredient.PACKET_CODEC, DifferenceIngredient::getSubtracted,
+		private static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath("fabric", "difference");
+		private static final MapCodec<DifferenceIngredient> ALLOW_EMPTY_CODEC = createCodec(Ingredient.CODEC);
+		private static final MapCodec<DifferenceIngredient> DISALLOW_EMPTY_CODEC = createCodec(Ingredient.CODEC_NONEMPTY);
+		private static final StreamCodec<RegistryFriendlyByteBuf, DifferenceIngredient> PACKET_CODEC = StreamCodec.composite(
+				Ingredient.CONTENTS_STREAM_CODEC, DifferenceIngredient::getBase,
+				Ingredient.CONTENTS_STREAM_CODEC, DifferenceIngredient::getSubtracted,
 				DifferenceIngredient::new
 		);
 
@@ -93,7 +91,7 @@ public class DifferenceIngredient implements CustomIngredient {
 		}
 
 		@Override
-		public Identifier getIdentifier() {
+		public ResourceLocation getIdentifier() {
 			return ID;
 		}
 
@@ -103,7 +101,7 @@ public class DifferenceIngredient implements CustomIngredient {
 		}
 
 		@Override
-		public PacketCodec<RegistryByteBuf, DifferenceIngredient> getPacketCodec() {
+		public StreamCodec<RegistryFriendlyByteBuf, DifferenceIngredient> getPacketCodec() {
 			return PACKET_CODEC;
 		}
 	}

@@ -19,19 +19,17 @@ package net.fabricmc.fabric.impl.blockrenderlayer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
-
-import net.minecraft.block.Block;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.item.Item;
-
 import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.material.Fluid;
 
 public class BlockRenderLayerMapImpl implements BlockRenderLayerMap {
 	public BlockRenderLayerMapImpl() { }
 
 	@Override
-	public void putBlock(Block block, RenderLayer renderLayer) {
+	public void putBlock(Block block, RenderType renderLayer) {
 		if (block == null) throw new IllegalArgumentException("Request to map null block to BlockRenderLayer");
 		if (renderLayer == null) throw new IllegalArgumentException("Request to map block " + block.toString() + " to null BlockRenderLayer");
 
@@ -39,14 +37,14 @@ public class BlockRenderLayerMapImpl implements BlockRenderLayerMap {
 	}
 
 	@Override
-	public void putBlocks(RenderLayer renderLayer, Block... blocks) {
+	public void putBlocks(RenderType renderLayer, Block... blocks) {
 		for (Block block : blocks) {
 			putBlock(block, renderLayer);
 		}
 	}
 
 	@Override
-	public void putItem(Item item, RenderLayer renderLayer) {
+	public void putItem(Item item, RenderType renderLayer) {
 		if (item == null) throw new IllegalArgumentException("Request to map null item to BlockRenderLayer");
 		if (renderLayer == null) throw new IllegalArgumentException("Request to map item " + item.toString() + " to null BlockRenderLayer");
 
@@ -54,14 +52,14 @@ public class BlockRenderLayerMapImpl implements BlockRenderLayerMap {
 	}
 
 	@Override
-	public void putItems(RenderLayer renderLayer, Item... items) {
+	public void putItems(RenderType renderLayer, Item... items) {
 		for (Item item : items) {
 			putItem(item, renderLayer);
 		}
 	}
 
 	@Override
-	public void putFluid(Fluid fluid, RenderLayer renderLayer) {
+	public void putFluid(Fluid fluid, RenderType renderLayer) {
 		if (fluid == null) throw new IllegalArgumentException("Request to map null fluid to BlockRenderLayer");
 		if (renderLayer == null) throw new IllegalArgumentException("Request to map fluid " + fluid.toString() + " to null BlockRenderLayer");
 
@@ -69,24 +67,24 @@ public class BlockRenderLayerMapImpl implements BlockRenderLayerMap {
 	}
 
 	@Override
-	public void putFluids(RenderLayer renderLayer, Fluid... fluids) {
+	public void putFluids(RenderType renderLayer, Fluid... fluids) {
 		for (Fluid fluid : fluids) {
 			putFluid(fluid, renderLayer);
 		}
 	}
 
-	private static Map<Block, RenderLayer> blockRenderLayerMap = new HashMap<>();
-	private static Map<Item, RenderLayer> itemRenderLayerMap = new HashMap<>();
-	private static Map<Fluid, RenderLayer> fluidRenderLayerMap = new HashMap<>();
+	private static Map<Block, RenderType> blockRenderLayerMap = new HashMap<>();
+	private static Map<Item, RenderType> itemRenderLayerMap = new HashMap<>();
+	private static Map<Fluid, RenderType> fluidRenderLayerMap = new HashMap<>();
 
 	//This consumers initially add to the maps above, and then are later set (when initialize is called) to insert straight into the target map.
-	private static BiConsumer<Block, RenderLayer> blockHandler = (b, l) -> blockRenderLayerMap.put(b, l);
-	private static BiConsumer<Item, RenderLayer> itemHandler = (i, l) -> itemRenderLayerMap.put(i, l);
-	private static BiConsumer<Fluid, RenderLayer> fluidHandler = (f, b) -> fluidRenderLayerMap.put(f, b);
+	private static BiConsumer<Block, RenderType> blockHandler = (b, l) -> blockRenderLayerMap.put(b, l);
+	private static BiConsumer<Item, RenderType> itemHandler = (i, l) -> itemRenderLayerMap.put(i, l);
+	private static BiConsumer<Fluid, RenderType> fluidHandler = (f, b) -> fluidRenderLayerMap.put(f, b);
 
-	public static void initialize(BiConsumer<Block, RenderLayer> blockHandlerIn, BiConsumer<Fluid, RenderLayer> fluidHandlerIn) {
+	public static void initialize(BiConsumer<Block, RenderType> blockHandlerIn, BiConsumer<Fluid, RenderType> fluidHandlerIn) {
 		//Done to handle backwards compat, in previous snapshots Items had their own map for render layers, now the BlockItem is used.
-		BiConsumer<Item, RenderLayer> itemHandlerIn = (item, renderLayer) -> blockHandlerIn.accept(Block.getBlockFromItem(item), renderLayer);
+		BiConsumer<Item, RenderType> itemHandlerIn = (item, renderLayer) -> blockHandlerIn.accept(Block.byItem(item), renderLayer);
 
 		//Add all the pre existing render layers
 		blockRenderLayerMap.forEach(blockHandlerIn);

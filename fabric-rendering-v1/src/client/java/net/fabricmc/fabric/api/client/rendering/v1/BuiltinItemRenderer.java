@@ -16,10 +16,10 @@
 
 package net.fabricmc.fabric.api.client.rendering.v1;
 
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Builtin item renderers render items with custom code.
@@ -40,7 +40,7 @@ public interface BuiltinItemRenderer {
 	 * @param matrices        the matrix stack
 	 * @param vertexConsumers the vertex consumer provider
 	 * @param light           the color light multiplier at the rendering position
-	 * @param overlay         the overlay UV passed to {@link net.minecraft.client.render.VertexConsumer#overlay(int)}
+	 * @param overlay         the overlay UV passed to {@link com.mojang.blaze3d.vertex.VertexConsumer#setOverlay(int)}
 	 */
-	void render(ItemStack stack, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay);
+	void render(ItemStack stack, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay);
 }

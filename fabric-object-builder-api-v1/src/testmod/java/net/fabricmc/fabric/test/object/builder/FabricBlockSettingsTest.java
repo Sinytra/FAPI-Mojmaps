@@ -21,11 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.objectweb.asm.Opcodes;
-
-import net.minecraft.block.AbstractBlock;
-
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 
 public class FabricBlockSettingsTest implements ModInitializer {
 	@Override
@@ -43,7 +41,7 @@ public class FabricBlockSettingsTest implements ModInitializer {
 				continue;
 			}
 
-			if (method.getReturnType() == AbstractBlock.Settings.class) {
+			if (method.getReturnType() == BlockBehaviour.Properties.class) {
 				missingMethods.add(method.getName());
 			}
 		}

@@ -16,16 +16,14 @@
 
 package net.fabricmc.fabric.impl.client.indigo.renderer.helper;
 
-import static net.minecraft.util.math.MathHelper.approximatelyEquals;
+import static net.minecraft.util.Mth.equal;
 
 import org.joml.Vector3f;
-
-import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Direction.Axis;
-import net.minecraft.util.math.Direction.AxisDirection;
-
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Direction.Axis;
+import net.minecraft.core.Direction.AxisDirection;
 
 /**
  * Static routines of general utility for renderer implementations.
@@ -83,7 +81,7 @@ public abstract class GeometryHelper {
 	public static boolean isQuadParallelToFace(Direction face, QuadView quad) {
 		int i = face.getAxis().ordinal();
 		final float val = quad.posByIndex(0, i);
-		return approximatelyEquals(val, quad.posByIndex(1, i)) && approximatelyEquals(val, quad.posByIndex(2, i)) && approximatelyEquals(val, quad.posByIndex(3, i));
+		return equal(val, quad.posByIndex(1, i)) && equal(val, quad.posByIndex(2, i)) && equal(val, quad.posByIndex(3, i));
 	}
 
 	/**
@@ -95,7 +93,7 @@ public abstract class GeometryHelper {
 	 */
 	public static boolean isParallelQuadOnFace(Direction lightFace, QuadView quad) {
 		final float x = quad.posByIndex(0, lightFace.getAxis().ordinal());
-		return lightFace.getDirection() == AxisDirection.POSITIVE ? x >= EPS_MAX : x <= EPS_MIN;
+		return lightFace.getAxisDirection() == AxisDirection.POSITIVE ? x >= EPS_MAX : x <= EPS_MIN;
 	}
 
 	/**
@@ -174,7 +172,7 @@ public abstract class GeometryHelper {
 
 	/**
 	 * Identifies the face to which the quad is most closely aligned.
-	 * This mimics the value that {@link BakedQuad#getFace()} returns, and is
+	 * This mimics the value that {@link BakedQuad#getDirection()} returns, and is
 	 * used in the vanilla renderer for all diffuse lighting.
 	 *
 	 * <p>Derived from the quad face normal and expects convex quads with all points co-planar.

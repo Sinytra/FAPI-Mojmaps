@@ -25,23 +25,22 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.SharedConstants;
-import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.server.command.CommandManager;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.command.TestCommand;
-
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.gametest.framework.TestCommand;
 import net.fabricmc.fabric.impl.gametest.FabricGameTestHelper;
 
-@Mixin(CommandManager.class)
+@Mixin(Commands.class)
 public abstract class CommandManagerMixin {
 	@Shadow
 	@Final
-	private CommandDispatcher<ServerCommandSource> dispatcher;
+	private CommandDispatcher<CommandSourceStack> dispatcher;
 
-	@Inject(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/command/WorldBorderCommand;register(Lcom/mojang/brigadier/CommandDispatcher;)V", shift = At.Shift.AFTER))
-	private void construct(CommandManager.RegistrationEnvironment environment, CommandRegistryAccess registryAccess, CallbackInfo info) {
+	@Inject(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/commands/WorldBorderCommand;register(Lcom/mojang/brigadier/CommandDispatcher;)V", shift = At.Shift.AFTER))
+	private void construct(Commands.CommandSelection environment, CommandBuildContext registryAccess, CallbackInfo info) {
 		// Registered by vanilla when isDevelopment is enabled.
-		if (FabricGameTestHelper.COMMAND_ENABLED && !SharedConstants.isDevelopment) {
+		if (FabricGameTestHelper.COMMAND_ENABLED && !SharedConstants.IS_RUNNING_IN_IDE) {
 			TestCommand.register(this.dispatcher);
 		}
 	}

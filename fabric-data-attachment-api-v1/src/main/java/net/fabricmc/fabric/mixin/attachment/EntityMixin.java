@@ -22,13 +22,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import net.minecraft.entity.Entity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.world.World;
-
 import net.fabricmc.fabric.api.attachment.v1.AttachmentSyncPredicate;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
@@ -37,6 +30,11 @@ import net.fabricmc.fabric.impl.attachment.AttachmentTypeImpl;
 import net.fabricmc.fabric.impl.attachment.sync.AttachmentSync;
 import net.fabricmc.fabric.impl.attachment.sync.AttachmentTargetInfo;
 import net.fabricmc.fabric.impl.attachment.sync.s2c.AttachmentSyncPayloadS2C;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
 
 @Mixin(Entity.class)
 abstract class EntityMixin implements AttachmentTargetImpl {
@@ -44,22 +42,22 @@ abstract class EntityMixin implements AttachmentTargetImpl {
 	private int id;
 
 	@Shadow
-	public abstract World getWorld();
+	public abstract Level level();
 
 	@Inject(
 			at = @At(value = "INVOKE", target = "net/minecraft/entity/Entity.readCustomDataFromNbt(Lnet/minecraft/nbt/NbtCompound;)V"),
-			method = "readNbt"
+			method = "load"
 	)
-	private void readEntityAttachments(NbtCompound nbt, CallbackInfo cir) {
-		this.fabric_readAttachmentsFromNbt(nbt, getWorld().getRegistryManager());
+	private void readEntityAttachments(CompoundTag nbt, CallbackInfo cir) {
+		this.fabric_readAttachmentsFromNbt(nbt, level().registryAccess());
 	}
 
 	@Inject(
 			at = @At(value = "INVOKE", target = "net/minecraft/entity/Entity.writeCustomDataToNbt(Lnet/minecraft/nbt/NbtCompound;)V"),
-			method = "writeNbt"
+			method = "saveWithoutId"
 	)
-	private void writeEntityAttachments(NbtCompound nbt, CallbackInfoReturnable<NbtCompound> cir) {
-		this.fabric_writeAttachmentsToNbt(nbt, getWorld().getRegistryManager());
+	private void writeEntityAttachments(CompoundTag nbt, CallbackInfoReturnable<CompoundTag> cir) {
+		this.fabric_writeAttachmentsToNbt(nbt, level().registryAccess());
 	}
 
 	@Override
@@ -69,10 +67,10 @@ abstract class EntityMixin implements AttachmentTargetImpl {
 
 	@Override
 	public void fabric_syncChange(AttachmentType<?> type, AttachmentSyncPayloadS2C payload) {
-		if (!this.getWorld().isClient()) {
+		if (!this.level().isClientSide()) {
 			AttachmentSyncPredicate predicate = ((AttachmentTypeImpl<?>) type).syncPredicate();
 
-			if ((Object) this instanceof ServerPlayerEntity self && predicate.test(this, self)) {
+			if ((Object) this instanceof ServerPlayer self && predicate.test(this, self)) {
 				// Players do not track themselves
 				AttachmentSync.trySync(payload, self);
 			}
@@ -88,11 +86,11 @@ abstract class EntityMixin implements AttachmentTargetImpl {
 
 	@Override
 	public boolean fabric_shouldTryToSync() {
-		return !this.getWorld().isClient();
+		return !this.level().isClientSide();
 	}
 
 	@Override
-	public DynamicRegistryManager fabric_getDynamicRegistryManager() {
-		return this.getWorld().getRegistryManager();
+	public RegistryAccess fabric_getDynamicRegistryManager() {
+		return this.level().registryAccess();
 	}
 }

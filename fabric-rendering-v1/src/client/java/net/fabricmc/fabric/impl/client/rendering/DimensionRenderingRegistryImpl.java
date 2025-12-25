@@ -21,38 +21,36 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.client.render.DimensionEffects;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.World;
-
 import net.fabricmc.fabric.api.client.rendering.v1.DimensionRenderingRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.DimensionRenderingRegistry.CloudRenderer;
 import net.fabricmc.fabric.api.client.rendering.v1.DimensionRenderingRegistry.SkyRenderer;
 import net.fabricmc.fabric.api.client.rendering.v1.DimensionRenderingRegistry.WeatherRenderer;
 import net.fabricmc.fabric.mixin.client.rendering.DimensionEffectsAccessor;
+import net.minecraft.client.renderer.DimensionSpecialEffects;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
 
 public final class DimensionRenderingRegistryImpl {
-	private static final Map<RegistryKey<World>, SkyRenderer> SKY_RENDERERS = new IdentityHashMap<>();
-	private static final Map<RegistryKey<World>, CloudRenderer> CLOUD_RENDERERS = new IdentityHashMap<>();
-	private static final Map<RegistryKey<World>, WeatherRenderer> WEATHER_RENDERERS = new IdentityHashMap<>();
+	private static final Map<ResourceKey<Level>, SkyRenderer> SKY_RENDERERS = new IdentityHashMap<>();
+	private static final Map<ResourceKey<Level>, CloudRenderer> CLOUD_RENDERERS = new IdentityHashMap<>();
+	private static final Map<ResourceKey<Level>, WeatherRenderer> WEATHER_RENDERERS = new IdentityHashMap<>();
 
-	public static void registerSkyRenderer(RegistryKey<World> key, DimensionRenderingRegistry.SkyRenderer renderer) {
+	public static void registerSkyRenderer(ResourceKey<Level> key, DimensionRenderingRegistry.SkyRenderer renderer) {
 		Objects.requireNonNull(key);
 		Objects.requireNonNull(renderer);
 
 		SKY_RENDERERS.putIfAbsent(key, renderer);
 	}
 
-	public static void registerWeatherRenderer(RegistryKey<World> key, WeatherRenderer renderer) {
+	public static void registerWeatherRenderer(ResourceKey<Level> key, WeatherRenderer renderer) {
 		Objects.requireNonNull(key);
 		Objects.requireNonNull(renderer);
 
 		WEATHER_RENDERERS.putIfAbsent(key, renderer);
 	}
 
-	public static void registerDimensionEffects(Identifier key, DimensionEffects effects) {
+	public static void registerDimensionEffects(ResourceLocation key, DimensionSpecialEffects effects) {
 		Objects.requireNonNull(key);
 		Objects.requireNonNull(effects);
 		//The map containing all dimension effects returns a default if null so a null check doesn't work.
@@ -60,7 +58,7 @@ public final class DimensionRenderingRegistryImpl {
 		DimensionEffectsAccessor.getIdentifierMap().putIfAbsent(key, effects);
 	}
 
-	public static void registerCloudRenderer(RegistryKey<World> key, CloudRenderer renderer) {
+	public static void registerCloudRenderer(ResourceKey<Level> key, CloudRenderer renderer) {
 		Objects.requireNonNull(key);
 		Objects.requireNonNull(renderer);
 
@@ -68,22 +66,22 @@ public final class DimensionRenderingRegistryImpl {
 	}
 
 	@Nullable
-	public static SkyRenderer getSkyRenderer(RegistryKey<World> key) {
+	public static SkyRenderer getSkyRenderer(ResourceKey<Level> key) {
 		return SKY_RENDERERS.get(key);
 	}
 
 	@Nullable
-	public static CloudRenderer getCloudRenderer(RegistryKey<World> key) {
+	public static CloudRenderer getCloudRenderer(ResourceKey<Level> key) {
 		return CLOUD_RENDERERS.get(key);
 	}
 
 	@Nullable
-	public static WeatherRenderer getWeatherRenderer(RegistryKey<World> key) {
+	public static WeatherRenderer getWeatherRenderer(ResourceKey<Level> key) {
 		return WEATHER_RENDERERS.get(key);
 	}
 
 	@Nullable
-	public static DimensionEffects getDimensionEffects(Identifier key) {
+	public static DimensionSpecialEffects getDimensionEffects(ResourceLocation key) {
 		return DimensionEffectsAccessor.getIdentifierMap().get(key);
 	}
 }

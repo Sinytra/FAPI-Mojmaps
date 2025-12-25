@@ -16,12 +16,11 @@
 
 package net.fabricmc.fabric.api.transfer.v1.item.base;
 
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryWrapper;
-
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.TransferVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 
 /**
  * A storage that can store a single item variant at any given time.
@@ -41,14 +40,14 @@ public abstract class SingleItemStorage extends SingleVariantStorage<ItemVariant
 	 * Simple implementation of reading from NBT, to match what is written by {@link #writeNbt}.
 	 * Other formats are allowed, this is just a suggestion.
 	 */
-	public void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup) {
+	public void readNbt(CompoundTag nbt, HolderLookup.Provider wrapperLookup) {
 		SingleVariantStorage.readNbt(this, ItemVariant.CODEC, ItemVariant::blank, nbt, wrapperLookup);
 	}
 
 	/**
 	 * Simple implementation of writing to NBT. Other formats are allowed, this is just a convenient suggestion.
 	 */
-	public void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup) {
+	public void writeNbt(CompoundTag nbt, HolderLookup.Provider wrapperLookup) {
 		SingleVariantStorage.writeNbt(this, ItemVariant.CODEC, nbt, wrapperLookup);
 	}
 }

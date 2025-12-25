@@ -16,12 +16,11 @@
 
 package net.fabricmc.fabric.test.rendering.client;
 
-import net.minecraft.world.biome.ColorResolver;
-
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorResolverRegistry;
 import net.fabricmc.fabric.test.rendering.CustomColorResolverTestInit;
+import net.minecraft.world.level.ColorResolver;
 
 public class CustomColorResolverTest implements ClientModInitializer {
 	public static final ColorResolver TEST_COLOR_RESOLVER = (biome, x, z) -> {
@@ -38,7 +37,7 @@ public class CustomColorResolverTest implements ClientModInitializer {
 
 		ColorProviderRegistry.BLOCK.register((state, world, pos, tintIndex) -> {
 			if (world != null && pos != null) {
-				return world.getColor(pos, TEST_COLOR_RESOLVER);
+				return world.getBlockTint(pos, TEST_COLOR_RESOLVER);
 			} else {
 				return -1;
 			}

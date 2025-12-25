@@ -16,20 +16,19 @@
 
 package net.fabricmc.fabric.test.transfer.ingame;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.fluid.base.SingleFluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class FluidChuteBlockEntity extends BlockEntity {
-	final SingleFluidStorage storage = SingleFluidStorage.withFixedCapacity(FluidConstants.BUCKET * 4, this::markDirty);
+	final SingleFluidStorage storage = SingleFluidStorage.withFixedCapacity(FluidConstants.BUCKET * 4, this::setChanged);
 
 	private int tickCounter = 0;
 
@@ -39,9 +38,9 @@ public class FluidChuteBlockEntity extends BlockEntity {
 
 	@SuppressWarnings("ConstantConditions")
 	public void tick() {
-		if (!world.isClient() && tickCounter++ % 20 == 0) {
+		if (!level.isClientSide() && tickCounter++ % 20 == 0) {
 			StorageUtil.move(
-					FluidStorage.SIDED.find(world, pos.offset(Direction.UP), Direction.DOWN),
+					FluidStorage.SIDED.find(level, worldPosition.relative(Direction.UP), Direction.DOWN),
 					storage,
 					fluid -> true,
 					FluidConstants.BUCKET,
@@ -49,7 +48,7 @@ public class FluidChuteBlockEntity extends BlockEntity {
 			);
 			StorageUtil.move(
 					storage,
-					FluidStorage.SIDED.find(world, pos.offset(Direction.DOWN), Direction.UP),
+					FluidStorage.SIDED.find(level, worldPosition.relative(Direction.DOWN), Direction.UP),
 					fluid -> true,
 					FluidConstants.BUCKET,
 					null
@@ -58,14 +57,14 @@ public class FluidChuteBlockEntity extends BlockEntity {
 	}
 
 	@Override
-	protected void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup) {
-		super.writeNbt(nbt, wrapperLookup);
+	protected void saveAdditional(CompoundTag nbt, HolderLookup.Provider wrapperLookup) {
+		super.saveAdditional(nbt, wrapperLookup);
 		storage.writeNbt(nbt, wrapperLookup);
 	}
 
 	@Override
-	public void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup) {
-		super.readNbt(nbt, wrapperLookup);
+	public void loadAdditional(CompoundTag nbt, HolderLookup.Provider wrapperLookup) {
+		super.loadAdditional(nbt, wrapperLookup);
 		storage.readNbt(nbt, wrapperLookup);
 	}
 }

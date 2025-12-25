@@ -21,23 +21,21 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.Bootstrap;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.item.Items;
-import net.minecraft.registry.Registries;
-
 import net.fabricmc.fabric.impl.registry.sync.RegistrySyncManager;
 import net.fabricmc.fabric.impl.registry.sync.trackers.StateIdTracker;
 import net.fabricmc.fabric.impl.registry.sync.trackers.vanilla.BlockInitTracker;
 import net.fabricmc.fabric.impl.registry.sync.trackers.vanilla.BlockItemTracker;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.server.Bootstrap;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
 
 @Mixin(Bootstrap.class)
 public class BootstrapMixin {
-	@Inject(method = "setOutputStreams", at = @At("RETURN"))
+	@Inject(method = "wrapStreams", at = @At("RETURN"))
 	private static void initialize(CallbackInfo info) {
 		// These seemingly pointless accesses are done to make sure each
 		// static initializer is called, to register vanilla-provided blocks
@@ -48,20 +46,20 @@ public class BootstrapMixin {
 		Object oItem = Items.AIR;
 
 		// state ID tracking
-		StateIdTracker.register(Registries.BLOCK, Block.STATE_IDS, (block) -> block.getStateManager().getStates());
-		StateIdTracker.register(Registries.FLUID, Fluid.STATE_IDS, (fluid) -> fluid.getStateManager().getStates());
+		StateIdTracker.register(BuiltInRegistries.BLOCK, Block.BLOCK_STATE_REGISTRY, (block) -> block.getStateDefinition().getPossibleStates());
+		StateIdTracker.register(BuiltInRegistries.FLUID, Fluid.FLUID_STATE_REGISTRY, (fluid) -> fluid.getStateDefinition().getPossibleStates());
 
 		// map tracking
-		BlockItemTracker.register(Registries.ITEM);
+		BlockItemTracker.register(BuiltInRegistries.ITEM);
 
 		// block initialization, like Blocks
-		BlockInitTracker.register(Registries.BLOCK);
+		BlockInitTracker.register(BuiltInRegistries.BLOCK);
 
 		RegistrySyncManager.bootstrapRegistries();
 	}
 
-	@Redirect(method = "initialize", at = @At(value = "INVOKE", target = "Lnet/minecraft/registry/Registries;bootstrap()V"))
+	@Redirect(method = "bootStrap", at = @At(value = "INVOKE", target = "Lnet/minecraft/core/registries/BuiltInRegistries;bootStrap()V"))
 	private static void initialize() {
-		Registries.init();
+		BuiltInRegistries.createContents();
 	}
 }

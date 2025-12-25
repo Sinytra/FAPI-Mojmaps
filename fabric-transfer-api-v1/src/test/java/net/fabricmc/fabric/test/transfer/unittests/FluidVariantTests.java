@@ -21,14 +21,12 @@ import static net.fabricmc.fabric.test.transfer.TestUtil.assertEquals;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-
-import net.minecraft.component.ComponentChanges;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.text.Text;
+import net.minecraft.core.component.DataComponentPatch;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.Unit;
-
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 
 class FluidVariantTests extends AbstractTransferApiTest {
@@ -47,22 +45,22 @@ class FluidVariantTests extends AbstractTransferApiTest {
 
 	@Test
 	public void testWithComponentChanges() {
-		FluidVariant variant = FluidVariant.of(Fluids.WATER, ComponentChanges.builder()
-				.add(DataComponentTypes.HIDE_TOOLTIP, Unit.INSTANCE)
+		FluidVariant variant = FluidVariant.of(Fluids.WATER, DataComponentPatch.builder()
+				.set(DataComponents.HIDE_TOOLTIP, Unit.INSTANCE)
 				.build());
 
-		FluidVariant newVariant = variant.withComponentChanges(ComponentChanges.builder()
-				.remove(DataComponentTypes.HIDE_TOOLTIP)
-				.add(DataComponentTypes.CUSTOM_NAME, Text.literal("Test"))
+		FluidVariant newVariant = variant.withComponentChanges(DataComponentPatch.builder()
+				.remove(DataComponents.HIDE_TOOLTIP)
+				.set(DataComponents.CUSTOM_NAME, Component.literal("Test"))
 				.build());
 
 		Assertions.assertFalse(
-				newVariant.getComponentMap().contains(DataComponentTypes.HIDE_TOOLTIP),
+				newVariant.getComponentMap().has(DataComponents.HIDE_TOOLTIP),
 				"New variant's HIDE_TOOLTIP component was removed, but is still present"
 		);
 
 		Assertions.assertTrue(
-				newVariant.getComponentMap().contains(DataComponentTypes.CUSTOM_NAME),
+				newVariant.getComponentMap().has(DataComponents.CUSTOM_NAME),
 				"New variant's GLIDER component was added, but is not present"
 		);
 	}

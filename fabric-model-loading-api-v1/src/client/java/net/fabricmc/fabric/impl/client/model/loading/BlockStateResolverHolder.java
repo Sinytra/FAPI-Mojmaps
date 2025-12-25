@@ -16,10 +16,9 @@
 
 package net.fabricmc.fabric.impl.client.model.loading;
 
-import net.minecraft.block.Block;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.client.model.loading.v1.BlockStateResolver;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.Block;
 
-record BlockStateResolverHolder(BlockStateResolver resolver, Block block, Identifier blockId) {
+record BlockStateResolverHolder(BlockStateResolver resolver, Block block, ResourceLocation blockId) {
 }

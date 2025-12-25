@@ -24,36 +24,34 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
-
-import net.minecraft.entity.Entity;
-import net.minecraft.network.packet.s2c.play.PositionFlag;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.world.TeleportTarget;
-import net.minecraft.world.World;
-
 import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.RelativeMovement;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.portal.DimensionTransition;
 
 @Mixin(Entity.class)
 abstract class EntityMixin {
 	@Shadow
-	private World world;
+	private Level level;
 
-	@Inject(method = "teleportTo", at = @At("RETURN"))
-	private void afterWorldChanged(TeleportTarget target, CallbackInfoReturnable<Entity> cir) {
+	@Inject(method = "changeDimension", at = @At("RETURN"))
+	private void afterWorldChanged(DimensionTransition target, CallbackInfoReturnable<Entity> cir) {
 		// Ret will only have an entity if the teleport worked (entity not removed, teleportTarget was valid, entity was successfully created)
 		Entity ret = cir.getReturnValue();
 
 		if (ret != null) {
-			ServerEntityWorldChangeEvents.AFTER_ENTITY_CHANGE_WORLD.invoker().afterChangeWorld((Entity) (Object) this, ret, (ServerWorld) this.world, (ServerWorld) ret.getWorld());
+			ServerEntityWorldChangeEvents.AFTER_ENTITY_CHANGE_WORLD.invoker().afterChangeWorld((Entity) (Object) this, ret, (ServerLevel) this.level, (ServerLevel) ret.level());
 		}
 	}
 
 	/**
 	 * We need to fire the change world event for entities that are teleported using the `/teleport` command.
 	 */
-	@Inject(method = "teleport(Lnet/minecraft/server/world/ServerWorld;DDDLjava/util/Set;FF)Z", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;setRemoved(Lnet/minecraft/entity/Entity$RemovalReason;)V"), locals = LocalCapture.CAPTURE_FAILHARD)
-	private void afterEntityTeleportedToWorld(ServerWorld destination, double x, double y, double z, Set<PositionFlag> flags, float yaw, float pitch, CallbackInfoReturnable<Boolean> cir, float i, Entity newEntity) {
+	@Inject(method = "teleportTo(Lnet/minecraft/server/level/ServerLevel;DDDLjava/util/Set;FF)Z", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;setRemoved(Lnet/minecraft/world/entity/Entity$RemovalReason;)V"), locals = LocalCapture.CAPTURE_FAILHARD)
+	private void afterEntityTeleportedToWorld(ServerLevel destination, double x, double y, double z, Set<RelativeMovement> flags, float yaw, float pitch, CallbackInfoReturnable<Boolean> cir, float i, Entity newEntity) {
 		Entity originalEntity = (Entity) (Object) this;
-		ServerEntityWorldChangeEvents.AFTER_ENTITY_CHANGE_WORLD.invoker().afterChangeWorld(originalEntity, newEntity, ((ServerWorld) originalEntity.getWorld()), destination);
+		ServerEntityWorldChangeEvents.AFTER_ENTITY_CHANGE_WORLD.invoker().afterChangeWorld(originalEntity, newEntity, ((ServerLevel) originalEntity.level()), destination);
 	}
 }

@@ -21,19 +21,17 @@ import static net.fabricmc.fabric.test.datagen.DataGeneratorTestContent.MOD_ID;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
-
-import net.minecraft.client.texture.atlas.AtlasSource;
-import net.minecraft.client.texture.atlas.AtlasSourceManager;
-import net.minecraft.client.texture.atlas.DirectoryAtlasSource;
-import net.minecraft.data.DataOutput;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.JsonKeySortOrderCallback;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricCodecDataProvider;
+import net.minecraft.client.renderer.texture.atlas.SpriteSource;
+import net.minecraft.client.renderer.texture.atlas.SpriteSources;
+import net.minecraft.client.renderer.texture.atlas.sources.DirectoryLister;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.data.PackOutput;
+import net.minecraft.resources.ResourceLocation;
 
 @SuppressWarnings("unused")
 public class DataGeneratorClientTestEntrypoint implements DataGeneratorEntrypoint {
@@ -44,18 +42,18 @@ public class DataGeneratorClientTestEntrypoint implements DataGeneratorEntrypoin
 
 	@Override
 	public void onInitializeDataGenerator(FabricDataGenerator dataGenerator) {
-		final FabricDataGenerator.Pack pack = dataGenerator.createBuiltinResourcePack(Identifier.of(MOD_ID, "example_builtin"));
+		final FabricDataGenerator.Pack pack = dataGenerator.createBuiltinResourcePack(ResourceLocation.fromNamespaceAndPath(MOD_ID, "example_builtin"));
 		pack.addProvider(TestAtlasSourceProvider::new);
 	}
 
-	private static class TestAtlasSourceProvider extends FabricCodecDataProvider<List<AtlasSource>> {
-		private TestAtlasSourceProvider(FabricDataOutput dataOutput, CompletableFuture<RegistryWrapper.WrapperLookup> registriesFuture) {
-			super(dataOutput, registriesFuture, DataOutput.OutputType.RESOURCE_PACK, "atlases", AtlasSourceManager.LIST_CODEC);
+	private static class TestAtlasSourceProvider extends FabricCodecDataProvider<List<SpriteSource>> {
+		private TestAtlasSourceProvider(FabricDataOutput dataOutput, CompletableFuture<HolderLookup.Provider> registriesFuture) {
+			super(dataOutput, registriesFuture, PackOutput.Target.RESOURCE_PACK, "atlases", SpriteSources.FILE_CODEC);
 		}
 
 		@Override
-		protected void configure(BiConsumer<Identifier, List<AtlasSource>> provider, RegistryWrapper.WrapperLookup lookup) {
-			provider.accept(Identifier.of(MOD_ID, "atlas_source_test"), List.of(new DirectoryAtlasSource("example", "example/")));
+		protected void configure(BiConsumer<ResourceLocation, List<SpriteSource>> provider, HolderLookup.Provider lookup) {
+			provider.accept(ResourceLocation.fromNamespaceAndPath(MOD_ID, "atlas_source_test"), List.of(new DirectoryLister("example", "example/")));
 		}
 
 		@Override

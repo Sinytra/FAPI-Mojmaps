@@ -16,20 +16,19 @@
 
 package net.fabricmc.fabric.api.client.model.loading.v1;
 
+import net.minecraft.client.resources.model.ModelBakery;
+import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.client.render.model.ModelLoader;
-import net.minecraft.client.render.model.UnbakedModel;
-import net.minecraft.util.Identifier;
-
 /**
- * Model resolvers are able to provide a custom model for specific {@link Identifier}s.
- * In vanilla, these {@link Identifier}s are converted to file paths and used to load
+ * Model resolvers are able to provide a custom model for specific {@link ResourceLocation}s.
+ * In vanilla, these {@link ResourceLocation}s are converted to file paths and used to load
  * a model from JSON. Since model resolvers override this process, they can be used to
  * create custom model formats.
  *
- * <p>Only one resolver may provide a custom model for a certain {@link Identifier}.
+ * <p>Only one resolver may provide a custom model for a certain {@link ResourceLocation}.
  * Thus, resolvers that load models using a custom format could conflict. To avoid
  * conflicts, such resolvers may want to only load files with a mod-suffixed name
  * or only load files that have been explicitly defined elsewhere.
@@ -47,7 +46,7 @@ import net.minecraft.util.Identifier;
 @FunctionalInterface
 public interface ModelResolver {
 	/**
-	 * @return the resolved {@link UnbakedModel}, or {@code null} if this resolver does not handle the current {@link Identifier}
+	 * @return the resolved {@link UnbakedModel}, or {@code null} if this resolver does not handle the current {@link ResourceLocation}
 	 */
 	@Nullable
 	UnbakedModel resolveModel(Context context);
@@ -60,19 +59,19 @@ public interface ModelResolver {
 		/**
 		 * The identifier of the model to be loaded.
 		 */
-		Identifier id();
+		ResourceLocation id();
 
 		/**
-		 * Loads a model using an {@link Identifier}, or gets it if it was already loaded.
+		 * Loads a model using an {@link ResourceLocation}, or gets it if it was already loaded.
 		 *
 		 * @param id the model identifier
 		 * @return the unbaked model, or a missing model if it is not present
 		 */
-		UnbakedModel getOrLoadModel(Identifier id);
+		UnbakedModel getOrLoadModel(ResourceLocation id);
 
 		/**
 		 * The current model loader instance, which changes between resource reloads.
 		 */
-		ModelLoader loader();
+		ModelBakery loader();
 	}
 }

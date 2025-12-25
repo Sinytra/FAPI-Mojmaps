@@ -19,28 +19,26 @@ package net.fabricmc.fabric.mixin.entity.event;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
-
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.passive.MerchantEntity;
-import net.minecraft.entity.passive.VillagerEntity;
-import net.minecraft.world.World;
-
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.npc.AbstractVillager;
+import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.level.Level;
 
-@Mixin(VillagerEntity.class)
-abstract class VillagerEntityMixin extends MerchantEntity {
-	VillagerEntityMixin(EntityType<? extends MerchantEntity> entityType, World world) {
+@Mixin(Villager.class)
+abstract class VillagerEntityMixin extends AbstractVillager {
+	VillagerEntityMixin(EntityType<? extends AbstractVillager> entityType, Level world) {
 		super(entityType, world);
 	}
 
 	@ModifyArg(
-			method = "onStruckByLightning",
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/server/world/ServerWorld;spawnEntityAndPassengers(Lnet/minecraft/entity/Entity;)V")
+			method = "thunderHit",
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;spawnEntityAndPassengers(Lnet/minecraft/world/entity/Entity;)V")
 	)
 	private Entity afterWitchConversion(Entity converted) {
-		ServerLivingEntityEvents.MOB_CONVERSION.invoker().onConversion(this, (MobEntity) converted, false);
+		ServerLivingEntityEvents.MOB_CONVERSION.invoker().onConversion(this, (Mob) converted, false);
 		return converted;
 	}
 }

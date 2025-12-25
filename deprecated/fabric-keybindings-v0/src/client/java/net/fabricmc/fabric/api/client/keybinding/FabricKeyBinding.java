@@ -16,23 +16,22 @@
 
 package net.fabricmc.fabric.api.client.keybinding;
 
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.util.Identifier;
-
+import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.resources.ResourceLocation;
 
 /**
- * Expanded version of {@link KeyBinding} for use by Fabric mods.
+ * Expanded version of {@link KeyMapping} for use by Fabric mods.
  *
  * <p>*ALL* instantiated FabricKeyBindings should be registered in
  * {@link KeyBindingRegistry#register(FabricKeyBinding)}!</p>
  *
- * @deprecated Please migrate to v1. Please use {@link KeyBindingHelper#registerKeyBinding(KeyBinding)} instead.
+ * @deprecated Please migrate to v1. Please use {@link KeyBindingHelper#registerKeyBinding(KeyMapping)} instead.
  */
 @Deprecated
-public class FabricKeyBinding extends KeyBinding {
-	protected FabricKeyBinding(Identifier id, InputUtil.Type type, int code, String category) {
+public class FabricKeyBinding extends KeyMapping {
+	protected FabricKeyBinding(ResourceLocation id, InputConstants.Type type, int code, String category) {
 		super(String.format("key.%s.%s", id.getNamespace(), id.getPath()), type, code, category);
 	}
 
@@ -42,7 +41,7 @@ public class FabricKeyBinding extends KeyBinding {
 	 * @return configured KeyCode
 	 */
 	@Deprecated
-	public InputUtil.Key getBoundKey() {
+	public InputConstants.Key getBoundKey() {
 		return KeyBindingHelper.getBoundKeyOf(this);
 	}
 
@@ -58,7 +57,7 @@ public class FabricKeyBinding extends KeyBinding {
 			return binding;
 		}
 
-		public static Builder create(Identifier id, InputUtil.Type type, int code, String category) {
+		public static Builder create(ResourceLocation id, InputConstants.Type type, int code, String category) {
 			return new Builder(new FabricKeyBinding(id, type, code, category));
 		}
 	}

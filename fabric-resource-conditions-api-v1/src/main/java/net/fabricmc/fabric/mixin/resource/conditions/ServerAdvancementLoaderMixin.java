@@ -16,22 +16,21 @@
 
 package net.fabricmc.fabric.mixin.resource.conditions;
 
+import net.minecraft.core.HolderLookup;
+import net.minecraft.server.ServerAdvancementManager;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.server.ServerAdvancementLoader;
-
-@Mixin(ServerAdvancementLoader.class)
+@Mixin(ServerAdvancementManager.class)
 public class ServerAdvancementLoaderMixin extends SinglePreparationResourceReloaderMixin {
 	@Shadow
 	@Final
-	private RegistryWrapper.WrapperLookup registryLookup;
+	private HolderLookup.Provider registries;
 
 	@Override
-	protected @Nullable RegistryWrapper.WrapperLookup fabric_getRegistryLookup() {
-		return this.registryLookup;
+	protected @Nullable HolderLookup.Provider fabric_getRegistryLookup() {
+		return this.registries;
 	}
 }

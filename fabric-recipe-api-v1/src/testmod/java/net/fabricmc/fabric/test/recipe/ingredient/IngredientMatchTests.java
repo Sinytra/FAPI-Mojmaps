@@ -17,107 +17,105 @@
 package net.fabricmc.fabric.test.recipe.ingredient;
 
 import java.util.Objects;
-
-import net.minecraft.component.ComponentChanges;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.test.GameTest;
-import net.minecraft.test.GameTestException;
-import net.minecraft.test.TestContext;
-import net.minecraft.text.Text;
-import net.minecraft.util.Util;
-
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.fabricmc.fabric.api.recipe.v1.ingredient.DefaultCustomIngredients;
+import net.minecraft.Util;
+import net.minecraft.core.component.DataComponentPatch;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestAssertException;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.crafting.Ingredient;
 
 public class IngredientMatchTests {
-	@GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE)
-	public void testAllIngredient(TestContext context) {
-		Ingredient allIngredient = DefaultCustomIngredients.all(Ingredient.ofItems(Items.APPLE, Items.CARROT), Ingredient.ofItems(Items.STICK, Items.CARROT));
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void testAllIngredient(GameTestHelper context) {
+		Ingredient allIngredient = DefaultCustomIngredients.all(Ingredient.of(Items.APPLE, Items.CARROT), Ingredient.of(Items.STICK, Items.CARROT));
 
-		assertEquals(1, allIngredient.getMatchingStacks().length);
-		assertEquals(Items.CARROT, allIngredient.getMatchingStacks()[0].getItem());
+		assertEquals(1, allIngredient.getItems().length);
+		assertEquals(Items.CARROT, allIngredient.getItems()[0].getItem());
 		assertEquals(false, allIngredient.isEmpty());
 
 		assertEquals(false, allIngredient.test(new ItemStack(Items.APPLE)));
 		assertEquals(true, allIngredient.test(new ItemStack(Items.CARROT)));
 		assertEquals(false, allIngredient.test(new ItemStack(Items.STICK)));
 
-		Ingredient emptyAllIngredient = DefaultCustomIngredients.all(Ingredient.ofItems(Items.APPLE), Ingredient.ofItems(Items.STICK));
+		Ingredient emptyAllIngredient = DefaultCustomIngredients.all(Ingredient.of(Items.APPLE), Ingredient.of(Items.STICK));
 
-		assertEquals(0, emptyAllIngredient.getMatchingStacks().length);
+		assertEquals(0, emptyAllIngredient.getItems().length);
 		assertEquals(true, emptyAllIngredient.isEmpty());
 
 		assertEquals(false, emptyAllIngredient.test(new ItemStack(Items.APPLE)));
 		assertEquals(false, emptyAllIngredient.test(new ItemStack(Items.STICK)));
 
-		context.complete();
+		context.succeed();
 	}
 
-	@GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE)
-	public void testAnyIngredient(TestContext context) {
-		Ingredient anyIngredient = DefaultCustomIngredients.any(Ingredient.ofItems(Items.APPLE, Items.CARROT), Ingredient.ofItems(Items.STICK, Items.CARROT));
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void testAnyIngredient(GameTestHelper context) {
+		Ingredient anyIngredient = DefaultCustomIngredients.any(Ingredient.of(Items.APPLE, Items.CARROT), Ingredient.of(Items.STICK, Items.CARROT));
 
-		assertEquals(4, anyIngredient.getMatchingStacks().length);
-		assertEquals(Items.APPLE, anyIngredient.getMatchingStacks()[0].getItem());
-		assertEquals(Items.CARROT, anyIngredient.getMatchingStacks()[1].getItem());
-		assertEquals(Items.STICK, anyIngredient.getMatchingStacks()[2].getItem());;
-		assertEquals(Items.CARROT, anyIngredient.getMatchingStacks()[3].getItem());
+		assertEquals(4, anyIngredient.getItems().length);
+		assertEquals(Items.APPLE, anyIngredient.getItems()[0].getItem());
+		assertEquals(Items.CARROT, anyIngredient.getItems()[1].getItem());
+		assertEquals(Items.STICK, anyIngredient.getItems()[2].getItem());;
+		assertEquals(Items.CARROT, anyIngredient.getItems()[3].getItem());
 		assertEquals(false, anyIngredient.isEmpty());
 
 		assertEquals(true, anyIngredient.test(new ItemStack(Items.APPLE)));
 		assertEquals(true, anyIngredient.test(new ItemStack(Items.CARROT)));
 		assertEquals(true, anyIngredient.test(new ItemStack(Items.STICK)));
 
-		context.complete();
+		context.succeed();
 	}
 
-	@GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE)
-	public void testDifferenceIngredient(TestContext context) {
-		Ingredient differenceIngredient = DefaultCustomIngredients.difference(Ingredient.ofItems(Items.APPLE, Items.CARROT), Ingredient.ofItems(Items.STICK, Items.CARROT));
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void testDifferenceIngredient(GameTestHelper context) {
+		Ingredient differenceIngredient = DefaultCustomIngredients.difference(Ingredient.of(Items.APPLE, Items.CARROT), Ingredient.of(Items.STICK, Items.CARROT));
 
-		assertEquals(1, differenceIngredient.getMatchingStacks().length);
-		assertEquals(Items.APPLE, differenceIngredient.getMatchingStacks()[0].getItem());
+		assertEquals(1, differenceIngredient.getItems().length);
+		assertEquals(Items.APPLE, differenceIngredient.getItems()[0].getItem());
 		assertEquals(false, differenceIngredient.isEmpty());
 
 		assertEquals(true, differenceIngredient.test(new ItemStack(Items.APPLE)));
 		assertEquals(false, differenceIngredient.test(new ItemStack(Items.CARROT)));
 		assertEquals(false, differenceIngredient.test(new ItemStack(Items.STICK)));
 
-		context.complete();
+		context.succeed();
 	}
 
-	@GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE)
-	public void testComponentIngredient(TestContext context) {
-		final Ingredient baseIngredient = Ingredient.ofItems(Items.DIAMOND_PICKAXE, Items.NETHERITE_PICKAXE, Items.STICK);
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void testComponentIngredient(GameTestHelper context) {
+		final Ingredient baseIngredient = Ingredient.of(Items.DIAMOND_PICKAXE, Items.NETHERITE_PICKAXE, Items.STICK);
 		final Ingredient undamagedIngredient = DefaultCustomIngredients.components(
 				baseIngredient,
-				builder -> builder.add(DataComponentTypes.DAMAGE, 0)
+				builder -> builder.set(DataComponents.DAMAGE, 0)
 		);
 		final Ingredient noNameUndamagedIngredient = DefaultCustomIngredients.components(
 				baseIngredient,
 				builder -> builder
-						.add(DataComponentTypes.DAMAGE, 0)
-						.remove(DataComponentTypes.CUSTOM_NAME)
+						.set(DataComponents.DAMAGE, 0)
+						.remove(DataComponents.CUSTOM_NAME)
 		);
 
 		ItemStack renamedUndamagedDiamondPickaxe = new ItemStack(Items.DIAMOND_PICKAXE);
-		renamedUndamagedDiamondPickaxe.set(DataComponentTypes.CUSTOM_NAME, Text.literal("Renamed"));
+		renamedUndamagedDiamondPickaxe.set(DataComponents.CUSTOM_NAME, Component.literal("Renamed"));
 		assertEquals(true, undamagedIngredient.test(renamedUndamagedDiamondPickaxe));
 		assertEquals(false, noNameUndamagedIngredient.test(renamedUndamagedDiamondPickaxe));
 
-		assertEquals(3, undamagedIngredient.getMatchingStacks().length);
-		ItemStack result0 = undamagedIngredient.getMatchingStacks()[0];
-		ItemStack result1 = undamagedIngredient.getMatchingStacks()[1];
+		assertEquals(3, undamagedIngredient.getItems().length);
+		ItemStack result0 = undamagedIngredient.getItems()[0];
+		ItemStack result1 = undamagedIngredient.getItems()[1];
 
 		assertEquals(Items.DIAMOND_PICKAXE, result0.getItem());
 		assertEquals(Items.NETHERITE_PICKAXE, result1.getItem());
-		assertEquals(ComponentChanges.EMPTY, result0.getComponentChanges());
-		assertEquals(ComponentChanges.EMPTY, result1.getComponentChanges());
+		assertEquals(DataComponentPatch.EMPTY, result0.getComponentsPatch());
+		assertEquals(DataComponentPatch.EMPTY, result1.getComponentsPatch());
 		assertEquals(false, undamagedIngredient.isEmpty());
 
 		// Undamaged is fine
@@ -126,80 +124,80 @@ public class IngredientMatchTests {
 
 		// Damaged is not fine
 		ItemStack damagedDiamondPickaxe = new ItemStack(Items.DIAMOND_PICKAXE);
-		damagedDiamondPickaxe.setDamage(10);
+		damagedDiamondPickaxe.setDamageValue(10);
 		assertEquals(false, undamagedIngredient.test(damagedDiamondPickaxe));
 
 		// Checking for DAMAGE component requires the item is damageable in the first place
 		assertEquals(false, undamagedIngredient.test(new ItemStack(Items.STICK)));
 
 		// Custom data is strictly matched, like any other component with multiple fields
-		final NbtCompound requiredData = new NbtCompound();
+		final CompoundTag requiredData = new CompoundTag();
 		requiredData.putInt("keyA", 1);
-		final NbtCompound extraData = requiredData.copy();
+		final CompoundTag extraData = requiredData.copy();
 		extraData.putInt("keyB", 2);
 
 		final Ingredient customDataIngredient = DefaultCustomIngredients.components(
 				baseIngredient,
-				builder -> builder.add(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(requiredData))
+				builder -> builder.set(DataComponents.CUSTOM_DATA, CustomData.of(requiredData))
 		);
 		ItemStack requiredDataStack = new ItemStack(Items.DIAMOND_PICKAXE);
-		requiredDataStack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(requiredData));
+		requiredDataStack.set(DataComponents.CUSTOM_DATA, CustomData.of(requiredData));
 		ItemStack extraDataStack = new ItemStack(Items.DIAMOND_PICKAXE);
-		extraDataStack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(extraData));
+		extraDataStack.set(DataComponents.CUSTOM_DATA, CustomData.of(extraData));
 		assertEquals(true, customDataIngredient.test(requiredDataStack));
 		assertEquals(false, customDataIngredient.test(extraDataStack));
 
 		// Default value is ignored in components(ItemStack)
 		final Ingredient damagedPickaxeIngredient = DefaultCustomIngredients.components(renamedUndamagedDiamondPickaxe);
 		ItemStack renamedDamagedDiamondPickaxe = renamedUndamagedDiamondPickaxe.copy();
-		renamedDamagedDiamondPickaxe.setDamage(10);
+		renamedDamagedDiamondPickaxe.setDamageValue(10);
 		assertEquals(true, damagedPickaxeIngredient.test(renamedUndamagedDiamondPickaxe));
 		assertEquals(true, damagedPickaxeIngredient.test(renamedDamagedDiamondPickaxe));
 
-		context.complete();
+		context.succeed();
 	}
 
-	@GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE)
-	public void testCustomDataIngredient(TestContext context) {
-		final NbtCompound requiredNbt = Util.make(new NbtCompound(), nbt -> {
+	@GameTest(template = FabricGameTest.EMPTY_STRUCTURE)
+	public void testCustomDataIngredient(GameTestHelper context) {
+		final CompoundTag requiredNbt = Util.make(new CompoundTag(), nbt -> {
 			nbt.putInt("keyA", 1);
 		});
-		final NbtCompound acceptedNbt = Util.make(requiredNbt.copy(), nbt -> {
+		final CompoundTag acceptedNbt = Util.make(requiredNbt.copy(), nbt -> {
 			nbt.putInt("keyB", 2);
 		});
-		final NbtCompound rejectedNbt1 = Util.make(new NbtCompound(), nbt -> {
+		final CompoundTag rejectedNbt1 = Util.make(new CompoundTag(), nbt -> {
 			nbt.putInt("keyA", -1);
 		});
-		final NbtCompound rejectedNbt2 = Util.make(new NbtCompound(), nbt -> {
+		final CompoundTag rejectedNbt2 = Util.make(new CompoundTag(), nbt -> {
 			nbt.putInt("keyB", 2);
 		});
 
-		final Ingredient baseIngredient = Ingredient.ofItems(Items.STICK);
+		final Ingredient baseIngredient = Ingredient.of(Items.STICK);
 		final Ingredient customDataIngredient = DefaultCustomIngredients.customData(baseIngredient, requiredNbt);
 
 		ItemStack stack = new ItemStack(Items.STICK);
 		assertEquals(false, customDataIngredient.test(stack));
-		stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(requiredNbt));
+		stack.set(DataComponents.CUSTOM_DATA, CustomData.of(requiredNbt));
 		assertEquals(true, customDataIngredient.test(stack));
 		// This is a non-strict matching
-		stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(acceptedNbt));
+		stack.set(DataComponents.CUSTOM_DATA, CustomData.of(acceptedNbt));
 		assertEquals(true, customDataIngredient.test(stack));
-		stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(rejectedNbt1));
+		stack.set(DataComponents.CUSTOM_DATA, CustomData.of(rejectedNbt1));
 		assertEquals(false, customDataIngredient.test(stack));
-		stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(rejectedNbt2));
+		stack.set(DataComponents.CUSTOM_DATA, CustomData.of(rejectedNbt2));
 		assertEquals(false, customDataIngredient.test(stack));
 
-		ItemStack[] matchingStacks = customDataIngredient.getMatchingStacks();
+		ItemStack[] matchingStacks = customDataIngredient.getItems();
 		assertEquals(1, matchingStacks.length);
 		assertEquals(Items.STICK, matchingStacks[0].getItem());
-		assertEquals(NbtComponent.of(requiredNbt), matchingStacks[0].get(DataComponentTypes.CUSTOM_DATA));
+		assertEquals(CustomData.of(requiredNbt), matchingStacks[0].get(DataComponents.CUSTOM_DATA));
 
-		context.complete();
+		context.succeed();
 	}
 
 	private static <T> void assertEquals(T expected, T actual) {
 		if (!Objects.equals(expected, actual)) {
-			throw new GameTestException(String.format("assertEquals failed%nexpected: %s%n but was: %s", expected, actual));
+			throw new GameTestAssertException(String.format("assertEquals failed%nexpected: %s%n but was: %s", expected, actual));
 		}
 	}
 }

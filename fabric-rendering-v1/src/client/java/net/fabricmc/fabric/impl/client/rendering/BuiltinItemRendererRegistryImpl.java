@@ -21,13 +21,11 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemConvertible;
-import net.minecraft.registry.Registries;
-
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRenderer;
 import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.ItemLike;
 
 public final class BuiltinItemRendererRegistryImpl implements BuiltinItemRendererRegistry {
 	private static final Map<Item, DynamicItemRenderer> RENDERERS = new HashMap<>();
@@ -42,25 +40,25 @@ public final class BuiltinItemRendererRegistryImpl implements BuiltinItemRendere
 	}
 
 	@Override
-	public void register(ItemConvertible item, BuiltinItemRenderer renderer) {
+	public void register(ItemLike item, BuiltinItemRenderer renderer) {
 		Objects.requireNonNull(item, "item is null");
 		register(item.asItem(), renderer);
 	}
 
 	@Override
-	public void register(ItemConvertible item, DynamicItemRenderer renderer) {
+	public void register(ItemLike item, DynamicItemRenderer renderer) {
 		Objects.requireNonNull(item, "item is null");
 		Objects.requireNonNull(item.asItem(), "item is null");
 		Objects.requireNonNull(renderer, "renderer is null");
 
 		if (RENDERERS.putIfAbsent(item.asItem(), renderer) != null) {
-			throw new IllegalArgumentException("Item " + Registries.ITEM.getId(item.asItem()) + " already has a builtin renderer!");
+			throw new IllegalArgumentException("Item " + BuiltInRegistries.ITEM.getKey(item.asItem()) + " already has a builtin renderer!");
 		}
 	}
 
 	@Override
 	@Nullable
-	public DynamicItemRenderer get(ItemConvertible item) {
+	public DynamicItemRenderer get(ItemLike item) {
 		Objects.requireNonNull(item.asItem(), "item is null");
 
 		return RENDERERS.get(item.asItem());

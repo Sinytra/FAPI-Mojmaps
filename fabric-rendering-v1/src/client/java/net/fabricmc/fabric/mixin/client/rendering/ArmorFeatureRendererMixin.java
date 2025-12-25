@@ -16,6 +16,7 @@
 
 package net.fabricmc.fabric.mixin.client.rendering;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import java.util.Map;
 
 import org.spongepowered.asm.mixin.Final;
@@ -24,38 +25,35 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.feature.ArmorFeatureRenderer;
-import net.minecraft.client.render.entity.feature.FeatureRenderer;
-import net.minecraft.client.render.entity.feature.FeatureRendererContext;
-import net.minecraft.client.render.entity.model.BipedEntityModel;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.client.rendering.v1.ArmorRenderer;
 import net.fabricmc.fabric.impl.client.rendering.ArmorRendererRegistryImpl;
+import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.RenderLayerParent;
+import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
+import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 
-@Mixin(ArmorFeatureRenderer.class)
-public abstract class ArmorFeatureRendererMixin extends FeatureRenderer<LivingEntity, BipedEntityModel<LivingEntity>> {
+@Mixin(HumanoidArmorLayer.class)
+public abstract class ArmorFeatureRendererMixin extends RenderLayer<LivingEntity, HumanoidModel<LivingEntity>> {
 	@Shadow
 	@Final
-	private static Map<String, Identifier> ARMOR_TEXTURE_CACHE;
+	private static Map<String, ResourceLocation> ARMOR_LOCATION_CACHE;
 
-	private ArmorFeatureRendererMixin(FeatureRendererContext<LivingEntity, BipedEntityModel<LivingEntity>> context) {
+	private ArmorFeatureRendererMixin(RenderLayerParent<LivingEntity, HumanoidModel<LivingEntity>> context) {
 		super(context);
 	}
 
-	@Inject(method = "renderArmor", at = @At("HEAD"), cancellable = true)
-	private void renderArmor(MatrixStack matrices, VertexConsumerProvider vertexConsumers, LivingEntity entity, EquipmentSlot armorSlot, int light, BipedEntityModel<LivingEntity> model, CallbackInfo ci) {
-		ItemStack stack = entity.getEquippedStack(armorSlot);
+	@Inject(method = "renderArmorPiece", at = @At("HEAD"), cancellable = true)
+	private void renderArmor(PoseStack matrices, MultiBufferSource vertexConsumers, LivingEntity entity, EquipmentSlot armorSlot, int light, HumanoidModel<LivingEntity> model, CallbackInfo ci) {
+		ItemStack stack = entity.getItemBySlot(armorSlot);
 		ArmorRenderer renderer = ArmorRendererRegistryImpl.get(stack.getItem());
 
 		if (renderer != null) {
-			renderer.render(matrices, vertexConsumers, stack, entity, armorSlot, light, getContextModel());
+			renderer.render(matrices, vertexConsumers, stack, entity, armorSlot, light, getParentModel());
 			ci.cancel();
 		}
 	}

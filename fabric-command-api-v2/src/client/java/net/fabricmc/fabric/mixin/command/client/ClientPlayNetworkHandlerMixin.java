@@ -24,62 +24,60 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.command.CommandSource;
-import net.minecraft.network.packet.s2c.play.CommandTreeS2CPacket;
-import net.minecraft.network.packet.s2c.play.GameJoinS2CPacket;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.resource.featuretoggle.FeatureSet;
-
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.impl.command.client.ClientCommandInternals;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.network.protocol.game.ClientboundCommandsPacket;
+import net.minecraft.network.protocol.game.ClientboundLoginPacket;
+import net.minecraft.world.flag.FeatureFlagSet;
 
-@Mixin(ClientPlayNetworkHandler.class)
+@Mixin(ClientPacketListener.class)
 abstract class ClientPlayNetworkHandlerMixin {
 	@Shadow
-	private CommandDispatcher<CommandSource> commandDispatcher;
+	private CommandDispatcher<SharedSuggestionProvider> commands;
 
 	@Shadow
 	@Final
-	private ClientCommandSource commandSource;
+	private ClientSuggestionProvider suggestionsProvider;
 
 	@Final
 	@Shadow
-	private FeatureSet enabledFeatures;
+	private FeatureFlagSet enabledFeatures;
 
 	@Final
 	@Shadow
-	private DynamicRegistryManager.Immutable combinedDynamicRegistries;
+	private RegistryAccess.Frozen registryAccess;
 
-	@Inject(method = "onGameJoin", at = @At("RETURN"))
-	private void onGameJoin(GameJoinS2CPacket packet, CallbackInfo info) {
+	@Inject(method = "handleLogin", at = @At("RETURN"))
+	private void onGameJoin(ClientboundLoginPacket packet, CallbackInfo info) {
 		final CommandDispatcher<FabricClientCommandSource> dispatcher = new CommandDispatcher<>();
 		ClientCommandInternals.setActiveDispatcher(dispatcher);
-		ClientCommandRegistrationCallback.EVENT.invoker().register(dispatcher, CommandRegistryAccess.of(this.combinedDynamicRegistries, this.enabledFeatures));
+		ClientCommandRegistrationCallback.EVENT.invoker().register(dispatcher, CommandBuildContext.simple(this.registryAccess, this.enabledFeatures));
 		ClientCommandInternals.finalizeInit();
 	}
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	@Inject(method = "onCommandTree", at = @At("RETURN"))
-	private void onOnCommandTree(CommandTreeS2CPacket packet, CallbackInfo info) {
+	@Inject(method = "handleCommands", at = @At("RETURN"))
+	private void onOnCommandTree(ClientboundCommandsPacket packet, CallbackInfo info) {
 		// Add the commands to the vanilla dispatcher for completion.
 		// It's done here because both the server and the client commands have
 		// to be in the same dispatcher and completion results.
-		ClientCommandInternals.addCommands((CommandDispatcher) commandDispatcher, (FabricClientCommandSource) commandSource);
+		ClientCommandInternals.addCommands((CommandDispatcher) commands, (FabricClientCommandSource) suggestionsProvider);
 	}
 
-	@Inject(method = "sendCommand", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "sendUnsignedCommand", at = @At("HEAD"), cancellable = true)
 	private void onSendCommand(String command, CallbackInfoReturnable<Boolean> cir) {
 		if (ClientCommandInternals.executeCommand(command)) {
 			cir.setReturnValue(true);
 		}
 	}
 
-	@Inject(method = "sendChatCommand", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "sendCommand", at = @At("HEAD"), cancellable = true)
 	private void onSendCommand(String command, CallbackInfo info) {
 		if (ClientCommandInternals.executeCommand(command)) {
 			info.cancel();

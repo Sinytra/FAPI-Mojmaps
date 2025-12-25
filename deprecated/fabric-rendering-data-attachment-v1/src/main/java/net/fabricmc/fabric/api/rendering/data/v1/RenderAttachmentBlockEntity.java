@@ -17,10 +17,8 @@
 package net.fabricmc.fabric.api.rendering.data.v1;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.block.entity.BlockEntity;
-
 import net.fabricmc.fabric.api.blockview.v2.RenderDataBlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 /**
  * This interface is guaranteed to be implemented on all {@link BlockEntity} instances.

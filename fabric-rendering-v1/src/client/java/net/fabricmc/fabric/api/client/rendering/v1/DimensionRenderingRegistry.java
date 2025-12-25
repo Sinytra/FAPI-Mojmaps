@@ -17,109 +17,107 @@
 package net.fabricmc.fabric.api.client.rendering.v1;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.client.render.DimensionEffects;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.World;
-
 import net.fabricmc.fabric.impl.client.rendering.DimensionRenderingRegistryImpl;
+import net.minecraft.client.renderer.DimensionSpecialEffects;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
 
 /**
  * Dimensional renderers render world specific visuals of a world.
  * They may be used to render the sky, weather, or clouds.
- * The {@link DimensionEffects} is the vanilla dimensional renderer.
+ * The {@link DimensionSpecialEffects} is the vanilla dimensional renderer.
  */
 public interface DimensionRenderingRegistry {
 	/**
-	 * Registers the custom sky renderer for a {@link World}.
+	 * Registers the custom sky renderer for a {@link Level}.
 	 *
 	 * <p>This overrides Vanilla's sky rendering.
-	 * @param key A {@link RegistryKey} for your {@link World}
+	 * @param key A {@link ResourceKey} for your {@link Level}
 	 * @param renderer A {@link SkyRenderer} implementation
 	 * @throws IllegalArgumentException if key is already registered.
 	 */
-	static void registerSkyRenderer(RegistryKey<World> key, SkyRenderer renderer) {
+	static void registerSkyRenderer(ResourceKey<Level> key, SkyRenderer renderer) {
 		DimensionRenderingRegistryImpl.registerSkyRenderer(key, renderer);
 	}
 
 	/**
-	 * Registers a custom weather renderer for a {@link World}.
+	 * Registers a custom weather renderer for a {@link Level}.
 	 *
 	 * <p>This overrides Vanilla's weather rendering.
-	 * @param key A RegistryKey for your {@link World}
+	 * @param key A RegistryKey for your {@link Level}
 	 * @param renderer A {@link WeatherRenderer} implementation
 	 * @throws IllegalArgumentException if key is already registered.
 	 */
-	static void registerWeatherRenderer(RegistryKey<World> key, WeatherRenderer renderer) {
+	static void registerWeatherRenderer(ResourceKey<Level> key, WeatherRenderer renderer) {
 		DimensionRenderingRegistryImpl.registerWeatherRenderer(key, renderer);
 	}
 
 	/**
-	 * Registers dimension effects for an {@link net.minecraft.util.Identifier}.
+	 * Registers dimension effects for an {@link net.minecraft.resources.ResourceLocation}.
 	 *
 	 * <p>This registers a new option for the "effects" entry of the dimension type json.
 	 *
-	 * @param key     The {@link net.minecraft.util.Identifier} for the new option entry.
-	 * @param effects The {@link DimensionEffects} option.
+	 * @param key     The {@link net.minecraft.resources.ResourceLocation} for the new option entry.
+	 * @param effects The {@link DimensionSpecialEffects} option.
 	 * @throws IllegalArgumentException if key is already registered.
 	 */
-	static void registerDimensionEffects(Identifier key, DimensionEffects effects) {
+	static void registerDimensionEffects(ResourceLocation key, DimensionSpecialEffects effects) {
 		DimensionRenderingRegistryImpl.registerDimensionEffects(key, effects);
 	}
 
 	/**
-	 * Registers a custom cloud renderer for a {@link World}.
+	 * Registers a custom cloud renderer for a {@link Level}.
 	 *
 	 * <p>This overrides Vanilla's cloud rendering.
 	 *
-	 * @param key      A {@link RegistryKey} for your {@link World}
+	 * @param key      A {@link ResourceKey} for your {@link Level}
 	 * @param renderer A {@link CloudRenderer} implementation
 	 * @throws IllegalArgumentException if key is already registered.
 	 */
-	static void registerCloudRenderer(RegistryKey<World> key, CloudRenderer renderer) {
+	static void registerCloudRenderer(ResourceKey<Level> key, CloudRenderer renderer) {
 		DimensionRenderingRegistryImpl.registerCloudRenderer(key, renderer);
 	}
 
 	/**
-	 * Gets the custom sky renderer for the given {@link World}.
+	 * Gets the custom sky renderer for the given {@link Level}.
 	 *
-	 * @param key A {@link RegistryKey} for your {@link World}
+	 * @param key A {@link ResourceKey} for your {@link Level}
 	 * @return {@code null} if no custom sky renderer is registered for the dimension.
 	 */
 	@Nullable
-	static SkyRenderer getSkyRenderer(RegistryKey<World> key) {
+	static SkyRenderer getSkyRenderer(ResourceKey<Level> key) {
 		return DimensionRenderingRegistryImpl.getSkyRenderer(key);
 	}
 
 	/**
-	 * Gets the custom cloud renderer for the given {@link World}.
+	 * Gets the custom cloud renderer for the given {@link Level}.
 	 *
-	 * @param key A {@link RegistryKey} for your {@link World}
+	 * @param key A {@link ResourceKey} for your {@link Level}
 	 * @return {@code null} if no custom cloud renderer is registered for the dimension.
 	 */
 	@Nullable
-	static CloudRenderer getCloudRenderer(RegistryKey<World> key) {
+	static CloudRenderer getCloudRenderer(ResourceKey<Level> key) {
 		return DimensionRenderingRegistryImpl.getCloudRenderer(key);
 	}
 
 	/**
-	 * Gets the custom weather effect renderer for the given {@link World}.
+	 * Gets the custom weather effect renderer for the given {@link Level}.
 	 *
 	 * @return {@code null} if no custom weather effect renderer is registered for the dimension.
 	 */
 	@Nullable
-	static WeatherRenderer getWeatherRenderer(RegistryKey<World> key) {
+	static WeatherRenderer getWeatherRenderer(ResourceKey<Level> key) {
 		return DimensionRenderingRegistryImpl.getWeatherRenderer(key);
 	}
 
 	/**
 	 * Gets the dimension effects registered for an id.
-	 * @param key A {@link RegistryKey} for your {@link World}.
+	 * @param key A {@link ResourceKey} for your {@link Level}.
 	 * @return overworld effect if no dimension effects is registered for the key.
 	 */
 	@Nullable
-	static DimensionEffects getDimensionEffects(Identifier key) {
+	static DimensionSpecialEffects getDimensionEffects(ResourceLocation key) {
 		return DimensionRenderingRegistryImpl.getDimensionEffects(key);
 	}
 

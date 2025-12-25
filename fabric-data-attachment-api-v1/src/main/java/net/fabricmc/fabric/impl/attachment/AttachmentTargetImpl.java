@@ -20,17 +20,15 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.server.network.ServerPlayerEntity;
-
 import net.fabricmc.fabric.api.attachment.v1.AttachmentTarget;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.fabricmc.fabric.impl.attachment.sync.AttachmentChange;
 import net.fabricmc.fabric.impl.attachment.sync.AttachmentTargetInfo;
 import net.fabricmc.fabric.impl.attachment.sync.s2c.AttachmentSyncPayloadS2C;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
 
 public interface AttachmentTargetImpl extends AttachmentTarget {
 	/**
@@ -61,11 +59,11 @@ public interface AttachmentTargetImpl extends AttachmentTarget {
 		throw new UnsupportedOperationException("Implemented via mixin");
 	}
 
-	default void fabric_writeAttachmentsToNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup) {
+	default void fabric_writeAttachmentsToNbt(CompoundTag nbt, HolderLookup.Provider wrapperLookup) {
 		throw new UnsupportedOperationException("Implemented via mixin");
 	}
 
-	default void fabric_readAttachmentsFromNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup) {
+	default void fabric_readAttachmentsFromNbt(CompoundTag nbt, HolderLookup.Provider wrapperLookup) {
 		throw new UnsupportedOperationException("Implemented via mixin");
 	}
 
@@ -81,7 +79,7 @@ public interface AttachmentTargetImpl extends AttachmentTarget {
 	/*
 	 * Computes changes that should be communicated to newcomers (i.e. clients that start tracking this target)
 	 */
-	default void fabric_computeInitialSyncChanges(ServerPlayerEntity player, Consumer<AttachmentChange> changeOutput) {
+	default void fabric_computeInitialSyncChanges(ServerPlayer player, Consumer<AttachmentChange> changeOutput) {
 		throw new UnsupportedOperationException("Implemented via mixin");
 	}
 
@@ -95,5 +93,5 @@ public interface AttachmentTargetImpl extends AttachmentTarget {
 		throw new UnsupportedOperationException("Implemented via mixin");
 	}
 
-	DynamicRegistryManager fabric_getDynamicRegistryManager();
+	RegistryAccess fabric_getDynamicRegistryManager();
 }

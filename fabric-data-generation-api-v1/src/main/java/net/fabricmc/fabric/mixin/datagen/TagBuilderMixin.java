@@ -18,10 +18,8 @@ package net.fabricmc.fabric.mixin.datagen;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
-
-import net.minecraft.registry.tag.TagBuilder;
-
 import net.fabricmc.fabric.impl.datagen.FabricTagBuilder;
+import net.minecraft.tags.TagBuilder;
 
 /**
  * Extends Tag.Builder to support setting the replace field.

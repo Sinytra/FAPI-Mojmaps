@@ -22,35 +22,33 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.impl.client.rendering.FabricShaderProgram;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Lets modded shaders {@code #moj_import} shaders from any namespace with the
  * {@code <>} syntax.
  */
-@Mixin(targets = "net.minecraft.client.gl.ShaderProgram$1")
+@Mixin(targets = "net.minecraft.client.renderer.ShaderInstance$1")
 abstract class ShaderProgramImportProcessorMixin {
 	@Unique
 	private String capturedImport;
 
-	@Inject(method = "loadImport", at = @At("HEAD"))
+	@Inject(method = "applyImport", at = @At("HEAD"))
 	private void captureImport(boolean inline, String name, CallbackInfoReturnable<String> info) {
 		capturedImport = name;
 	}
 
-	@ModifyVariable(method = "loadImport", at = @At("STORE"), ordinal = 0, argsOnly = true)
+	@ModifyVariable(method = "applyImport", at = @At("STORE"), ordinal = 0, argsOnly = true)
 	private String modifyImportId(String id, boolean inline) {
-		if (!inline && capturedImport.contains(String.valueOf(Identifier.NAMESPACE_SEPARATOR))) {
+		if (!inline && capturedImport.contains(String.valueOf(ResourceLocation.NAMESPACE_SEPARATOR))) {
 			return FabricShaderProgram.rewriteAsId(id, capturedImport).toString();
 		}
 
 		return id;
 	}
 
-	@Inject(method = "loadImport", at = @At("RETURN"))
+	@Inject(method = "applyImport", at = @At("RETURN"))
 	private void uncaptureImport(boolean inline, String name, CallbackInfoReturnable<String> info) {
 		capturedImport = null;
 	}

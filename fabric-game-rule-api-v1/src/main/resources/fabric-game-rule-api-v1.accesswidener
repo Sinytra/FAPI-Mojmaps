@@ -1,7 +1,7 @@
 accessWidener	v1	named
-accessible  method  net/minecraft/world/GameRules$Type <init>  (Ljava/util/function/Supplier;Ljava/util/function/Function;Ljava/util/function/BiConsumer;Lnet/minecraft/world/GameRules$Acceptor;)V
-extendable  method  net/minecraft/world/GameRules$Type <init>  (Ljava/util/function/Supplier;Ljava/util/function/Function;Ljava/util/function/BiConsumer;Lnet/minecraft/world/GameRules$Acceptor;)V
-accessible  class   net/minecraft/world/GameRules$Acceptor
-accessible  class   net/minecraft/client/gui/screen/world/EditGameRulesScreen$RuleWidgetFactory
-accessible  field   net/minecraft/client/gui/screen/world/EditGameRulesScreen$NamedRuleWidget name  Ljava/util/List;
-mutable  field   net/minecraft/client/gui/screen/world/EditGameRulesScreen$NamedRuleWidget name  Ljava/util/List;
+accessible	method	net/minecraft/world/level/GameRules$Type	<init>	(Ljava/util/function/Supplier;Ljava/util/function/Function;Ljava/util/function/BiConsumer;Lnet/minecraft/world/level/GameRules$VisitorCaller;)V
+extendable	method	net/minecraft/world/level/GameRules$Type	<init>	(Ljava/util/function/Supplier;Ljava/util/function/Function;Ljava/util/function/BiConsumer;Lnet/minecraft/world/level/GameRules$VisitorCaller;)V
+accessible	class	net/minecraft/world/level/GameRules$VisitorCaller
+accessible	class	net/minecraft/client/gui/screens/worldselection/EditGameRulesScreen$EntryFactory
+accessible	field	net/minecraft/client/gui/screens/worldselection/EditGameRulesScreen$GameRuleEntry	label	Ljava/util/List;
+mutable	field	net/minecraft/client/gui/screens/worldselection/EditGameRulesScreen$GameRuleEntry	label	Ljava/util/List;

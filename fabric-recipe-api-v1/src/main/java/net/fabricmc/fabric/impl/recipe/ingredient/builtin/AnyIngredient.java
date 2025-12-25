@@ -22,16 +22,14 @@ import java.util.List;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
-
-import net.minecraft.item.ItemStack;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredientSerializer;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 
 public class AnyIngredient extends CombinedIngredient {
-	private static final MapCodec<AnyIngredient> ALLOW_EMPTY_CODEC = createCodec(Ingredient.ALLOW_EMPTY_CODEC);
-	private static final MapCodec<AnyIngredient> DISALLOW_EMPTY_CODEC = createCodec(Ingredient.DISALLOW_EMPTY_CODEC);
+	private static final MapCodec<AnyIngredient> ALLOW_EMPTY_CODEC = createCodec(Ingredient.CODEC);
+	private static final MapCodec<AnyIngredient> DISALLOW_EMPTY_CODEC = createCodec(Ingredient.CODEC_NONEMPTY);
 
 	private static MapCodec<AnyIngredient> createCodec(Codec<Ingredient> ingredientCodec) {
 		return ingredientCodec
@@ -41,7 +39,7 @@ public class AnyIngredient extends CombinedIngredient {
 	}
 
 	public static final CustomIngredientSerializer<AnyIngredient> SERIALIZER =
-			new CombinedIngredient.Serializer<>(Identifier.of("fabric", "any"), AnyIngredient::new, ALLOW_EMPTY_CODEC, DISALLOW_EMPTY_CODEC);
+			new CombinedIngredient.Serializer<>(ResourceLocation.fromNamespaceAndPath("fabric", "any"), AnyIngredient::new, ALLOW_EMPTY_CODEC, DISALLOW_EMPTY_CODEC);
 
 	public AnyIngredient(List<Ingredient> ingredients) {
 		super(ingredients);
@@ -63,7 +61,7 @@ public class AnyIngredient extends CombinedIngredient {
 		List<ItemStack> previewStacks = new ArrayList<>();
 
 		for (Ingredient ingredient : ingredients) {
-			previewStacks.addAll(Arrays.asList(ingredient.getMatchingStacks()));
+			previewStacks.addAll(Arrays.asList(ingredient.getItems()));
 		}
 
 		return previewStacks;

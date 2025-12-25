@@ -26,21 +26,21 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.SharedConstants;
+import net.minecraft.gametest.framework.GameTestTicker;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.ServerTickManager;
-import net.minecraft.test.TestManager;
+import net.minecraft.server.ServerTickRateManager;
 
 @Mixin(MinecraftServer.class)
 public abstract class MinecraftServerMixin {
 	@Shadow
 	@Final
-	private ServerTickManager tickManager;
+	private ServerTickRateManager tickRateManager;
 
-	@Inject(method = "tickWorlds", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/PlayerManager;updatePlayerLatency()V", shift = At.Shift.AFTER))
+	@Inject(method = "tickChildren", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/players/PlayerList;tick()V", shift = At.Shift.AFTER))
 	private void tickWorlds(BooleanSupplier shouldKeepTicking, CallbackInfo callbackInfo) {
 		// Called by vanilla when isDevelopment is enabled.
-		if (!SharedConstants.isDevelopment && this.tickManager.shouldTick()) {
-			TestManager.INSTANCE.tick();
+		if (!SharedConstants.IS_RUNNING_IN_IDE && this.tickRateManager.runsNormally()) {
+			GameTestTicker.SINGLETON.tick();
 		}
 	}
 }

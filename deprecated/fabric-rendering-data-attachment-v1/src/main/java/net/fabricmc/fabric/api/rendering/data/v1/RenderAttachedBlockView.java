@@ -17,22 +17,20 @@
 package net.fabricmc.fabric.api.rendering.data.v1;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.BlockRenderView;
-import net.minecraft.world.WorldView;
-
 import net.fabricmc.fabric.api.blockview.v2.FabricBlockView;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.LevelReader;
 
 /**
- * This interface is guaranteed to be implemented on all {@link WorldView} instances.
- * It is likely to be implemented on any given {@link BlockRenderView} instance, but
+ * This interface is guaranteed to be implemented on all {@link LevelReader} instances.
+ * It is likely to be implemented on any given {@link BlockAndTintGetter} instance, but
  * this is not guaranteed.
  *
  * @deprecated Use {@link FabricBlockView} instead.
  */
 @Deprecated
-public interface RenderAttachedBlockView extends BlockRenderView {
+public interface RenderAttachedBlockView extends BlockAndTintGetter {
 	/**
 	 * This method will call {@link FabricBlockView#getBlockEntityRenderData(BlockPos)} by default.
 	 *

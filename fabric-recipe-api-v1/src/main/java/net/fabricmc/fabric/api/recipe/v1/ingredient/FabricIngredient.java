@@ -16,10 +16,9 @@
 
 package net.fabricmc.fabric.api.recipe.v1.ingredient;
 
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.item.ItemStack;
-import net.minecraft.recipe.Ingredient;
 
 /**
  * Fabric-provided extensions for {@link Ingredient}.
@@ -40,8 +39,8 @@ public interface FabricIngredient {
 	 * and custom ingredients need to {@linkplain CustomIngredient#requiresTesting() provide this information}.
 	 *
 	 * <p>If {@code false}, {@linkplain Ingredient#test testing this ingredient} with an item stack must be equivalent to checking whether
-	 * the item stack's item is included in the ingredient's {@linkplain Ingredient#getMatchingStacks() list of matching stacks}.
-	 * In that case, optimized matching logic can be used, for example using {@link Ingredient#getMatchingItemIds()}.
+	 * the item stack's item is included in the ingredient's {@linkplain Ingredient#getItems() list of matching stacks}.
+	 * In that case, optimized matching logic can be used, for example using {@link Ingredient#getStackingIds()}.
 	 *
 	 * <p>If {@code true}, the ingredient must always be tested using {@link Ingredient#test(ItemStack)}.
 	 * Note that Fabric patches some vanilla systems such as shapeless recipes to account for this.

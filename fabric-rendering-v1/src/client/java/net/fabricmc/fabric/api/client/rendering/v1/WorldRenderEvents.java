@@ -17,18 +17,16 @@
 package net.fabricmc.fabric.api.client.rendering.v1;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.util.hit.HitResult;
-
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext.BlockOutlineContext;
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.world.phys.HitResult;
 
 /**
- * Mods should use these events to introduce custom rendering during {@link WorldRenderer#render}
+ * Mods should use these events to introduce custom rendering during {@link LevelRenderer#renderLevel}
  * without adding complicated and conflict-prone injections there.  Using these events also enables 3rd-party renderers
  * that make large-scale changes to rendering maintain compatibility by calling any broken event invokers directly.
  *
@@ -51,7 +49,7 @@ public final class WorldRenderEvents {
 
 	/**
 	 * Called before world rendering executes. Input parameters are available but frustum is not.
-	 * Use this event instead of injecting to the HEAD of {@link WorldRenderer#render} to avoid
+	 * Use this event instead of injecting to the HEAD of {@link LevelRenderer#renderLevel} to avoid
 	 * compatibility problems with 3rd-party renderer implementations.
 	 *
 	 * <p>Use for setup of state that is needed during the world render call that
@@ -108,7 +106,7 @@ public final class WorldRenderEvents {
 	 *
 	 * <p>Use for global block entity render setup, or
 	 * to append block-related quads to the entity consumers using the
-	 * {@link VertexConsumerProvider} from the provided context. This
+	 * {@link MultiBufferSource} from the provided context. This
 	 * will generally give better (if not perfect) results
 	 * for non-terrain translucency vs. drawing directly later on.
 	 */
@@ -171,7 +169,7 @@ public final class WorldRenderEvents {
 	 * outline render for <em>all</em> blocks because all event subscribers will
 	 * always render - only the default outline render can be cancelled.  That should
 	 * be accomplished by mixin to the block outline render routine itself, typically
-	 * by targeting {@link WorldRenderer#drawShapeOutline}.
+	 * by targeting {@link LevelRenderer#renderVoxelShape}.
 	 */
 	public static final Event<BlockOutline> BLOCK_OUTLINE = EventFactory.createArrayBacked(BlockOutline.class, (worldRenderContext, blockOutlineContext) -> true, callbacks -> (worldRenderContext, blockOutlineContext) -> {
 		boolean shouldRender = true;
@@ -280,7 +278,7 @@ public final class WorldRenderEvents {
 		 *
 		 * @param context  Access to state and parameters available during world rendering.
 		 * @param hitResult The game object currently under the crosshair target.
-		 * Normally equivalent to {@link MinecraftClient#crosshairTarget}. Provided for convenience.
+		 * Normally equivalent to {@link Minecraft#hitResult}. Provided for convenience.
 		 * @return true if vanilla block outline rendering should happen.
 		 * Returning false prevents {@link WorldRenderEvents#BLOCK_OUTLINE} from invoking
 		 * and also skips the vanilla block outline render, but has no effect on other subscribers to this event.

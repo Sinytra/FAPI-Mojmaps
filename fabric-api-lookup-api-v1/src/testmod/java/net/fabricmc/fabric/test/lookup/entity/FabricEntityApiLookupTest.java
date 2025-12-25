@@ -16,45 +16,44 @@
 
 package net.fabricmc.fabric.test.lookup.entity;
 
-import net.minecraft.entity.EntityDimensions;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.entity.mob.CreeperEntity;
-import net.minecraft.entity.passive.PigEntity;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.lookup.v1.entity.EntityApiLookup;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
 import net.fabricmc.fabric.test.lookup.FabricApiLookupTest;
 import net.fabricmc.fabric.test.lookup.api.Inspectable;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.animal.Pig;
+import net.minecraft.world.entity.monster.Creeper;
 
 public class FabricEntityApiLookupTest {
 	public static final EntityApiLookup<Inspectable, Void> INSPECTABLE =
-			EntityApiLookup.get(Identifier.of(FabricApiLookupTest.MOD_ID, "inspectable"), Inspectable.class, Void.class);
+			EntityApiLookup.get(ResourceLocation.fromNamespaceAndPath(FabricApiLookupTest.MOD_ID, "inspectable"), Inspectable.class, Void.class);
 
 	public static final EntityType<InspectablePigEntity> INSPECTABLE_PIG = FabricEntityTypeBuilder.create()
-			.spawnGroup(SpawnGroup.CREATURE)
+			.spawnGroup(MobCategory.CREATURE)
 			.entityFactory(InspectablePigEntity::new)
-			.dimensions(EntityDimensions.changing(0.9F, 0.9F))
+			.dimensions(EntityDimensions.scalable(0.9F, 0.9F))
 			.trackRangeChunks(10)
 			.build();
 
 	public static void onInitialize() {
-		Registry.register(Registries.ENTITY_TYPE, Identifier.of(FabricApiLookupTest.MOD_ID, "inspectable_pig"), INSPECTABLE_PIG);
-		FabricDefaultAttributeRegistry.register(INSPECTABLE_PIG, PigEntity.createPigAttributes());
+		Registry.register(BuiltInRegistries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(FabricApiLookupTest.MOD_ID, "inspectable_pig"), INSPECTABLE_PIG);
+		FabricDefaultAttributeRegistry.register(INSPECTABLE_PIG, Pig.createAttributes());
 
 		INSPECTABLE.registerSelf(INSPECTABLE_PIG);
 		INSPECTABLE.registerForTypes(
-				(entity, context) -> () -> Text.literal("registerForTypes: " + entity.getClass().getName()),
+				(entity, context) -> () -> Component.literal("registerForTypes: " + entity.getClass().getName()),
 				EntityType.PLAYER,
 				EntityType.COW);
 		INSPECTABLE.registerFallback((entity, context) -> {
-			if (entity instanceof CreeperEntity) {
-				return () -> Text.literal("registerFallback: CreeperEntity");
+			if (entity instanceof Creeper) {
+				return () -> Component.literal("registerFallback: CreeperEntity");
 			} else {
 				return null;
 			}

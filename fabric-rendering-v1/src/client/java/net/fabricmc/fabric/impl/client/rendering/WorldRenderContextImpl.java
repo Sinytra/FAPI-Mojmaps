@@ -17,40 +17,38 @@
 package net.fabricmc.fabric.impl.client.rendering;
 
 import org.joml.Matrix4f;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.Frustum;
-import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.profiler.Profiler;
-
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
+import net.minecraft.client.Camera;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.block.state.BlockState;
 
 public final class WorldRenderContextImpl implements WorldRenderContext.BlockOutlineContext, WorldRenderContext {
-	private WorldRenderer worldRenderer;
-	private RenderTickCounter tickCounter;
-	private MatrixStack matrixStack;
+	private LevelRenderer worldRenderer;
+	private DeltaTracker tickCounter;
+	private PoseStack matrixStack;
 	private boolean blockOutlines;
 	private Camera camera;
 	private Frustum frustum;
 	private GameRenderer gameRenderer;
-	private LightmapTextureManager lightmapTextureManager;
+	private LightTexture lightmapTextureManager;
 	private Matrix4f projectionMatrix;
 	private Matrix4f positionMatrix;
-	private VertexConsumerProvider consumers;
-	private Profiler profiler;
+	private MultiBufferSource consumers;
+	private ProfilerFiller profiler;
 	private boolean advancedTranslucency;
-	private ClientWorld world;
+	private ClientLevel world;
 
 	private Entity entity;
 	private double cameraX;
@@ -62,18 +60,18 @@ public final class WorldRenderContextImpl implements WorldRenderContext.BlockOut
 	public boolean renderBlockOutline = true;
 
 	public void prepare(
-			WorldRenderer worldRenderer,
-			RenderTickCounter delta,
+			LevelRenderer worldRenderer,
+			DeltaTracker delta,
 			boolean blockOutlines,
 			Camera camera,
 			GameRenderer gameRenderer,
-			LightmapTextureManager lightmapTextureManager,
+			LightTexture lightmapTextureManager,
 			Matrix4f projectionMatrix,
 			Matrix4f positionMatrix,
-			VertexConsumerProvider consumers,
-			Profiler profiler,
+			MultiBufferSource consumers,
+			ProfilerFiller profiler,
 			boolean advancedTranslucency,
-			ClientWorld world
+			ClientLevel world
 	) {
 		this.worldRenderer = worldRenderer;
 		this.tickCounter = delta;
@@ -94,7 +92,7 @@ public final class WorldRenderContextImpl implements WorldRenderContext.BlockOut
 		this.frustum = frustum;
 	}
 
-	public void setMatrixStack(MatrixStack matrixStack) {
+	public void setMatrixStack(PoseStack matrixStack) {
 		this.matrixStack = matrixStack;
 	}
 
@@ -115,17 +113,17 @@ public final class WorldRenderContextImpl implements WorldRenderContext.BlockOut
 	}
 
 	@Override
-	public WorldRenderer worldRenderer() {
+	public LevelRenderer worldRenderer() {
 		return worldRenderer;
 	}
 
 	@Override
-	public MatrixStack matrixStack() {
+	public PoseStack matrixStack() {
 		return matrixStack;
 	}
 
 	@Override
-	public RenderTickCounter tickCounter() {
+	public DeltaTracker tickCounter() {
 		return this.tickCounter;
 	}
 
@@ -150,7 +148,7 @@ public final class WorldRenderContextImpl implements WorldRenderContext.BlockOut
 	}
 
 	@Override
-	public ClientWorld world() {
+	public ClientLevel world() {
 		return world;
 	}
 
@@ -160,7 +158,7 @@ public final class WorldRenderContextImpl implements WorldRenderContext.BlockOut
 	}
 
 	@Override
-	public VertexConsumerProvider consumers() {
+	public MultiBufferSource consumers() {
 		return consumers;
 	}
 
@@ -170,12 +168,12 @@ public final class WorldRenderContextImpl implements WorldRenderContext.BlockOut
 	}
 
 	@Override
-	public LightmapTextureManager lightmapTextureManager() {
+	public LightTexture lightmapTextureManager() {
 		return lightmapTextureManager;
 	}
 
 	@Override
-	public Profiler profiler() {
+	public ProfilerFiller profiler() {
 		return profiler;
 	}
 
@@ -186,7 +184,7 @@ public final class WorldRenderContextImpl implements WorldRenderContext.BlockOut
 
 	@Override
 	public VertexConsumer vertexConsumer() {
-		return consumers.getBuffer(RenderLayer.getLines());
+		return consumers.getBuffer(RenderType.lines());
 	}
 
 	@Override

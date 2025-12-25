@@ -18,20 +18,18 @@ package net.fabricmc.fabric.api.renderer.v1.model;
 
 import java.util.List;
 import java.util.function.Supplier;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.render.model.json.ModelOverrideList;
-import net.minecraft.client.render.model.json.ModelTransformation;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.BlockRenderView;
-
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.ItemOverrides;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * Base class for specialized model implementations that need to wrap other baked models.
@@ -47,17 +45,17 @@ public abstract class ForwardingBakedModel implements BakedModel, WrapperBakedMo
 	}
 
 	@Override
-	public void emitBlockQuads(BlockRenderView blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context) {
+	public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context) {
 		wrapped.emitBlockQuads(blockView, state, pos, randomSupplier, context);
 	}
 
 	@Override
-	public void emitItemQuads(ItemStack stack, Supplier<Random> randomSupplier, RenderContext context) {
+	public void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context) {
 		wrapped.emitItemQuads(stack, randomSupplier, context);
 	}
 
 	@Override
-	public List<BakedQuad> getQuads(BlockState blockState, Direction face, Random rand) {
+	public List<BakedQuad> getQuads(BlockState blockState, Direction face, RandomSource rand) {
 		return wrapped.getQuads(blockState, face, rand);
 	}
 
@@ -67,32 +65,32 @@ public abstract class ForwardingBakedModel implements BakedModel, WrapperBakedMo
 	}
 
 	@Override
-	public boolean hasDepth() {
-		return wrapped.hasDepth();
+	public boolean isGui3d() {
+		return wrapped.isGui3d();
 	}
 
 	@Override
-	public boolean isBuiltin() {
-		return wrapped.isBuiltin();
+	public boolean isCustomRenderer() {
+		return wrapped.isCustomRenderer();
 	}
 
 	@Override
-	public Sprite getParticleSprite() {
-		return wrapped.getParticleSprite();
+	public TextureAtlasSprite getParticleIcon() {
+		return wrapped.getParticleIcon();
 	}
 
 	@Override
-	public boolean isSideLit() {
-		return wrapped.isSideLit();
+	public boolean usesBlockLight() {
+		return wrapped.usesBlockLight();
 	}
 
 	@Override
-	public ModelTransformation getTransformation() {
-		return wrapped.getTransformation();
+	public ItemTransforms getTransforms() {
+		return wrapped.getTransforms();
 	}
 
 	@Override
-	public ModelOverrideList getOverrides() {
+	public ItemOverrides getOverrides() {
 		return wrapped.getOverrides();
 	}
 

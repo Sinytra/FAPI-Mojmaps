@@ -23,49 +23,47 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
-
-import net.minecraft.client.gui.screen.world.EditGameRulesScreen;
-import net.minecraft.client.resource.language.I18n;
-import net.minecraft.world.GameRules;
-
 import net.fabricmc.fabric.api.gamerule.v1.FabricGameRuleVisitor;
 import net.fabricmc.fabric.api.gamerule.v1.rule.DoubleRule;
 import net.fabricmc.fabric.api.gamerule.v1.rule.EnumRule;
 import net.fabricmc.fabric.impl.gamerule.widget.DoubleRuleWidget;
 import net.fabricmc.fabric.impl.gamerule.widget.EnumRuleWidget;
+import net.minecraft.client.gui.screens.worldselection.EditGameRulesScreen;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.world.level.GameRules;
 
-@Mixin(targets = "net/minecraft/client/gui/screen/world/EditGameRulesScreen$RuleListWidget$1")
-public abstract class RuleListWidgetVisitorMixin implements GameRules.Visitor, FabricGameRuleVisitor {
+@Mixin(targets = "net/minecraft/client/gui/screens/worldselection/EditGameRulesScreen$RuleList$1")
+public abstract class RuleListWidgetVisitorMixin implements GameRules.GameRuleTypeVisitor, FabricGameRuleVisitor {
 	@Final
 	@Shadow
-	private EditGameRulesScreen field_24314;
+	private EditGameRulesScreen val$this$0;
 	@Shadow
-	protected abstract <T extends GameRules.Rule<T>> void createRuleWidget(GameRules.Key<T> key, EditGameRulesScreen.RuleWidgetFactory<T> ruleWidgetFactory);
+	protected abstract <T extends GameRules.Value<T>> void addEntry(GameRules.Key<T> key, EditGameRulesScreen.EntryFactory<T> ruleWidgetFactory);
 
 	@Override
 	public void visitDouble(GameRules.Key<DoubleRule> key, GameRules.Type<DoubleRule> type) {
-		this.createRuleWidget(key, (name, description, ruleName, rule) -> {
-			return new DoubleRuleWidget(this.field_24314, name, description, ruleName, rule);
+		this.addEntry(key, (name, description, ruleName, rule) -> {
+			return new DoubleRuleWidget(this.val$this$0, name, description, ruleName, rule);
 		});
 	}
 
 	@Override
 	public <E extends Enum<E>> void visitEnum(GameRules.Key<EnumRule<E>> key, GameRules.Type<EnumRule<E>> type) {
-		this.createRuleWidget(key, (name, description, ruleName, rule) -> {
-			return new EnumRuleWidget<>(this.field_24314, name, description, ruleName, rule, key.getTranslationKey());
+		this.addEntry(key, (name, description, ruleName, rule) -> {
+			return new EnumRuleWidget<>(this.val$this$0, name, description, ruleName, rule, key.getDescriptionId());
 		});
 	}
 
 	/**
 	 * @reason We need to display an enum rule's default value as translated.
 	 */
-	@Redirect(at = @At(value = "INVOKE", target = "Lnet/minecraft/world/GameRules$Rule;serialize()Ljava/lang/String;"), method = "net/minecraft/client/gui/screen/world/EditGameRulesScreen$RuleListWidget$1.createRuleWidget(Lnet/minecraft/world/GameRules$Key;Lnet/minecraft/client/gui/screen/world/EditGameRulesScreen$RuleWidgetFactory;)V")
-	private <T extends GameRules.Rule<T>> String displayProperEnumName(GameRules.Rule<T> rule, GameRules.Key<T> key, EditGameRulesScreen.RuleWidgetFactory<T> widgetFactory) {
+	@Redirect(at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/GameRules$Value;serialize()Ljava/lang/String;"), method = "addEntry(Lnet/minecraft/world/level/GameRules$Key;Lnet/minecraft/client/gui/screens/worldselection/EditGameRulesScreen$EntryFactory;)V")
+	private <T extends GameRules.Value<T>> String displayProperEnumName(GameRules.Value<T> rule, GameRules.Key<T> key, EditGameRulesScreen.EntryFactory<T> widgetFactory) {
 		if (rule instanceof EnumRule) {
-			String translationKey = key.getTranslationKey() + "." + ((EnumRule<?>) rule).get().name().toLowerCase(Locale.ROOT);
+			String translationKey = key.getDescriptionId() + "." + ((EnumRule<?>) rule).get().name().toLowerCase(Locale.ROOT);
 
-			if (I18n.hasTranslation(translationKey)) {
-				return I18n.translate(translationKey);
+			if (I18n.exists(translationKey)) {
+				return I18n.get(translationKey);
 			}
 
 			return ((EnumRule<?>) rule).get().toString();

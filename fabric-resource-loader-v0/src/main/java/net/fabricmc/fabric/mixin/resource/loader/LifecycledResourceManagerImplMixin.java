@@ -23,25 +23,23 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.resource.LifecycledResourceManagerImpl;
-import net.minecraft.resource.ResourcePack;
-import net.minecraft.resource.ResourceType;
-
 import net.fabricmc.fabric.impl.resource.loader.FabricLifecycledResourceManager;
+import net.minecraft.server.packs.PackResources;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.resources.MultiPackResourceManager;
 
-@Mixin(LifecycledResourceManagerImpl.class)
+@Mixin(MultiPackResourceManager.class)
 public class LifecycledResourceManagerImplMixin implements FabricLifecycledResourceManager {
 	@Unique
-	private ResourceType fabric_ResourceType;
+	private PackType fabric_ResourceType;
 
 	@Inject(method = "<init>", at = @At("TAIL"))
-	private void init(ResourceType resourceType, List<ResourcePack> list, CallbackInfo ci) {
+	private void init(PackType resourceType, List<PackResources> list, CallbackInfo ci) {
 		this.fabric_ResourceType = resourceType;
 	}
 
 	@Override
-	public ResourceType fabric_getResourceType() {
+	public PackType fabric_getResourceType() {
 		return fabric_ResourceType;
 	}
 }

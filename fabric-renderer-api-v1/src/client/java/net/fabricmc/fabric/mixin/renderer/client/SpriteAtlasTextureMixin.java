@@ -24,24 +24,22 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.client.texture.SpriteAtlasTexture;
-import net.minecraft.client.texture.SpriteLoader;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.impl.renderer.SpriteFinderImpl;
+import net.minecraft.client.renderer.texture.SpriteLoader;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.resources.ResourceLocation;
 
-@Mixin(SpriteAtlasTexture.class)
+@Mixin(TextureAtlas.class)
 public class SpriteAtlasTextureMixin implements SpriteFinderImpl.SpriteFinderAccess {
 	@Final
 	@Shadow
-	private Map<Identifier, Sprite> sprites;
+	private Map<ResourceLocation, TextureAtlasSprite> texturesByName;
 
 	private SpriteFinderImpl fabric_spriteFinder = null;
 
 	@Inject(at = @At("RETURN"), method = "upload")
-	private void uploadHook(SpriteLoader.StitchResult arg, CallbackInfo ci) {
+	private void uploadHook(SpriteLoader.Preparations arg, CallbackInfo ci) {
 		fabric_spriteFinder = null;
 	}
 
@@ -50,7 +48,7 @@ public class SpriteAtlasTextureMixin implements SpriteFinderImpl.SpriteFinderAcc
 		SpriteFinderImpl result = fabric_spriteFinder;
 
 		if (result == null) {
-			result = new SpriteFinderImpl(sprites, (SpriteAtlasTexture) (Object) this);
+			result = new SpriteFinderImpl(texturesByName, (TextureAtlas) (Object) this);
 			fabric_spriteFinder = result;
 		}
 

@@ -19,28 +19,26 @@ package net.fabricmc.fabric.mixin.entity.event;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
-
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.passive.AnimalEntity;
-import net.minecraft.entity.passive.PigEntity;
-import net.minecraft.world.World;
-
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.animal.Pig;
+import net.minecraft.world.level.Level;
 
-@Mixin(PigEntity.class)
-abstract class PigEntityMixin extends AnimalEntity {
-	protected PigEntityMixin(EntityType<? extends AnimalEntity> entityType, World world) {
+@Mixin(Pig.class)
+abstract class PigEntityMixin extends Animal {
+	protected PigEntityMixin(EntityType<? extends Animal> entityType, Level world) {
 		super(entityType, world);
 	}
 
 	@ModifyArg(
-			method = "onStruckByLightning",
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/server/world/ServerWorld;spawnEntity(Lnet/minecraft/entity/Entity;)Z")
+			method = "thunderHit",
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;spawnEntity(Lnet/minecraft/world/entity/Entity;)Z")
 	)
 	private Entity afterPiglinConversion(Entity converted) {
-		ServerLivingEntityEvents.MOB_CONVERSION.invoker().onConversion(this, (MobEntity) converted, false);
+		ServerLivingEntityEvents.MOB_CONVERSION.invoker().onConversion(this, (Mob) converted, false);
 		return converted;
 	}
 }

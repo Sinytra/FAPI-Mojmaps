@@ -17,17 +17,15 @@
 package net.fabricmc.fabric.api.gametest.v1;
 
 import java.lang.reflect.Method;
-
-import net.minecraft.test.TestContext;
-
 import net.fabricmc.fabric.impl.gametest.FabricGameTestHelper;
+import net.minecraft.gametest.framework.GameTestHelper;
 
 /**
  * This interface can be optionally implemented on your test class.
  */
 public interface FabricGameTest {
 	/**
-	 * Use in {@link net.minecraft.test.GameTest} structureName to use an empty 8x8 structure for the test.
+	 * Use in {@link net.minecraft.gametest.framework.GameTest} structureName to use an empty 8x8 structure for the test.
 	 */
 	String EMPTY_STRUCTURE = "fabric-gametest-api-v1:empty";
 
@@ -40,7 +38,7 @@ public interface FabricGameTest {
 	 * @param context The vanilla test context
 	 * @param method The test method to invoke
 	 */
-	default void invokeTestMethod(TestContext context, Method method) {
+	default void invokeTestMethod(GameTestHelper context, Method method) {
 		FabricGameTestHelper.invokeTestMethod(context, method, this);
 	}
 }

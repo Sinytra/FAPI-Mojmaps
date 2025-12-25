@@ -22,14 +22,12 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import net.minecraft.client.gui.hud.DebugHud;
-
 import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
+import net.minecraft.client.gui.components.DebugScreenOverlay;
 
-@Mixin(DebugHud.class)
+@Mixin(DebugScreenOverlay.class)
 public class DebugHudMixin {
-	@Inject(at = @At("RETURN"), method = "getLeftText")
+	@Inject(at = @At("RETURN"), method = "getGameInformation")
 	protected void getLeftText(CallbackInfoReturnable<List<String>> info) {
 		if (RendererAccess.INSTANCE.hasRenderer()) {
 			info.getReturnValue().add("[Fabric] Active renderer: " + RendererAccess.INSTANCE.getRenderer().getClass().getSimpleName());

@@ -16,19 +16,18 @@
 
 package net.fabricmc.fabric.mixin.object.builder.client;
 
+import net.minecraft.client.renderer.item.ClampedItemPropertyFunction;
+import net.minecraft.client.renderer.item.ItemProperties;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
-import net.minecraft.client.item.ClampedModelPredicateProvider;
-import net.minecraft.client.item.ModelPredicateProviderRegistry;
-import net.minecraft.item.Item;
-import net.minecraft.util.Identifier;
-
 // mixin doesn't care about descriptor, must put two "register" accessors in different places
-@Mixin(ModelPredicateProviderRegistry.class)
+@Mixin(ItemProperties.class)
 public interface ModelPredicateProviderRegistrySpecificAccessor {
 	@Invoker
-	static void callRegister(Item item, Identifier id, ClampedModelPredicateProvider provider) {
+	static void callRegister(Item item, ResourceLocation id, ClampedItemPropertyFunction provider) {
 		throw new AssertionError("mixin dummy");
 	}
 }

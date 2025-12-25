@@ -16,14 +16,13 @@
 
 package net.fabricmc.fabric.api.event.client.player;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.hit.HitResult;
-
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 
 /**
  * This event is emitted at the beginning of the block picking process in
@@ -50,5 +49,5 @@ public interface ClientPickBlockGatherCallback {
 			}
 	);
 
-	ItemStack pick(PlayerEntity player, HitResult result);
+	ItemStack pick(Player player, HitResult result);
 }

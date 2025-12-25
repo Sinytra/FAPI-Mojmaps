@@ -16,15 +16,15 @@
 
 package net.fabricmc.fabric.impl.client.model.loading;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.state.StateManager;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
 
 public interface BlockStatesLoaderHooks {
 	void fabric_setLoadingOverride(LoadingOverride override);
 
 	interface LoadingOverride {
-		boolean loadBlockStates(Identifier id, StateManager<Block, BlockState> stateManager);
+		boolean loadBlockStates(ResourceLocation id, StateDefinition<Block, BlockState> stateManager);
 	}
 }

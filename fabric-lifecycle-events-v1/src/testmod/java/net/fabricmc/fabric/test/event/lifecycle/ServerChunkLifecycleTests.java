@@ -20,12 +20,10 @@ import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.slf4j.Logger;
-
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.minecraft.resources.ResourceLocation;
 
 public final class ServerChunkLifecycleTests implements ModInitializer {
 	private static final Logger LOGGER = LogUtils.getLogger();
@@ -41,18 +39,18 @@ public final class ServerChunkLifecycleTests implements ModInitializer {
 	 * Moving to an unexplored area will start logging again.
 	 */
 	private static void setupChunkGenerateTest() {
-		final Object2IntMap<Identifier> generated = new Object2IntOpenHashMap<>();
+		final Object2IntMap<ResourceLocation> generated = new Object2IntOpenHashMap<>();
 
 		ServerTickEvents.END_WORLD_TICK.register(world -> {
-			final int count = generated.removeInt(world.getRegistryKey().getValue());
+			final int count = generated.removeInt(world.dimension().location());
 
 			if (count > 0) {
-				LOGGER.info("Loaded {} freshly generated chunks in {} during tick #{}", count, world.getRegistryKey().getValue(), world.getServer().getTicks());
+				LOGGER.info("Loaded {} freshly generated chunks in {} during tick #{}", count, world.dimension().location(), world.getServer().getTickCount());
 			}
 		});
 
 		ServerChunkEvents.CHUNK_GENERATE.register((world, chunk) -> {
-			generated.mergeInt(world.getRegistryKey().getValue(), 1, Integer::sum);
+			generated.mergeInt(world.dimension().location(), 1, Integer::sum);
 		});
 	}
 }

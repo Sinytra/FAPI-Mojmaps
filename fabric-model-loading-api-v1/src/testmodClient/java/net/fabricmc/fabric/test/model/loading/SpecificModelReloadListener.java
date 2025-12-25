@@ -18,18 +18,16 @@ package net.fabricmc.fabric.test.model.loading;
 
 import java.util.Collection;
 import java.util.List;
-
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.util.Identifier;
-
 import net.fabricmc.fabric.api.resource.ResourceReloadListenerKeys;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
 
 public class SpecificModelReloadListener implements SimpleSynchronousResourceReloadListener {
 	public static final SpecificModelReloadListener INSTANCE = new SpecificModelReloadListener();
-	public static final Identifier ID = Identifier.of(ModelTestModClient.ID, "specific_model");
+	public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(ModelTestModClient.ID, "specific_model");
 
 	private BakedModel specificModel;
 
@@ -38,17 +36,17 @@ public class SpecificModelReloadListener implements SimpleSynchronousResourceRel
 	}
 
 	@Override
-	public void reload(ResourceManager manager) {
-		specificModel = MinecraftClient.getInstance().getBakedModelManager().getModel(ModelTestModClient.HALF_RED_SAND_MODEL_ID);
+	public void onResourceManagerReload(ResourceManager manager) {
+		specificModel = Minecraft.getInstance().getModelManager().getModel(ModelTestModClient.HALF_RED_SAND_MODEL_ID);
 	}
 
 	@Override
-	public Identifier getFabricId() {
+	public ResourceLocation getFabricId() {
 		return ID;
 	}
 
 	@Override
-	public Collection<Identifier> getFabricDependencies() {
+	public Collection<ResourceLocation> getFabricDependencies() {
 		return List.of(ResourceReloadListenerKeys.MODELS);
 	}
 }

@@ -24,24 +24,22 @@ import java.util.function.Consumer;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
-
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
-
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.fabricmc.fabric.impl.attachment.AttachmentSerializingImpl;
 import net.fabricmc.fabric.impl.attachment.AttachmentTargetImpl;
 import net.fabricmc.fabric.impl.attachment.AttachmentTypeImpl;
 import net.fabricmc.fabric.impl.attachment.sync.AttachmentChange;
 import net.fabricmc.fabric.impl.attachment.sync.s2c.AttachmentSyncPayloadS2C;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.chunk.ChunkAccess;
 
-@Mixin({BlockEntity.class, Entity.class, World.class, Chunk.class})
+@Mixin({BlockEntity.class, Entity.class, Level.class, ChunkAccess.class})
 abstract class AttachmentTargetsMixin implements AttachmentTargetImpl {
 	@Nullable
 	private IdentityHashMap<AttachmentType<?>, Object> fabric_dataAttachments = null;
@@ -88,12 +86,12 @@ abstract class AttachmentTargetsMixin implements AttachmentTargetImpl {
 	}
 
 	@Override
-	public void fabric_writeAttachmentsToNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup) {
+	public void fabric_writeAttachmentsToNbt(CompoundTag nbt, HolderLookup.Provider wrapperLookup) {
 		AttachmentSerializingImpl.serializeAttachmentData(nbt, wrapperLookup, fabric_dataAttachments);
 	}
 
 	@Override
-	public void fabric_readAttachmentsFromNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup wrapperLookup) {
+	public void fabric_readAttachmentsFromNbt(CompoundTag nbt, HolderLookup.Provider wrapperLookup) {
 		// Note on player targets: no syncing can happen here as the networkHandler is still null
 		// Instead it is done on player join (see AttachmentSync)
 		this.fabric_dataAttachments = AttachmentSerializingImpl.deserializeAttachmentData(nbt, wrapperLookup);
@@ -118,8 +116,8 @@ abstract class AttachmentTargetsMixin implements AttachmentTargetImpl {
 	}
 
 	@Unique
-	private void acknowledgeSynced(AttachmentType<?> type, Object value, RegistryWrapper.WrapperLookup wrapperLookup) {
-		DynamicRegistryManager dynamicRegistryManager = (wrapperLookup instanceof DynamicRegistryManager drm) ? drm : fabric_getDynamicRegistryManager();
+	private void acknowledgeSynced(AttachmentType<?> type, Object value, HolderLookup.Provider wrapperLookup) {
+		RegistryAccess dynamicRegistryManager = (wrapperLookup instanceof RegistryAccess drm) ? drm : fabric_getDynamicRegistryManager();
 		acknowledgeSyncedEntry(type, AttachmentChange.create(fabric_getSyncTargetInfo(), type, value, dynamicRegistryManager));
 	}
 
@@ -141,7 +139,7 @@ abstract class AttachmentTargetsMixin implements AttachmentTargetImpl {
 	}
 
 	@Override
-	public void fabric_computeInitialSyncChanges(ServerPlayerEntity player, Consumer<AttachmentChange> changeOutput) {
+	public void fabric_computeInitialSyncChanges(ServerPlayer player, Consumer<AttachmentChange> changeOutput) {
 		if (fabric_syncedAttachments == null) {
 			return;
 		}

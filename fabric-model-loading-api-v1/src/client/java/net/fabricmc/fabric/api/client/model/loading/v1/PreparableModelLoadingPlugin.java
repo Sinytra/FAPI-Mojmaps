@@ -19,10 +19,8 @@ package net.fabricmc.fabric.api.client.model.loading.v1;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
-
-import net.minecraft.resource.ResourceManager;
-
 import net.fabricmc.fabric.impl.client.model.loading.ModelLoadingPluginManager;
+import net.minecraft.server.packs.resources.ResourceManager;
 
 /**
  * A model loading plugin is used to extend the model loading process through the passed

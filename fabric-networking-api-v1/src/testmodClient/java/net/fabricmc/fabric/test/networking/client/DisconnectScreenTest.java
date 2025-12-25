@@ -16,11 +16,10 @@
 
 package net.fabricmc.fabric.test.networking.client;
 
-import net.minecraft.text.Text;
-
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.minecraft.network.chat.Component;
 
 public class DisconnectScreenTest implements ClientModInitializer {
 	@Override
@@ -33,7 +32,7 @@ public class DisconnectScreenTest implements ClientModInitializer {
 						builder.append("\nLine ").append(i + 1);
 					}
 
-					context.getSource().getPlayer().networkHandler.getConnection().disconnect(Text.of(builder.toString()));
+					context.getSource().getPlayer().connection.getConnection().disconnect(Component.nullToEmpty(builder.toString()));
 					return 1;
 				})));
 	}

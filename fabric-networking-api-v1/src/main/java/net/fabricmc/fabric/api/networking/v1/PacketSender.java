@@ -16,13 +16,12 @@
 
 package net.fabricmc.fabric.api.networking.v1;
 
+import net.minecraft.network.PacketSendListener;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.network.PacketCallbacks;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.text.Text;
 
 /**
  * Represents something that supports sending packets to channels.
@@ -35,7 +34,7 @@ public interface PacketSender {
 	 *
 	 * @param payload the packet payload
 	 */
-	Packet<?> createPacket(CustomPayload payload);
+	Packet<?> createPacket(CustomPacketPayload payload);
 
 	/**
 	 * Sends a packet.
@@ -50,7 +49,7 @@ public interface PacketSender {
 	 * Sends a packet.
 	 * @param payload the payload
 	 */
-	default void sendPacket(CustomPayload payload) {
+	default void sendPacket(CustomPacketPayload payload) {
 		sendPacket(createPacket(payload));
 	}
 
@@ -60,7 +59,7 @@ public interface PacketSender {
 	 * @param packet the packet
 	 * @param callback an optional callback to execute after the packet is sent, may be {@code null}.
 	 */
-	void sendPacket(Packet<?> packet, @Nullable PacketCallbacks callback);
+	void sendPacket(Packet<?> packet, @Nullable PacketSendListener callback);
 
 	/**
 	 * Sends a packet.
@@ -68,7 +67,7 @@ public interface PacketSender {
 	 * @param payload the payload
 	 * @param callback an optional callback to execute after the packet is sent, may be {@code null}.
 	 */
-	default void sendPacket(CustomPayload payload, @Nullable PacketCallbacks callback) {
+	default void sendPacket(CustomPacketPayload payload, @Nullable PacketSendListener callback) {
 		sendPacket(createPacket(payload), callback);
 	}
 
@@ -76,5 +75,5 @@ public interface PacketSender {
 	 * Disconnects the player.
 	 * @param disconnectReason the reason for disconnection
 	 */
-	void disconnect(Text disconnectReason);
+	void disconnect(Component disconnectReason);
 }

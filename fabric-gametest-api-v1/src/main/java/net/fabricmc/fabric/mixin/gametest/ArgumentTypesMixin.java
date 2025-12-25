@@ -24,28 +24,27 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import net.minecraft.SharedConstants;
-import net.minecraft.command.argument.ArgumentTypes;
-import net.minecraft.command.argument.TestClassArgumentType;
-import net.minecraft.command.argument.TestFunctionArgumentType;
-import net.minecraft.command.argument.serialize.ArgumentSerializer;
-import net.minecraft.command.argument.serialize.ConstantArgumentSerializer;
-import net.minecraft.registry.Registry;
-
+import net.minecraft.commands.synchronization.ArgumentTypeInfo;
+import net.minecraft.commands.synchronization.ArgumentTypeInfos;
+import net.minecraft.commands.synchronization.SingletonArgumentInfo;
+import net.minecraft.core.Registry;
+import net.minecraft.gametest.framework.TestClassNameArgument;
+import net.minecraft.gametest.framework.TestFunctionArgument;
 import net.fabricmc.fabric.impl.gametest.FabricGameTestHelper;
 
-@Mixin(ArgumentTypes.class)
+@Mixin(ArgumentTypeInfos.class)
 public abstract class ArgumentTypesMixin {
 	@Shadow
-	private static <A extends ArgumentType<?>, T extends ArgumentSerializer.ArgumentTypeProperties<A>> ArgumentSerializer<A, T> register(Registry<ArgumentSerializer<?, ?>> registry, String string, Class<? extends A> clazz, ArgumentSerializer<A, T> argumentSerializer) {
+	private static <A extends ArgumentType<?>, T extends ArgumentTypeInfo.Template<A>> ArgumentTypeInfo<A, T> register(Registry<ArgumentTypeInfo<?, ?>> registry, String string, Class<? extends A> clazz, ArgumentTypeInfo<A, T> argumentSerializer) {
 		throw new AssertionError("Nope.");
 	}
 
-	@Inject(method = "register(Lnet/minecraft/registry/Registry;)Lnet/minecraft/command/argument/serialize/ArgumentSerializer;", at = @At("RETURN"))
-	private static void register(Registry<ArgumentSerializer<?, ?>> registry, CallbackInfoReturnable<ArgumentSerializer<?, ?>> ci) {
+	@Inject(method = "bootstrap(Lnet/minecraft/core/Registry;)Lnet/minecraft/commands/synchronization/ArgumentTypeInfo;", at = @At("RETURN"))
+	private static void register(Registry<ArgumentTypeInfo<?, ?>> registry, CallbackInfoReturnable<ArgumentTypeInfo<?, ?>> ci) {
 		// Registered by vanilla when isDevelopment is enabled.
-		if (FabricGameTestHelper.COMMAND_ENABLED && !SharedConstants.isDevelopment) {
-			register(registry, "test_argument", TestFunctionArgumentType.class, ConstantArgumentSerializer.of(TestFunctionArgumentType::testFunction));
-			register(registry, "test_class", TestClassArgumentType.class, ConstantArgumentSerializer.of(TestClassArgumentType::testClass));
+		if (FabricGameTestHelper.COMMAND_ENABLED && !SharedConstants.IS_RUNNING_IN_IDE) {
+			register(registry, "test_argument", TestFunctionArgument.class, SingletonArgumentInfo.contextFree(TestFunctionArgument::testFunctionArgument));
+			register(registry, "test_class", TestClassNameArgument.class, SingletonArgumentInfo.contextFree(TestClassNameArgument::testClassName));
 		}
 	}
 }

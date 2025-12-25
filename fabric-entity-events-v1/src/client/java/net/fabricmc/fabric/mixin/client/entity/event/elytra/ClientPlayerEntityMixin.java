@@ -17,6 +17,12 @@
 package net.fabricmc.fabric.mixin.client.entity.event.elytra;
 
 import com.mojang.authlib.GameProfile;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
+import net.minecraft.world.item.Items;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -25,33 +31,26 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.item.Items;
-import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket;
-
 @SuppressWarnings("unused")
-@Mixin(ClientPlayerEntity.class)
-abstract class ClientPlayerEntityMixin extends AbstractClientPlayerEntity {
-	ClientPlayerEntityMixin(ClientWorld world, GameProfile profile) {
+@Mixin(LocalPlayer.class)
+abstract class ClientPlayerEntityMixin extends AbstractClientPlayer {
+	ClientPlayerEntityMixin(ClientLevel world, GameProfile profile) {
 		super(world, profile);
 		throw new AssertionError();
 	}
 
 	@Shadow
 	@Final
-	private ClientPlayNetworkHandler networkHandler;
+	private ClientPacketListener connection;
 
 	/**
-	 * Call {@link #checkFallFlying()} even if the player is not wearing {@link Items#ELYTRA} to allow custom elytra flight.
+	 * Call {@link #tryToStartFallFlying()} even if the player is not wearing {@link Items#ELYTRA} to allow custom elytra flight.
 	 */
-	@Inject(at = @At(value = "FIELD", target = "Lnet/minecraft/entity/EquipmentSlot;CHEST:Lnet/minecraft/entity/EquipmentSlot;"), method = "tickMovement", slice = @Slice(from = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;isClimbing()Z"), to = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;checkFallFlying()Z")), allow = 1)
+	@Inject(at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/EquipmentSlot;CHEST:Lnet/minecraft/world/entity/EquipmentSlot;"), method = "aiStep", slice = @Slice(from = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;onClimbable()Z"), to = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;tryToStartFallFlying()Z")), allow = 1)
 	void injectElytraStart(CallbackInfo info) {
 		// Note that if fall flying is not ALLOWed, checkFallFlying will return false and nothing will happen.
-		if (this.checkFallFlying()) {
-			networkHandler.sendPacket(new ClientCommandC2SPacket(this, ClientCommandC2SPacket.Mode.START_FALL_FLYING));
+		if (this.tryToStartFallFlying()) {
+			connection.send(new ServerboundPlayerCommandPacket(this, ServerboundPlayerCommandPacket.Action.START_FALL_FLYING));
 		}
 	}
 }

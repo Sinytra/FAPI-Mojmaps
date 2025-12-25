@@ -28,18 +28,16 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.logging.LogUtils;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-
-import net.minecraft.client.render.model.BakedModelManager;
-import net.minecraft.client.render.model.UnbakedModel;
-import net.minecraft.client.render.model.json.JsonUnbakedModel;
-import net.minecraft.resource.Resource;
-import net.minecraft.resource.ResourceFinder;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Util;
-
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.model.loading.v1.PreparableModelLoadingPlugin;
+import net.minecraft.Util;
+import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.resources.model.ModelManager;
+import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.resources.FileToIdConverter;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
 
 /**
  * Allows putting model files in {@code /model_replacements} instead of {@code /models} to override models.
@@ -49,13 +47,13 @@ import net.fabricmc.fabric.api.client.model.loading.v1.PreparableModelLoadingPlu
  */
 public class PreparablePluginTest implements ClientModInitializer {
 	private static final Logger LOGGER = LogUtils.getLogger();
-	private static final ResourceFinder MODEL_REPLACEMENTS_FINDER = ResourceFinder.json("model_replacements");
+	private static final FileToIdConverter MODEL_REPLACEMENTS_FINDER = FileToIdConverter.json("model_replacements");
 
 	@Override
 	public void onInitializeClient() {
 		PreparableModelLoadingPlugin.register(PreparablePluginTest::loadModelReplacements, (replacementModels, pluginContext) -> {
 			pluginContext.modifyModelOnLoad().register((model, ctx) -> {
-				Identifier id = ctx.resourceId();
+				ResourceLocation id = ctx.resourceId();
 
 				if (id != null) {
 					@Nullable
@@ -72,19 +70,19 @@ public class PreparablePluginTest implements ClientModInitializer {
 	}
 
 	/**
-	 * Adaptation of the {@link BakedModelManager} method.
+	 * Adaptation of the {@link ModelManager} method.
 	 */
-	private static CompletableFuture<Map<Identifier, JsonUnbakedModel>> loadModelReplacements(ResourceManager resourceManager, Executor executor) {
-		return CompletableFuture.supplyAsync(() -> MODEL_REPLACEMENTS_FINDER.findResources(resourceManager), executor).thenCompose(models2 -> {
-			ArrayList<CompletableFuture<Pair<Identifier, JsonUnbakedModel>>> list = new ArrayList<>(models2.size());
+	private static CompletableFuture<Map<ResourceLocation, BlockModel>> loadModelReplacements(ResourceManager resourceManager, Executor executor) {
+		return CompletableFuture.supplyAsync(() -> MODEL_REPLACEMENTS_FINDER.listMatchingResources(resourceManager), executor).thenCompose(models2 -> {
+			ArrayList<CompletableFuture<Pair<ResourceLocation, BlockModel>>> list = new ArrayList<>(models2.size());
 
-			for (Map.Entry<Identifier, Resource> entry : models2.entrySet()) {
+			for (Map.Entry<ResourceLocation, Resource> entry : models2.entrySet()) {
 				list.add(CompletableFuture.supplyAsync(() -> {
-					try (BufferedReader reader = entry.getValue().getReader()) {
+					try (BufferedReader reader = entry.getValue().openAsReader()) {
 						// Remove model_replacements/ prefix from the identifier
-						Identifier modelId = MODEL_REPLACEMENTS_FINDER.toResourceId(entry.getKey());
+						ResourceLocation modelId = MODEL_REPLACEMENTS_FINDER.fileToId(entry.getKey());
 
-						return Pair.of(modelId, JsonUnbakedModel.deserialize(reader));
+						return Pair.of(modelId, BlockModel.fromStream(reader));
 					} catch (Exception exception) {
 						LOGGER.error("Failed to load model {}", entry.getKey(), exception);
 						return null;
@@ -92,7 +90,7 @@ public class PreparablePluginTest implements ClientModInitializer {
 				}, executor));
 			}
 
-			return Util.combineSafe(list).thenApply(models -> models.stream().filter(Objects::nonNull).collect(Collectors.toUnmodifiableMap(Pair::getFirst, Pair::getSecond)));
+			return Util.sequence(list).thenApply(models -> models.stream().filter(Objects::nonNull).collect(Collectors.toUnmodifiableMap(Pair::getFirst, Pair::getSecond)));
 		});
 	}
 }

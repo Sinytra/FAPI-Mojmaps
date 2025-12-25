@@ -25,14 +25,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Drawable;
-import net.minecraft.client.gui.Element;
-import net.minecraft.client.gui.Selectable;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ClickableWidget;
-
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
@@ -40,18 +32,24 @@ import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.impl.client.screen.ButtonList;
 import net.fabricmc.fabric.impl.client.screen.ScreenEventFactory;
 import net.fabricmc.fabric.impl.client.screen.ScreenExtensions;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Renderable;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.narration.NarratableEntry;
+import net.minecraft.client.gui.screens.Screen;
 
 @Mixin(Screen.class)
 abstract class ScreenMixin implements ScreenExtensions {
 	@Shadow
 	@Final
-	protected List<Selectable> selectables;
+	protected List<NarratableEntry> narratables;
 	@Shadow
 	@Final
-	protected List<Element> children;
+	protected List<GuiEventListener> children;
 	@Shadow
 	@Final
-	protected List<Drawable> drawables;
+	protected List<Renderable> renderables;
 
 	@Unique
 	private ButtonList fabricButtons;
@@ -100,28 +98,28 @@ abstract class ScreenMixin implements ScreenExtensions {
 	@Unique
 	private Event<ScreenMouseEvents.AfterMouseScroll> afterMouseScrollEvent;
 
-	@Inject(method = "init(Lnet/minecraft/client/MinecraftClient;II)V", at = @At("HEAD"))
-	private void beforeInitScreen(MinecraftClient client, int width, int height, CallbackInfo ci) {
+	@Inject(method = "init(Lnet/minecraft/client/Minecraft;II)V", at = @At("HEAD"))
+	private void beforeInitScreen(Minecraft client, int width, int height, CallbackInfo ci) {
 		beforeInit(client, width, height);
 	}
 
-	@Inject(method = "init(Lnet/minecraft/client/MinecraftClient;II)V", at = @At("TAIL"))
-	private void afterInitScreen(MinecraftClient client, int width, int height, CallbackInfo ci) {
+	@Inject(method = "init(Lnet/minecraft/client/Minecraft;II)V", at = @At("TAIL"))
+	private void afterInitScreen(Minecraft client, int width, int height, CallbackInfo ci) {
 		afterInit(client, width, height);
 	}
 
 	@Inject(method = "resize", at = @At("HEAD"))
-	private void beforeResizeScreen(MinecraftClient client, int width, int height, CallbackInfo ci) {
+	private void beforeResizeScreen(Minecraft client, int width, int height, CallbackInfo ci) {
 		beforeInit(client, width, height);
 	}
 
 	@Inject(method = "resize", at = @At("TAIL"))
-	private void afterResizeScreen(MinecraftClient client, int width, int height, CallbackInfo ci) {
+	private void afterResizeScreen(Minecraft client, int width, int height, CallbackInfo ci) {
 		afterInit(client, width, height);
 	}
 
 	@Unique
-	private void beforeInit(MinecraftClient client, int width, int height) {
+	private void beforeInit(Minecraft client, int width, int height) {
 		// All elements are repopulated on the screen, so we need to reinitialize all events
 		this.fabricButtons = null;
 		this.removeEvent = ScreenEventFactory.createRemoveEvent();
@@ -153,15 +151,15 @@ abstract class ScreenMixin implements ScreenExtensions {
 	}
 
 	@Unique
-	private void afterInit(MinecraftClient client, int width, int height) {
+	private void afterInit(Minecraft client, int width, int height) {
 		ScreenEvents.AFTER_INIT.invoker().afterInit(client, (Screen) (Object) this, width, height);
 	}
 
 	@Override
-	public List<ClickableWidget> fabric_getButtons() {
+	public List<AbstractWidget> fabric_getButtons() {
 		// Lazy init to make the list access safe after Screen#init
 		if (this.fabricButtons == null) {
-			this.fabricButtons = new ButtonList(this.drawables, this.selectables, this.children);
+			this.fabricButtons = new ButtonList(this.renderables, this.narratables, this.children);
 		}
 
 		return this.fabricButtons;

@@ -20,13 +20,6 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
-
 import net.fabricmc.fabric.api.renderer.v1.Renderer;
 import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
@@ -35,6 +28,11 @@ import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.fabricmc.fabric.api.util.TriState;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * Routines for adaptation of vanilla {@link BakedModel}s to FRAPI pipelines.
@@ -45,7 +43,7 @@ public class VanillaModelEncoder {
 	private static final RenderMaterial STANDARD_MATERIAL = RENDERER.materialFinder().shadeMode(ShadeMode.VANILLA).find();
 	private static final RenderMaterial NO_AO_MATERIAL = RENDERER.materialFinder().shadeMode(ShadeMode.VANILLA).ambientOcclusion(TriState.FALSE).find();
 
-	public static void emitBlockQuads(BakedModel model, @Nullable BlockState state, Supplier<Random> randomSupplier, RenderContext context) {
+	public static void emitBlockQuads(BakedModel model, @Nullable BlockState state, Supplier<RandomSource> randomSupplier, RenderContext context) {
 		QuadEmitter emitter = context.getEmitter();
 		final RenderMaterial defaultMaterial = model.useAmbientOcclusion() ? STANDARD_MATERIAL : NO_AO_MATERIAL;
 
@@ -68,7 +66,7 @@ public class VanillaModelEncoder {
 		}
 	}
 
-	public static void emitItemQuads(BakedModel model, @Nullable BlockState state, Supplier<Random> randomSupplier, RenderContext context) {
+	public static void emitItemQuads(BakedModel model, @Nullable BlockState state, Supplier<RandomSource> randomSupplier, RenderContext context) {
 		QuadEmitter emitter = context.getEmitter();
 
 		for (int i = 0; i <= ModelHelper.NULL_FACE_ID; i++) {

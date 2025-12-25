@@ -18,11 +18,9 @@ package net.fabricmc.fabric.mixin.rendering.data;
 
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
-
-import net.minecraft.block.entity.BlockEntity;
-
 import net.fabricmc.fabric.api.blockview.v2.RenderDataBlockEntity;
 import net.fabricmc.fabric.api.rendering.data.v1.RenderAttachmentBlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 @Mixin(BlockEntity.class)
 public class BlockEntityMixin implements RenderAttachmentBlockEntity, RenderDataBlockEntity {

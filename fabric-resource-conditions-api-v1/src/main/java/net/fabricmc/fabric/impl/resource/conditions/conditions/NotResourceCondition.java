@@ -19,12 +19,10 @@ package net.fabricmc.fabric.impl.resource.conditions.conditions;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.registry.RegistryWrapper;
-
 import net.fabricmc.fabric.api.resource.conditions.v1.ResourceCondition;
 import net.fabricmc.fabric.api.resource.conditions.v1.ResourceConditionType;
 import net.fabricmc.fabric.impl.resource.conditions.DefaultResourceConditionTypes;
+import net.minecraft.core.HolderLookup;
 
 public record NotResourceCondition(ResourceCondition condition) implements ResourceCondition {
 	public static final MapCodec<NotResourceCondition> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
@@ -37,7 +35,7 @@ public record NotResourceCondition(ResourceCondition condition) implements Resou
 	}
 
 	@Override
-	public boolean test(@Nullable RegistryWrapper.WrapperLookup registryLookup) {
+	public boolean test(@Nullable HolderLookup.Provider registryLookup) {
 		return !this.condition().test(registryLookup);
 	}
 }

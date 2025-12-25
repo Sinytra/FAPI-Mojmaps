@@ -16,30 +16,28 @@
 
 package net.fabricmc.fabric.impl.client.indigo.renderer.render;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.MatrixUtil;
 import java.util.function.Supplier;
 
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.block.BlockState;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.item.ItemColors;
-import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.RenderLayers;
-import net.minecraft.client.render.TexturedRenderLayers;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.item.ItemRenderer;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.json.ModelTransformationMode;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MatrixUtil;
-import net.minecraft.util.math.random.Random;
-
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.Sheets;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
 import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
@@ -58,8 +56,8 @@ public class ItemRenderContext extends AbstractRenderContext {
 	private static final long ITEM_RANDOM_SEED = 42L;
 
 	private final ItemColors colorMap;
-	private final Random random = Random.create();
-	private final Supplier<Random> randomSupplier = () -> {
+	private final RandomSource random = RandomSource.create();
+	private final Supplier<RandomSource> randomSupplier = () -> {
 		random.setSeed(ITEM_RANDOM_SEED);
 		return random;
 	};
@@ -79,9 +77,9 @@ public class ItemRenderContext extends AbstractRenderContext {
 	private final BakedModelConsumerImpl vanillaModelConsumer = new BakedModelConsumerImpl();
 
 	private ItemStack itemStack;
-	private ModelTransformationMode transformMode;
-	private MatrixStack matrixStack;
-	private VertexConsumerProvider vertexConsumerProvider;
+	private ItemDisplayContext transformMode;
+	private PoseStack matrixStack;
+	private MultiBufferSource vertexConsumerProvider;
 	private int lightmap;
 
 	private boolean isDefaultTranslucent;
@@ -89,7 +87,7 @@ public class ItemRenderContext extends AbstractRenderContext {
 	private boolean isDefaultGlint;
 	private boolean isGlintDynamicDisplay;
 
-	private MatrixStack.Entry dynamicDisplayGlintEntry;
+	private PoseStack.Pose dynamicDisplayGlintEntry;
 	private VertexConsumer translucentVertexConsumer;
 	private VertexConsumer cutoutVertexConsumer;
 	private VertexConsumer translucentGlintVertexConsumer;
@@ -111,7 +109,7 @@ public class ItemRenderContext extends AbstractRenderContext {
 	}
 
 	@Override
-	public ModelTransformationMode itemTransformationMode() {
+	public ItemDisplayContext itemTransformationMode() {
 		return transformMode;
 	}
 
@@ -120,7 +118,7 @@ public class ItemRenderContext extends AbstractRenderContext {
 		return vanillaModelConsumer;
 	}
 
-	public void renderModel(ItemStack itemStack, ModelTransformationMode transformMode, boolean invert, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int lightmap, int overlay, BakedModel model) {
+	public void renderModel(ItemStack itemStack, ItemDisplayContext transformMode, boolean invert, PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, int lightmap, int overlay, BakedModel model) {
 		this.itemStack = itemStack;
 		this.transformMode = transformMode;
 		this.matrixStack = matrixStack;
@@ -129,8 +127,8 @@ public class ItemRenderContext extends AbstractRenderContext {
 		this.overlay = overlay;
 		computeOutputInfo();
 
-		matrix = matrixStack.peek().getPositionMatrix();
-		normalMatrix = matrixStack.peek().getNormalMatrix();
+		matrix = matrixStack.last().pose();
+		normalMatrix = matrixStack.last().normal();
 
 		model.emitItemQuads(itemStack, randomSupplier, this);
 
@@ -152,19 +150,19 @@ public class ItemRenderContext extends AbstractRenderContext {
 		Item item = itemStack.getItem();
 
 		if (item instanceof BlockItem blockItem) {
-			BlockState state = blockItem.getBlock().getDefaultState();
-			RenderLayer renderLayer = RenderLayers.getBlockLayer(state);
+			BlockState state = blockItem.getBlock().defaultBlockState();
+			RenderType renderLayer = ItemBlockRenderTypes.getChunkRenderType(state);
 
-			if (renderLayer != RenderLayer.getTranslucent()) {
+			if (renderLayer != RenderType.translucent()) {
 				isDefaultTranslucent = false;
 			}
 
-			if (transformMode != ModelTransformationMode.GUI && !transformMode.isFirstPerson()) {
+			if (transformMode != ItemDisplayContext.GUI && !transformMode.firstPerson()) {
 				isTranslucentDirect = false;
 			}
 		}
 
-		isDefaultGlint = itemStack.hasGlint();
+		isDefaultGlint = itemStack.hasFoil();
 		isGlintDynamicDisplay = ItemRendererAccessor.fabric_callUsesDynamicDisplay(itemStack);
 	}
 
@@ -196,7 +194,7 @@ public class ItemRenderContext extends AbstractRenderContext {
 	private void shadeQuad(MutableQuadViewImpl quad, boolean emissive) {
 		if (emissive) {
 			for (int i = 0; i < 4; i++) {
-				quad.lightmap(i, LightmapTextureManager.MAX_LIGHT_COORDINATE);
+				quad.lightmap(i, LightTexture.FULL_BRIGHT);
 			}
 		} else {
 			final int lightmap = this.lightmap;
@@ -261,38 +259,38 @@ public class ItemRenderContext extends AbstractRenderContext {
 
 	private VertexConsumer createTranslucentVertexConsumer(boolean glint) {
 		if (glint && isGlintDynamicDisplay) {
-			return createDynamicDisplayGlintVertexConsumer(MinecraftClient.isFabulousGraphicsOrBetter() && !isTranslucentDirect ? TexturedRenderLayers.getItemEntityTranslucentCull() : TexturedRenderLayers.getEntityTranslucentCull());
+			return createDynamicDisplayGlintVertexConsumer(Minecraft.useShaderTransparency() && !isTranslucentDirect ? Sheets.translucentItemSheet() : Sheets.translucentCullBlockSheet());
 		}
 
 		if (isTranslucentDirect) {
-			return ItemRenderer.getDirectItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getEntityTranslucentCull(), true, glint);
-		} else if (MinecraftClient.isFabulousGraphicsOrBetter()) {
-			return ItemRenderer.getItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getItemEntityTranslucentCull(), true, glint);
+			return ItemRenderer.getFoilBufferDirect(vertexConsumerProvider, Sheets.translucentCullBlockSheet(), true, glint);
+		} else if (Minecraft.useShaderTransparency()) {
+			return ItemRenderer.getFoilBuffer(vertexConsumerProvider, Sheets.translucentItemSheet(), true, glint);
 		} else {
-			return ItemRenderer.getItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getEntityTranslucentCull(), true, glint);
+			return ItemRenderer.getFoilBuffer(vertexConsumerProvider, Sheets.translucentCullBlockSheet(), true, glint);
 		}
 	}
 
 	private VertexConsumer createCutoutVertexConsumer(boolean glint) {
 		if (glint && isGlintDynamicDisplay) {
-			return createDynamicDisplayGlintVertexConsumer(TexturedRenderLayers.getEntityCutout());
+			return createDynamicDisplayGlintVertexConsumer(Sheets.cutoutBlockSheet());
 		}
 
-		return ItemRenderer.getDirectItemGlintConsumer(vertexConsumerProvider, TexturedRenderLayers.getEntityCutout(), true, glint);
+		return ItemRenderer.getFoilBufferDirect(vertexConsumerProvider, Sheets.cutoutBlockSheet(), true, glint);
 	}
 
-	private VertexConsumer createDynamicDisplayGlintVertexConsumer(RenderLayer layer) {
+	private VertexConsumer createDynamicDisplayGlintVertexConsumer(RenderType layer) {
 		if (dynamicDisplayGlintEntry == null) {
-			dynamicDisplayGlintEntry = matrixStack.peek().copy();
+			dynamicDisplayGlintEntry = matrixStack.last().copy();
 
-			if (transformMode == ModelTransformationMode.GUI) {
-				MatrixUtil.scale(dynamicDisplayGlintEntry.getPositionMatrix(), 0.5F);
-			} else if (transformMode.isFirstPerson()) {
-				MatrixUtil.scale(dynamicDisplayGlintEntry.getPositionMatrix(), 0.75F);
+			if (transformMode == ItemDisplayContext.GUI) {
+				MatrixUtil.mulComponentWise(dynamicDisplayGlintEntry.pose(), 0.5F);
+			} else if (transformMode.firstPerson()) {
+				MatrixUtil.mulComponentWise(dynamicDisplayGlintEntry.pose(), 0.75F);
 			}
 		}
 
-		return ItemRenderer.getDynamicDisplayGlintConsumer(vertexConsumerProvider, layer, dynamicDisplayGlintEntry);
+		return ItemRenderer.getCompassFoilBuffer(vertexConsumerProvider, layer, dynamicDisplayGlintEntry);
 	}
 
 	private class BakedModelConsumerImpl implements BakedModelConsumer {

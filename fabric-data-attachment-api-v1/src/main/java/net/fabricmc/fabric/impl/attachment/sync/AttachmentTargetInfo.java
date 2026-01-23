@@ -33,6 +33,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 
 public sealed interface AttachmentTargetInfo<T> {
 	int MAX_SIZE_IN_BYTES = Byte.BYTES + Long.BYTES;
@@ -145,7 +146,7 @@ public sealed interface AttachmentTargetInfo<T> {
 
 		@Override
 		public AttachmentTarget getTarget(Level world) {
-			return world.getChunk(pos.x, pos.z);
+			return world.getChunk(pos.x, pos.z, ChunkStatus.FULL, false);
 		}
 
 		@Override

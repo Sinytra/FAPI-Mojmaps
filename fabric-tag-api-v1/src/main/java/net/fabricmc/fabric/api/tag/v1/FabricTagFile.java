@@ -14,10 +14,19 @@
  * limitations under the License.
  */
 
-package net.fabricmc.fabric.impl.datagen;
+package net.fabricmc.fabric.api.tag.v1;
 
-public interface FabricTagBuilder {
-	void fabric_setReplace(boolean replace);
+import java.util.List;
+import net.minecraft.tags.TagEntry;
 
-	boolean fabric_isReplaced();
+/**
+ * Fabric-provided extensions for the {@link net.minecraft.tags.TagFile} class.
+ */
+public interface FabricTagFile {
+	/**
+	 * A list of entries defined via the {@code fabric:remove} field.
+	 */
+	default List<TagEntry> remove() {
+		throw new AssertionError("Implemented via mixin");
+	}
 }

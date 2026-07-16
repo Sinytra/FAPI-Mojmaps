@@ -8,7 +8,7 @@ plugins {
 	id "com.diffplug.spotless" version "6.20.0"
 	id "org.ajoberstar.grgit" version "5.2.2"
 	id "me.modmuss50.remotesign" version "0.4.0" apply false
-	id "me.modmuss50.mod-publish-plugin" version "0.4.5"
+	id "me.modmuss50.mod-publish-plugin" version "0.5.0"
 }
 
 def ENV = System.getenv()
@@ -777,6 +777,8 @@ publishMods {
 		accessToken = providers.environmentVariable("CURSEFORGE_API_KEY")
 		projectId = "306612"
 		minecraftVersions.add(project.curseforge_minecraft_version)
+		clientRequired = true
+		serverRequired = true
 	}
 	modrinth {
 		accessToken = providers.environmentVariable("MODRINTH_TOKEN")
